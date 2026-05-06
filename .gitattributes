@@ -1,0 +1,2 @@
+# Amostras de teste — ficheiros grandes: usar Git LFS (ver amostras-testes/README.md)
+amostras-testes/**/*.zip filter=lfs diff=lfs merge=lfs -text
