@@ -1,0 +1,53 @@
+# --- App (fluxtrace_web) ---
+fluxtrace_web/node_modules/
+fluxtrace_web/dist/
+fluxtrace_web/build/
+fluxtrace_web/.env
+fluxtrace_web/.env.local
+fluxtrace_web/.env.*.local
+fluxtrace_web/.pnpm-store/
+fluxtrace_web/coverage/
+fluxtrace_web/.vite/
+fluxtrace_web/.cache/
+fluxtrace_web/.parcel-cache/
+fluxtrace_web/*.tsbuildinfo
+fluxtrace_web/.webdev/
+
+# Lock npm se o projecto for só pnpm (evita duplicar com pnpm-lock.yaml)
+fluxtrace_web/package-lock.json
+
+# Artefactos locais grandes (scripts MITRE)
+fluxtrace_web/backend/scripts/_enterprise-attack-tmp.json
+fluxtrace_web/backend/scripts/enterprise-attack.json
+
+# Genérico (qualquer pasta)
+**/node_modules/
+.pnpm-store/
+dist/
+build/
+*.dist
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+coverage/
+.nyc_output/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python (se voltar a haver na raiz)
+__pycache__/
+*.pyc
+.venv/
+
+# Arquivos compactados volumosos
+*.7z
+*.zip

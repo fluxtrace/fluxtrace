@@ -1,0 +1,12 @@
+{
+  "name": "fluxtrace",
+  "private": true,
+  "description": "Monorepo mínimo; aplicação em fluxtrace_web/ (use pnpm).",
+  "scripts": {
+    "dev": "pnpm --dir fluxtrace_web dev",
+    "build": "pnpm --dir fluxtrace_web build",
+    "start": "pnpm --dir fluxtrace_web start",
+    "test": "pnpm --dir fluxtrace_web test",
+    "check": "pnpm --dir fluxtrace_web check"
+  }
+}

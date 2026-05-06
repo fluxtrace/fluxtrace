@@ -1,0 +1,293 @@
+import { describe, expect, it } from "vitest";
+
+import { buildLiveFileMetrics } from "./analysisService";
+
+describe("buildLiveFileMetrics", () => {
+  it("reconstrói a etapa mais recente por arquivo a partir de eventos de fila, redução heurística, consolidação e conclusão", () => {
+    const fileName = "TraceInstructions.log";
+    const events = [
+      {
+        eventType: "file-queued",
+        stage: "fila do lote",
+        message: `${fileName} entrou na fila de redução do lote atual.`,
+        progress: 8,
+        payloadJson: {
+          fileName,
+          logType: "TraceInstructions",
+          status: "queued",
+          fileProgress: 0,
+          currentStage: "Fila do lote",
+          currentStep: "Aguardando vez para reduzir",
+        },
+      },
+      {
+        eventType: "file-start",
+        stage: "preparando redução",
+        message: `Iniciando a preparação de ${fileName}.`,
+        progress: 26,
+        payloadJson: {
+          fileName,
+          logType: "TraceInstructions",
+          status: "running",
+          fileProgress: 10,
+          currentStage: "Preparação do arquivo",
+          currentStep: "Validando cabeçalho e contexto do log",
+        },
+      },
+      {
+        eventType: "file-stage",
+        stage: "redução heurística",
+        message: `Aplicando filtragem heurística em ${fileName}.`,
+        progress: 35,
+        payloadJson: {
+          fileName,
+          logType: "TraceInstructions",
+          status: "running",
+          fileProgress: 45,
+          currentStage: "Redução heurística",
+          currentStep: "Filtrando linhas e preservando gatilhos críticos",
+        },
+      },
+      {
+        eventType: "file-stage",
+        stage: "consolidação do resultado",
+        message: `Consolidando métricas e artefatos reduzidos de ${fileName}.`,
+        progress: 44,
+        payloadJson: {
+          fileName,
+          logType: "TraceInstructions",
+          status: "running",
+          fileProgress: 82,
+          currentStage: "Consolidação",
+          currentStep: "Agregando métricas e preparando artefatos",
+          originalLineCount: 120,
+          reducedLineCount: 24,
+          originalBytes: 8192,
+          reducedBytes: 2048,
+          suspiciousEventCount: 3,
+          triggerCount: 1,
+        },
+      },
+    ];
+
+    const inFlightMetrics = buildLiveFileMetrics(events, {}, "running");
+
+    expect(inFlightMetrics).toHaveLength(1);
+    expect(inFlightMetrics[0]).toEqual(expect.objectContaining({
+      fileName,
+      status: "running",
+      progress: 82,
+      currentStage: "Consolidação",
+      currentStep: "Agregando métricas e preparando artefatos",
+      originalLineCount: 120,
+      reducedLineCount: 24,
+      originalBytes: 8192,
+      reducedBytes: 2048,
+      suspiciousEventCount: 3,
+      triggerCount: 1,
+    }));
+
+    const completedMetrics = buildLiveFileMetrics([
+      ...events,
+      {
+        eventType: "file-complete",
+        stage: "Sinais críticos preservados",
+        message: `${fileName} concluído: 24/120 linhas mantidas após a redução.`,
+        progress: 88,
+        payloadJson: {
+          fileName,
+          logType: "TraceInstructions",
+          status: "completed",
+          fileProgress: 100,
+          currentStage: "Arquivo concluído",
+          currentStep: "Sinais críticos preservados",
+          originalLineCount: 120,
+          reducedLineCount: 24,
+          originalBytes: 8192,
+          reducedBytes: 2048,
+          suspiciousEventCount: 3,
+          triggerCount: 1,
+        },
+      },
+    ], {}, "completed");
+
+    expect(completedMetrics[0]).toEqual(expect.objectContaining({
+      fileName,
+      status: "completed",
+      progress: 100,
+      currentStage: "Arquivo concluído",
+      currentStep: "Sinais críticos preservados",
+      suspiciousEventCount: 3,
+      triggerCount: 1,
+    }));
+  });
+
+  it("ignora a ordem newest-first do banco e mantém o estado final correto (último evento cronológico vence)", () => {
+    const fileName = "TraceMemory.log";
+    const chronological = [
+      {
+        id: 1,
+        eventType: "file-queued",
+        stage: "fila do lote",
+        message: `${fileName} entrou na fila.`,
+        progress: 8,
+        payloadJson: {
+          fileName,
+          logType: "TraceMemory",
+          currentStage: "Fila do lote",
+          currentStep: "Aguardando vez para reduzir",
+        },
+      },
+      {
+        id: 2,
+        eventType: "file-complete",
+        stage: "Sinais críticos preservados",
+        message: `${fileName} concluído.`,
+        progress: 90,
+        payloadJson: {
+          fileName,
+          logType: "TraceMemory",
+          fileProgress: 100,
+          currentStage: "Arquivo concluído",
+          currentStep: "Redução concluída",
+          originalLineCount: 100,
+          reducedLineCount: 10,
+        },
+      },
+    ];
+
+    const newestFirst = [...chronological].reverse();
+
+    const a = buildLiveFileMetrics(chronological, {}, "running");
+    const b = buildLiveFileMetrics(newestFirst, {}, "running");
+
+    expect(a[0]).toEqual(expect.objectContaining({
+      fileName,
+      status: "completed",
+      progress: 100,
+      currentStage: "Arquivo concluído",
+    }));
+    expect(b[0]).toEqual(a[0]);
+  });
+
+  it("em falha, mantém a percentagem do último file-stage (não fixa 45% nem cai para o progresso do lote)", () => {
+    const fileName = "TraceInstructions.cdf";
+    const events = [
+      {
+        eventType: "file-queued" as const,
+        stage: "fila do lote",
+        message: `${fileName} na fila.`,
+        progress: 8,
+        payloadJson: { fileName, logType: "TraceInstructions", fileProgress: 0 },
+      },
+      {
+        eventType: "file-start" as const,
+        stage: "preparando redução",
+        message: "início",
+        progress: 26,
+        payloadJson: { fileName, logType: "TraceInstructions", fileProgress: 10 },
+      },
+      {
+        eventType: "file-stage" as const,
+        stage: "leitura",
+        message: "lendo blocos",
+        progress: 30,
+        payloadJson: { fileName, logType: "TraceInstructions", fileProgress: 78, currentStage: "Leitura" },
+      },
+      {
+        eventType: "file-failed" as const,
+        stage: "falha no arquivo",
+        message: `Falha em ${fileName}: limite de memória`,
+        progress: 26,
+        payloadJson: {
+          fileName,
+          logType: "TraceInstructions",
+          status: "failed",
+          currentStage: "Falha",
+          currentStep: "Erro de processamento",
+        },
+      },
+    ];
+
+    const m = buildLiveFileMetrics(events, {}, "failed");
+    expect(m[0]).toEqual(
+      expect.objectContaining({
+        fileName,
+        status: "failed",
+        progress: 78,
+        currentStage: "Falha",
+        currentStep: "Erro de processamento",
+      }),
+    );
+  });
+
+  it("preenche processingDurationMs a partir dos eventos quando createdAt está presente", () => {
+    const fileName = "Timed.cdf";
+    const tQueued = new Date("2026-05-05T12:00:00.000Z");
+    const tStart = new Date("2026-05-05T12:01:40.000Z");
+    const tDone = new Date("2026-05-05T12:06:40.000Z");
+    const events = [
+      {
+        eventType: "file-queued" as const,
+        stage: "fila",
+        message: "na fila",
+        progress: 8,
+        createdAt: tQueued,
+        payloadJson: { fileName, logType: "FunctionInterceptor", fileProgress: 0 },
+      },
+      {
+        eventType: "file-start" as const,
+        stage: "início",
+        message: "start",
+        progress: 26,
+        createdAt: tStart,
+        payloadJson: { fileName, logType: "FunctionInterceptor", fileProgress: 10 },
+      },
+      {
+        eventType: "file-complete" as const,
+        stage: "ok",
+        message: "done",
+        progress: 90,
+        createdAt: tDone,
+        payloadJson: {
+          fileName,
+          logType: "FunctionInterceptor",
+          status: "completed",
+          fileProgress: 100,
+          currentStage: "Arquivo concluído",
+          currentStep: "Redução concluída",
+        },
+      },
+    ];
+    const m = buildLiveFileMetrics(events, {}, "completed");
+    expect(m[0]?.processingDurationMs).toBe(300_000);
+  });
+
+  it("preenche a lista de ficheiros via payload submission quando o evento submission já não está na janela de eventos", () => {
+    const fa = "dir/a.TraceInstructions.cdf";
+    const fb = "dir/b.TraceInstructions.cdf";
+    const submission = { analysisName: "batch", fileNames: [fa, fb] };
+    const events = [
+      {
+        eventType: "file-stage" as const,
+        stage: "redução heurística",
+        message: "lendo b",
+        progress: 60,
+        payloadJson: {
+          fileName: fb,
+          logType: "TraceInstructions",
+          status: "running",
+          fileProgress: 55,
+          currentStage: "Redução heurística",
+          currentStep: "Leitura",
+          lastMessage: "…",
+          originalBytes: 10_737_418_240,
+        },
+      },
+    ];
+    const m = buildLiveFileMetrics(events, {}, "running", submission);
+    expect(m.map((row) => row.fileName).sort()).toEqual([fa, fb].sort());
+    expect(m.find((row) => row.fileName === fa)?.status).toBe("queued");
+    expect(m.find((row) => row.fileName === fb)?.status).toBe("running");
+  });
+});

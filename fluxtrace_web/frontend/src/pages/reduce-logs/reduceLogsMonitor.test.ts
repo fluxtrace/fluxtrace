@@ -1,0 +1,233 @@
+import { beforeAll, describe, expect, it } from "vitest";
+
+import i18n from "@/i18n/config";
+
+import {
+  buildMonitoredFiles,
+  getFileReductionDisplayPercent,
+  getFileInterpretation,
+  getFileRecommendation,
+  type DetailFileMonitor,
+  type FileMonitor,
+  type SubmittedFileMonitor,
+} from "./reduceLogsMonitor";
+
+async function lngPt() {
+  await i18n.changeLanguage("pt-BR");
+}
+
+function T(key: string, opts?: Record<string, unknown>) {
+  return String(i18n.t(key as "reduceLogs.monitor.stageReused", opts as never));
+}
+
+describe("reduceLogsMonitor", () => {
+  beforeAll(async () => {
+    await lngPt();
+  });
+
+  it("mantém um arquivo reaproveitado por nome/label em fila sem pedir novo upload", () => {
+    const submittedFiles: SubmittedFileMonitor[] = [
+      {
+        fileName: "TraceInstructions.log",
+        logType: "TraceInstructions",
+        sizeBytes: 4096,
+        uploadProgress: 100,
+        uploadStatus: "completed",
+        uploadReused: true,
+        uploadDurationMs: 0,
+      },
+    ];
+
+    const monitored = buildMonitoredFiles(submittedFiles, []);
+
+    expect(monitored[0]).toEqual(expect.objectContaining({
+      fileName: "TraceInstructions.log",
+      processingStatus: "queued",
+      currentStage: T("reduceLogs.monitor.stageReused"),
+      currentStep: T("reduceLogs.monitor.stepAwaitReprocess"),
+      uploadReused: true,
+    }));
+    expect(getFileInterpretation(monitored[0]!)).toBe(T("reduceLogs.monitor.interpretQueuedReused"));
+    expect(getFileRecommendation(monitored[0]!)).toBe(T("reduceLogs.monitor.recoQueuedReused"));
+  });
+
+  it("prioriza os detalhes do lote quando o backend já iniciou o processamento em background", () => {
+    const submittedFiles: SubmittedFileMonitor[] = [
+      {
+        fileName: "TraceMemory.log",
+        logType: "TraceMemory",
+        sizeBytes: 8192,
+        uploadProgress: 100,
+        uploadStatus: "completed",
+        uploadReused: false,
+        uploadDurationMs: 1500,
+      },
+    ];
+    const detailFiles: DetailFileMonitor[] = [
+      {
+        fileName: "TraceMemory.log",
+        logType: "TraceMemory",
+        status: "running",
+        progress: 42,
+        currentStage: "Redução heurística",
+        currentStep: "Filtrando eventos e consolidando sinais críticos",
+        lastMessage: "Processamento heurístico em andamento.",
+        originalBytes: 8192,
+        reducedBytes: 2048,
+        uploadDurationMs: 1500,
+      },
+    ];
+
+    const monitored = buildMonitoredFiles(submittedFiles, detailFiles);
+
+    expect(monitored[0]).toEqual(expect.objectContaining({
+      processingStatus: "running",
+      processingProgress: 42,
+      currentStage: "Redução heurística",
+      currentStep: "Filtrando eventos e consolidando sinais críticos",
+      lastMessage: "Processamento heurístico em andamento.",
+    }));
+    expect(getFileInterpretation(monitored[0]!)).toBe(T("reduceLogs.monitor.interpretRunning"));
+    expect(getFileRecommendation(monitored[0]!)).toBe(T("reduceLogs.monitor.recoRunning"));
+  });
+
+  it("gera conclusão coerente quando o lote já terminou", () => {
+    const monitored = buildMonitoredFiles([], [
+      {
+        fileName: "TraceFcnCall.log",
+        logType: "TraceFcnCall",
+        status: "completed",
+        progress: 100,
+        originalBytes: 1000,
+        reducedBytes: 200,
+        suspiciousEventCount: 3,
+        triggerCount: 1,
+      },
+    ]);
+
+    expect(monitored[0]).toEqual(expect.objectContaining({
+      processingStatus: "completed",
+      processingProgress: 100,
+      currentStage: T("reduceLogs.monitor.stageResultDone"),
+      currentStep: T("reduceLogs.monitor.stepReductionDone"),
+    }));
+    expect(getFileInterpretation(monitored[0]!)).toBe(T("reduceLogs.monitor.interpretSignals"));
+    expect(getFileRecommendation(monitored[0]!)).toBe(T("reduceLogs.monitor.recoSignals"));
+  });
+
+  it("associa o progresso de upload local ao nome de ficheiro com caminho vindo do servidor (basename)", () => {
+    const submittedFiles: SubmittedFileMonitor[] = [
+      {
+        fileName: "contradef.1.TraceInstructions.cdf",
+        logType: "TraceInstructions",
+        sizeBytes: 1_000_000,
+        uploadProgress: 42,
+        uploadStatus: "uploading",
+      },
+    ];
+    const detailFiles: DetailFileMonitor[] = [
+      {
+        fileName: "Pasta-ample/contradef.1.TraceInstructions.cdf",
+        logType: "TraceInstructions",
+        status: "queued",
+        progress: 0,
+        originalBytes: 1_000_000,
+      },
+    ];
+    const monitored = buildMonitoredFiles(submittedFiles, detailFiles);
+    expect(monitored).toHaveLength(2);
+    const pathRow = monitored.find((f) => f.fileName.includes("Pasta-ample"))!;
+    expect(pathRow.uploadProgress).toBe(42);
+    expect(pathRow.uploadStatus).toBe("uploading");
+  });
+
+  it("não lista o ficheiro .7z na grelha enquanto o servidor ainda não devolveu os logs extraídos", () => {
+    const submittedFiles: SubmittedFileMonitor[] = [
+      {
+        fileName: "Full-Execution-Sample-1.7z",
+        logType: "Unknown",
+        sizeBytes: 38 * 1024 * 1024,
+        uploadProgress: 50,
+        uploadStatus: "uploading",
+      },
+    ];
+    expect(buildMonitoredFiles(submittedFiles, [])).toHaveLength(0);
+  });
+
+  it("getFileReductionDisplayPercent: 0% com reducedBytes=0 em curso, não 100% enganador", () => {
+    const f: FileMonitor = {
+      fileName: "x.log",
+      logType: "TraceInstructions",
+      sizeBytes: 1000,
+      uploadProgress: 100,
+      uploadStatus: "completed",
+      processingStatus: "running",
+      processingProgress: 0,
+      currentStage: "Redução",
+      currentStep: "…",
+      lastMessage: "…",
+      originalLineCount: 0,
+      reducedLineCount: 0,
+      originalBytes: 1000,
+      reducedBytes: 0,
+      suspiciousEventCount: 0,
+      triggerCount: 0,
+      uploadDurationMs: 0,
+      uploadReused: false,
+    };
+    expect(getFileReductionDisplayPercent(f)).toBe(0);
+    expect(
+      getFileReductionDisplayPercent({
+        ...f,
+        processingProgress: 38,
+      }),
+    ).toBe(38);
+  });
+
+  it("getFileReductionDisplayPercent: concluído usa redução real de bytes", () => {
+    const f: FileMonitor = {
+      fileName: "x.log",
+      logType: "TraceInstructions",
+      sizeBytes: 1000,
+      uploadProgress: 100,
+      uploadStatus: "completed",
+      processingStatus: "completed",
+      processingProgress: 100,
+      currentStage: "OK",
+      currentStep: "OK",
+      lastMessage: "OK",
+      originalLineCount: 100,
+      reducedLineCount: 10,
+      originalBytes: 1000,
+      reducedBytes: 400,
+      suspiciousEventCount: 0,
+      triggerCount: 0,
+      uploadDurationMs: 0,
+      uploadReused: false,
+    };
+    expect(getFileReductionDisplayPercent(f)).toBeCloseTo(60, 5);
+  });
+
+  it("oculta o contêiner .7z quando o backend já retornou logs extraídos", () => {
+    const submittedFiles: SubmittedFileMonitor[] = [
+      {
+        fileName: "Full-Execution-Sample-1.7z",
+        logType: "Unknown",
+        sizeBytes: 38 * 1024 * 1024,
+        uploadProgress: 100,
+        uploadStatus: "completed",
+      },
+    ];
+    const detailFiles: DetailFileMonitor[] = [
+      { fileName: "contradef.2956.FunctionInterceptor.cdf", status: "queued", progress: 8 },
+      { fileName: "contradef.2956.TraceInstructions.cdf", status: "queued", progress: 8 },
+    ];
+
+    const monitored = buildMonitoredFiles(submittedFiles, detailFiles);
+
+    expect(monitored.map((file) => file.fileName)).toEqual([
+      "contradef.2956.FunctionInterceptor.cdf",
+      "contradef.2956.TraceInstructions.cdf",
+    ]);
+  });
+});
