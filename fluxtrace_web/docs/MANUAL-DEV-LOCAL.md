@@ -224,7 +224,7 @@ git clone git@github.com:SEU_ORG/fluxtrace.git
 
 1. Abra o **Visual Studio Code**.
 2. Menu **Ficheiro → Abrir pasta…** (ou **File → Open Folder…** se a UI estiver em inglês).
-3. Seleccione a pasta **raiz** do repositório clonado — a que contém **`fluxtrace_web`** (e, em muitos clones, **`amostras-testes`**). **Não** abra apenas `fluxtrace_web` se quiser ver o repo completo na árvore; abrir a raiz (`fluxtrace`) é o recomendado neste manual.
+3. Seleccione a pasta **raiz** do repositório clonado — a que contém **`fluxtrace_web`** (e, em muitos clones, **`test-samples`**). **Não** abra apenas `fluxtrace_web` se quiser ver o repo completo na árvore; abrir a raiz (`fluxtrace`) é o recomendado neste manual.
 
 <!-- Captura sugerida: `docs/_screenshots/dev-local/01-vscode-abrir-pasta.png` — diálogo «Abrir pasta» a apontar para a raiz do repo -->
 
@@ -232,13 +232,13 @@ git clone git@github.com:SEU_ORG/fluxtrace.git
 
 <!-- Captura sugerida: `docs/_screenshots/dev-local/01-vscode-explorador-raiz.png` — Explorador lateral com `fluxtrace_web` e pastas vizinhas visíveis -->
 
-> **\[Inserir captura\]** — Barra lateral **Explorador** do VS Code a mostrar `fluxtrace_web`, `amostras-testes` (se existir) e `docs` ao nível correcto.
+> **\[Inserir captura\]** — Barra lateral **Explorador** do VS Code a mostrar `fluxtrace_web`, `test-samples` (se existir) e `docs` ao nível correcto.
 
 ---
 
 ### 1.3 Porque abrir a raiz do repo
 
-Trabalhar a partir da **raiz** (`fluxtrace`) permite ver documentação, `amostras-testes` e configs partilhadas; os comandos `pnpm` que vêm a seguir correrão **dentro de** `fluxtrace_web/` (secção 2).
+Trabalhar a partir da **raiz** (`fluxtrace`) permite ver documentação, `test-samples` e configs partilhadas; os comandos `pnpm` que vêm a seguir correrão **dentro de** `fluxtrace_web/` (secção 2).
 
 ---
 
@@ -408,7 +408,7 @@ Execute `pnpm check` e `pnpm test` antes de considerar o ambiente “validado”
 | [`readme-web.md`](../readme-web.md) | Arranque, estrutura, rotas, deploy (resumo). |
 | [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md) | Arquitectura, API, operação. |
 | [`MANUAL-USUARIO.md`](./MANUAL-USUARIO.md) | Funcionalidades para utilizadores. |
-| [`../amostras-testes/README.md`](../../amostras-testes/README.md) | Amostras de teste e tempos de referência (raiz do repo). |
+| [`test-samples/README.md`](../../test-samples/README.md) | Amostras de teste e tempos de referência (raiz do repo). |
 
 ---
 

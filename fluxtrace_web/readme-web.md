@@ -8,7 +8,7 @@
 | [Documentação e manuais](#documentação-e-manuais) | PDF-style em `docs/` |
 | [Frontend](#frontend) | Stack, pastas, rotas, tRPC, REST |
 | [Backend](#backend-api) | Pastas, ambiente, Drizzle, deploy Render, testes |
-| [Amostras](../amostras-testes/README.md) | `.zip` na raiz do repo; LFS e Drive (documentação nessa pasta) |
+| [Amostras](../test-samples/README.md) | `.zip` na raiz do repo; LFS e Drive (documentação nessa pasta) |
 
 ---
 
@@ -251,8 +251,8 @@ Com OAuth: preencher as três; redirect registado: `https://<serviço>.onrender.
 
 ## Amostras de testes
 
-Toda a informação (Google Drive, Git LFS, como contribuir) está em **[`amostras-testes/README.md`](../amostras-testes/README.md)** na raiz do repositório Git.
+Toda a informação (Google Drive, Git LFS, como contribuir) está em **[`test-samples/README.md`](../test-samples/README.md)** na raiz do repositório Git.
 
 ---
 
-*Última consolidação: um único `readme-web.md` em `fluxtrace_web/`; actualizar este ficheiro quando mudarem rotas, deploy ou estrutura relevante. Amostras: `amostras-testes/README.md`.*
+*Última consolidação: um único `readme-web.md` em `fluxtrace_web/`; actualizar este ficheiro quando mudarem rotas, deploy ou estrutura relevante. Amostras: `test-samples/README.md`.*

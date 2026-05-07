@@ -10,7 +10,7 @@ Para correr a aplicação com estes dados: **`fluxtrace_web/readme-web.md`**.
 
 Valores **aproximados** alinhados ao gráfico **«Tempo envio + processamento — lotes concluídos»** do dashboard (somatório upload + processamento; lotes antigos podem estar **estimados** por regressão pelo tamanho). Dependem de rede, carga do servidor e do ambiente.
 
-A coluna **SHA-256** é o identificador do pacote: coincide com o **nome do ficheiro `.zip`** em `amostras-testes/` (sem `.zip`). O rótulo **ficheiro** é o nome convencional usado nos relatórios / gráfico; dentro do arquivo vêm sobretudo `.cdf` Contradef (não um `.csv` com esse nome).
+A coluna **SHA-256** é o identificador do pacote: coincide com o **nome do ficheiro `.zip`** em `test-samples/` (sem `.zip`). O rótulo **ficheiro** é o nome convencional usado nos relatórios / gráfico; dentro do arquivo vêm sobretudo `.cdf` Contradef (não um `.csv` com esse nome).
 
 | Ficheiro (rótulo) | SHA-256 (pacote `.zip`) | Tempo de processamento (aprox.) |
 | ----------------- | ------------------------- | -------------------------------- |
@@ -39,9 +39,9 @@ URL: `https://drive.google.com/file/d/1kpHaI8c_e7HLqdY4dTNYfZVqWR9wTMNh/view?usp
 
 ## Opção 2 — FSF (Git LFS no repositório)
 
-**FSF** = amostras pela **fonte versionada** com LFS (`amostras-testes/*.zip`).
+**FSF** = amostras pela **fonte versionada** com LFS (`test-samples/*.zip`).
 
-Na raiz do repo (pasta que contém `fluxtrace_web/` e `amostras-testes/`):
+Na raiz do repo (pasta que contém `fluxtrace_web/` e `test-samples/`):
 
 ```bash
 git lfs install
@@ -55,7 +55,7 @@ Quota LFS no GitHub (plano gratuito ~1 GiB); volumes maiores: Drive ou outro a
 | Opção | Quando usar |
 |-------|-------------|
 | **1 — Google Drive** | Download simples |
-| **2 — FSF (Git LFS)** | Clone do repositório com os `.zip` em `amostras-testes/` |
+| **2 — FSF (Git LFS)** | Clone do repositório com os `.zip` em `test-samples/` |
 
 ---
 
@@ -63,7 +63,7 @@ Quota LFS no GitHub (plano gratuito ~1 GiB); volumes maiores: Drive ou outro a
 
 ```bash
 git lfs install
-git add amostras-testes/
-git commit -m "amostras: …"
+git add test-samples/
+git commit -m "test-samples: …"
 git push
 ```

@@ -51,6 +51,6 @@ __pycache__/
 # Arquivos compactados volumosos
 *.7z
 *.zip
-# Excepção: amostras de teste versionadas (ponteiro LFS — ver .gitattributes)
-!amostras-testes/
-!amostras-testes/**/*.zip
+# Excepção: pacotes de teste versionados em test-samples/ (ponteiro LFS — ver .gitattributes)
+!test-samples/
+!test-samples/**/*.zip
