@@ -12,12 +12,12 @@ Siga **por ordem**; não precisa de ler o resto do manual “de uma vez” — v
 2. **Secção 1** — `git clone` do repositório e **Ficheiro → Abrir pasta…** na **raiz** do clone (pasta que contém `fluxtrace_web/`).
 3. **Secção 2** — No terminal do VS Code: `cd fluxtrace_web`, confirme `node -v`; `corepack enable` se ainda não correu nesta sessão.
 4. **Secção 4** — Criar **`fluxtrace_web/.env`** a partir de `backend/.env.example` (sobretudo `DATABASE_URL` e `JWT_SECRET`).
-5. **Secção 5** — `pnpm install` (dentro de `fluxtrace_web/`).
-6. **Secção 6** — `pnpm db:push`.
+5. **Secção 5** — `pnpm install` (dentro de `fluxtrace_web/`). Se o PowerShell bloquear `pnpm.ps1`, **0.4.1**; mensagens do Corepack / `approve-builds`, **5.1**.
+6. **Secção 6** — `pnpm db:push` (PowerShell real se o drizzle pedir confirmações — **6.2**).
 7. **Secção 7** — `pnpm dev` e abrir o URL que o terminal mostrar (em geral `http://localhost:3000/`).
 8. **Secção 9** (opcional mas útil) — `pnpm check` e `pnpm test` para validar o ambiente.
 
-Se algo falhar, **Secção 11** (problemas frequentes) e as mensagens no terminal costumam indicar o que falta (Postgres parado, `pnpm` não encontrado, porta ocupada, etc.).
+Se algo falhar, **Secção 11** (problemas frequentes) e as mensagens no terminal costumam indicar o que falta (Postgres parado, `pnpm` não encontrado, **PowerShell a bloquear `pnpm.ps1`**, porta ocupada, etc.).
 
 ---
 
@@ -126,6 +126,41 @@ pnpm -v
 > **\[Inserir captura\]** — Terminal: `corepack enable` (se não houver erro) e versão do `pnpm`.
 
 **Se `corepack` não for reconhecido:** reinstale Node a partir do site oficial (installer recente) ou veja a documentação do Node para o seu ambiente. **Se `pnpm` falhar após `corepack enable`:** feche o VS Code, abra de novo e repita.
+
+---
+
+### 0.4.1 Windows — PowerShell bloqueia `pnpm` (`ExecutionPolicy` / `pnpm.ps1`)
+
+No **Windows**, o terminal do VS Code usa muitas vezes **PowerShell**. O Node disponibiliza `pnpm` como **`pnpm.ps1`** em `C:\Program Files\nodejs\` (além do `pnpm.cmd`). Se a **política de execução** do PowerShell estiver restrita, o `pnpm install` pode falhar com uma mensagem como:
+
+```text
+pnpm : O arquivo C:\Program Files\nodejs\pnpm.ps1 não pode ser carregado porque a execução de scripts foi
+desabilitada neste sistema. Para obter mais informações, consulte about_Execution_Policies em
+https://go.microsoft.com/fwlink/?LinkID=135170.
+    + CategoryInfo          : ErrodeSegurança: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+```
+
+**Correcção recomendada (uma vez por utilizador Windows):**
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Confirme com `S`/`Y` se o PowerShell perguntar. Em seguida, na pasta **`fluxtrace_web/`**, volte a correr:
+
+```powershell
+pnpm install
+```
+
+`RemoteSigned` é um equilíbrio habitual em máquinas de desenvolvimento (scripts **locais** correm; scripts descarregados da Internet costumam precisar de assinatura). Documentação Microsoft: [about_Execution_Policies](https://learn.microsoft.com/pt-br/powershell/module/microsoft.powershell.core/about/about_execution_policies).
+
+**Alternativas imediatas** (sem alterar a política):
+
+- Chamar explicitamente o launcher **`.cmd`** no PowerShell:  
+  `pnpm.cmd install` , `pnpm.cmd dev`, etc.
+- Abrir no VS Code um terminal **Command Prompt** (**Terminal → Novo terminal** → painel `+` ▼ → **Command Prompt**) em vez de PowerShell.
+- Usar **Git Bash** se tiver Git for Windows instalado.
 
 ---
 
@@ -319,7 +354,31 @@ No terminal, com `cwd` = **`fluxtrace_web/`**:
 pnpm install
 ```
 
+No **Windows**, se o terminal for **PowerShell** e aparecer erro sobre **`pnpm.ps1`** e **execução de scripts**, veja a **secção 0.4.1** (ou use `pnpm.cmd install`).
+
 Aguarde o fim do `postinstall` (7-Zip, etc.). Se aparecer erro de rede ou de permissões, corrija antes de continuar.
+
+### 5.1 Mensagens comuns no primeiro `pnpm install` (Windows)
+
+**1 — Corepack a descarregar o `pnpm`**
+
+Se aparecer algo como `Corepack is about to download ... pnpm-10.x.x.tgz` e `Do you want to continue? [Y/n]`, responda **`Y`** (Enter). Isto só costuma acontecer **na primeira vez** que o Corepack prepara a versão de `pnpm` pedida pelo `package.json`.
+
+**2 — Aviso Node `DEP0169` / `url.parse()`**
+
+Um `DeprecationWarning` referindo `url.parse()` pode surgir durante o download; vem em geral de **dependências** (Corepack/registo), não do vosso código. **Pode ignorar** para desenvolvimento local, salvo se estiverem a depurar com `node --trace-deprecation`.
+
+**3 — `Ignored build scripts: @tailwindcss/oxide, esbuild`**
+
+Versões recentes do **pnpm** podem **adiar** a execução de *build scripts* de certos pacotes até os aprovar (política de segurança). Muitas vezes o `pnpm install` **termina na mesma** (`Done in …`) e o projecto **compila**, porque há **binários pré-compilados**.
+
+- Se **`pnpm dev`** ou **`pnpm build`** falharem por falta de binário nativo (`esbuild`, Tailwind `oxide`, etc.), execute:
+
+```bash
+pnpm approve-builds
+```
+
+Siga as instruções no ecrã para **aprovar** os pacotes que o projecto precisa (por exemplo `esbuild`, `@tailwindcss/oxide`), e volte a correr `pnpm install` se o assistente o indicar.
 
 ---
 
@@ -332,6 +391,19 @@ pnpm db:push
 ```
 
 Isto aplica o schema esperado pelo Drizzle à base apontada por `DATABASE_URL`. Execute de novo quando o projecto exigir migrações (ver comunicados no repositório ou `MANUAL-TECNICO.md`).
+
+### 6.1 Erro «No schema files found» (`drizzle/schema/index.ts`)
+
+Se aparecer algo como **`No schema files found for path config ['./drizzle/schema/index.ts']`**:
+
+- O comando corre a partir de **`fluxtrace_web/`**, mas o `drizzle.config.ts` vive em **`backend/`**; caminhos relativos só `drizzle/...` apontavam para uma pasta **inexistente** na raiz da app.
+- No **Windows**, caminhos com **`\`** também podem confundir o `drizzle-kit`.
+
+O repositório usa caminhos **absolutos normalizados com `/`** em `backend/drizzle.config.ts`. Garanta que está com o **último código**; em último caso, volte a fazer `git pull`.
+
+### 6.2 `drizzle-kit` pede confirmação interativa (truncate / alterações perigosas)
+
+Se o `push` perguntar se quer **esvaziar** uma tabela ou alterar constraints e o terminal **não** for interactivo (ex.: output colado, algumas extensões), pode aparecer erro de **TTY**. Use um **PowerShell** ou **cmd** normal no VS Code e rode `pnpm db:push` de novo para poder responder **`Yes`/`No`** com segurança **após ler** o aviso (dados podem ser afectados).
 
 ---
 
@@ -393,6 +465,9 @@ Execute `pnpm check` e `pnpm test` antes de considerar o ambiente “validado”
 
 | Sintoma | O que verificar |
 |---------|------------------|
+| `db:push`: «No schema files found» para `drizzle/...` | **Secção 6.1** — caminhos do `drizzle.config.ts` / Windows; actualize o repositório. |
+| `db:push`: TTY / prompts interactivos | **Secção 6.2** — correr num terminal real e responder ao drizzle-kit. |
+| PowerShell: `pnpm.ps1` / «execução de scripts desabilitada» | **Secção 0.4.1:** `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`, ou `pnpm.cmd …`, ou terminal **cmd** / Git Bash. |
 | `pnpm` não encontrado | `corepack enable`; fechar e reabrir o terminal. |
 | Erro ao ligar ao PostgreSQL | `DATABASE_URL`, serviço PostgreSQL a correr, porta 5432 (ou a que usar), palavra-passe. |
 | Porta em uso | Fechar outro processo na 3000 ou aceitar a porta alternativa indicada no log. |

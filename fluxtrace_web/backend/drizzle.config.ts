@@ -12,9 +12,14 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required to run drizzle commands");
 }
 
+/** Caminhos com `/` para o drizzle-kit no Windows (glob/resolução falham com `\`). */
+function posixPathFromParts(...parts: string[]) {
+  return path.join(...parts).split(path.sep).join("/");
+}
+
 export default defineConfig({
-  schema: "./drizzle/schema/index.ts",
-  out: "./drizzle/migrations",
+  schema: posixPathFromParts(configDir, "drizzle", "schema", "index.ts"),
+  out: posixPathFromParts(configDir, "drizzle", "migrations"),
   dialect: "postgresql",
   dbCredentials: {
     url: connectionString,
