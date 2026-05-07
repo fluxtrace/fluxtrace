@@ -79,7 +79,7 @@ git --version
 node -v
 ```
 
-Deve aparecer algo como `v20.x.y` ou `v22.x.y`.
+Deve aparecer algo como `v22.x.y` ou `v24.x.y`.
 
 <!-- Captura sugerida: `docs/_screenshots/dev-local/00-node-download.png` — site Node com LTS -->
 
