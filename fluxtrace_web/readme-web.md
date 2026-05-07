@@ -39,7 +39,7 @@ Ficheiros em **`docs/`** (além deste README):
 | [`docs/MANUAL-USUARIO.md`](docs/MANUAL-USUARIO.md) | Utilizadores — funcionalidades e uso |
 | [`docs/MANUAL-TECNICO.md`](docs/MANUAL-TECNICO.md) | Desenvolvedores / DevOps — arquitectura, API, operação |
 
-**Capturas de ecrã** para o manual do utilizador: colar imagens em **`docs/_screenshots/`** (nomes sugeridos no `MANUAL-USUARIO.md`).
+**Capturas de ecrã:** manual do utilizador — pasta **`docs/_screenshots/`** (nomes sugeridos no `MANUAL-USUARIO.md`). Manual de desenvolvimento local — **`docs/_screenshots/dev-local/`** (referências em `MANUAL-DEV-LOCAL.md`).
 
 ---
 

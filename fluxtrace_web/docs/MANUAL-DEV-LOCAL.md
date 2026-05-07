@@ -23,11 +23,13 @@ Se algo falhar, **Secção 11** (problemas frequentes) e as mensagens no termina
 
 ## 0. O que vai precisar — checklist e como instalar
 
-Use este capítulo **antes** de clonar o projecto, se ainda não tiver as ferramentas na máquina. No fim de cada subsecção há **espaço para uma captura de ecrã**: tire o print, guarde em `docs/_screenshots/dev-local/` (crie a pasta se não existir) e substitua o bloco *\[Inserir captura\]* por uma imagem Markdown, por exemplo:
+As figuras deste capítulo estão em **`docs/_screenshots/dev-local/`** e são referenciadas em Markdown a partir deste ficheiro (`docs/MANUAL-DEV-LOCAL.md`), por exemplo:
 
 ```markdown
-![Descrição curta](_screenshots/dev-local/00-git-versao.png)
+![Legenda](_screenshots/dev-local/00-git-version.png)
 ```
+
+**Nota:** em capturas que mostrem palavras-passe, chaves API ou dados sensíveis, borre ou redija antes de partilhar o manual.
 
 ### 0.1 Resumo (o que instalar)
 
@@ -43,6 +45,10 @@ No **Windows**, o `pnpm install` trata do binário **7-Zip** via npm (`7zip-bin`
 
 **Dica:** depois de instalar **Git** ou **Node**, **feche e volte a abrir** o VS Code (ou pelo menos o terminal) para o Windows actualizar o `PATH` e os comandos serem reconhecidos.
 
+**Opcional** — versão do Windows (útil em suporte / diagnóstico):
+
+![Definições — sobre o Windows](_screenshots/dev-local/00-versao-windows.png)
+
 ---
 
 ### 0.2 Git (Windows)
@@ -57,13 +63,9 @@ No **Windows**, o `pnpm install` trata do binário **7-Zip** via npm (`7zip-bin`
 git --version
 ```
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-git-download.png` — página de download -->
+![Página de download do Git for Windows](_screenshots/dev-local/00-git-download.png)
 
-> **\[Inserir captura\]** — Página de download do Git ou ecrã final do instalador.
-
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-git-version.png` — saída de `git --version` -->
-
-> **\[Inserir captura\]** — Terminal a mostrar `git --version` com um número de versão.
+![Terminal com `git --version`](_screenshots/dev-local/00-git-version.png)
 
 ---
 
@@ -79,15 +81,11 @@ git --version
 node -v
 ```
 
-Deve aparecer algo como `v22.x.y` ou `v24.x.y`.
+Deve aparecer algo como `v22.x.y` (ou outra LTS suportada pelo projecto).
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-node-download.png` — site Node com LTS -->
+![Site do Node.js — descarga LTS](_screenshots/dev-local/00-node-download.png)
 
-> **\[Inserir captura\]** — Site do Node.js com o botão LTS visível.
-
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-node-version.png` — `node -v` -->
-
-> **\[Inserir captura\]** — Terminal com a versão do Node.
+![Terminal com `node -v`](_screenshots/dev-local/00-node-version.png)
 
 ---
 
@@ -121,9 +119,7 @@ cd caminho\para\fluxtrace\fluxtrace_web
 pnpm -v
 ```
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-corepack-enable.png` — `corepack enable` e `pnpm -v` -->
-
-> **\[Inserir captura\]** — Terminal: `corepack enable` (se não houver erro) e versão do `pnpm`.
+![Terminal — `corepack --version` e preparação do pnpm](_screenshots/dev-local/00-corepack-version.png)
 
 **Se `corepack` não for reconhecido:** reinstale Node a partir do site oficial (installer recente) ou veja a documentação do Node para o seu ambiente. **Se `pnpm` falhar após `corepack enable`:** feche o VS Code, abra de novo e repita.
 
@@ -172,17 +168,15 @@ pnpm install
 4. Instale e abra o VS Code.
 5. *Opcional:* na vista de **Extensões** (`Ctrl+Shift+X`), procure **Portuguese Language Pack** se quiser a UI em português.
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-vscode-download.png` -->
-
-> **\[Inserir captura\]** — Página de download do VS Code.
-
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-vscode-primeiro-ecra.png` -->
-
-> **\[Inserir captura\]** — VS Code aberto (área de boas-vindas ou explorador de ficheiros).
+*(Não há figuras separadas do site do VS Code neste pacote; o ecrã típico com o repositório aberto aparece na **secção 1.2**.)*
 
 ---
 
 ### 0.6 PostgreSQL (Windows — instalador)
+
+![PostgreSQL — página de download para Windows](_screenshots/dev-local/00-postgresql-download.png)
+
+![PostgreSQL — seguimento do download / instalador EDB](_screenshots/dev-local/00-postgresql-download2.png)
 
 1. Abra [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/) e use o instalador recomendado (**EDB** ou similar).
 2. Durante o assistente, defina uma **palavra-passe** para o superutilizador `postgres` (anote-a em local seguro para desenvolvimento).
@@ -194,13 +188,9 @@ pnpm install
 
 Guarde **utilizador**, **palavra-passe**, **nome da base** e **porta** — entram na `DATABASE_URL` (secção 4).
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-postgres-assistente-porta.png` -->
+![Assistente PostgreSQL — porta (borre a palavra-passe se aparecer)](_screenshots/dev-local/00-postgres-assistente-porta.png)
 
-> **\[Inserir captura\]** — Passo do instalador PostgreSQL (porta ou palavra-passe, sem expor a palavra-passe real — pode borrar).
-
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-pgadmin-nova-bd.png` -->
-
-> **\[Inserir captura\]** — pgAdmin ou ecrã equivalente a mostrar a nova base `fluxtrace_dev`.
+![pgAdmin — nova base `fluxtrace_dev` (exemplo)](_screenshots/dev-local/00-pgadmin-nova-bd.png)
 
 ---
 
@@ -217,13 +207,7 @@ docker run --name fluxtrace-pg -e POSTGRES_PASSWORD=devpass -e POSTGRES_USER=flu
 
 3. Use `DATABASE_URL` como `postgresql://flux:devpass@127.0.0.1:5432/fluxtrace_dev` (ajuste se mudar utilizador ou palavra-passe).
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-docker-desktop-a-correr.png` -->
-
-> **\[Inserir captura\]** — Docker Desktop a indicar que o motor está activo.
-
-<!-- Captura sugerida: `docs/_screenshots/dev-local/00-docker-container-postgres.png` -->
-
-> **\[Inserir captura\]** — Lista de contentores com `fluxtrace-pg` em execução.
+*(Figuras do Docker Desktop e da lista de contentores podem ser acrescentadas a `docs/_screenshots/dev-local/` se quiser documentar este fluxo com prints.)*
 
 ---
 
@@ -249,9 +233,7 @@ git clone git@github.com:SEU_ORG/fluxtrace.git
 
 4. Quando terminar, deve existir uma pasta **`fluxtrace`** (ou o nome do repo) com `fluxtrace_web/` lá dentro.
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/01-git-clone-terminal.png` -->
-
-> **\[Inserir captura\]** — Terminal a mostrar o comando `git clone` e a mensagem de conclusão (sem expor URLs ou credenciais internas, se preferir borrar).
+![Terminal — `git clone` e conclusão](_screenshots/dev-local/01-git-clone-terminal.png)
 
 ---
 
@@ -261,13 +243,9 @@ git clone git@github.com:SEU_ORG/fluxtrace.git
 2. Menu **Ficheiro → Abrir pasta…** (ou **File → Open Folder…** se a UI estiver em inglês).
 3. Seleccione a pasta **raiz** do repositório clonado — a que contém **`fluxtrace_web`** (e, em muitos clones, **`test-samples`**). **Não** abra apenas `fluxtrace_web` se quiser ver o repo completo na árvore; abrir a raiz (`fluxtrace`) é o recomendado neste manual.
 
-<!-- Captura sugerida: `docs/_screenshots/dev-local/01-vscode-abrir-pasta.png` — diálogo «Abrir pasta» a apontar para a raiz do repo -->
+![VS Code — Abrir pasta (raiz do repositório)](_screenshots/dev-local/01-vscode-abrir-pasta.png)
 
-> **\[Inserir captura\]** — Diálogo do Windows / VS Code ao escolher a pasta raiz do clone.
-
-<!-- Captura sugerida: `docs/_screenshots/dev-local/01-vscode-explorador-raiz.png` — Explorador lateral com `fluxtrace_web` e pastas vizinhas visíveis -->
-
-> **\[Inserir captura\]** — Barra lateral **Explorador** do VS Code a mostrar `fluxtrace_web`, `test-samples` (se existir) e `docs` ao nível correcto.
+![VS Code — Explorador com `fluxtrace_web` e pastas vizinhas](_screenshots/dev-local/01-vscode-explorador-raiz.png)
 
 ---
 
@@ -344,7 +322,7 @@ Ajuste utilizador, palavra-passe e nome da base ao valor em **`DATABASE_URL`** (
 
 Referência de todas as variáveis: comentários em **`backend/.env.example`** e código em **`backend/_core/config/env.ts`**.
 
----
+![Exemplo de `.env` no VS Code — **não** commite segredos; borre em capturas públicas](_screenshots/dev-local/04-env.png)
 
 ## 5. Instalar dependências
 
@@ -424,7 +402,7 @@ Server running on http://localhost:3000/
 
 Abra o browser em **`http://localhost:3000/`** (ou na porta mostrada).
 
----
+![Terminal — `pnpm dev` com servidor a escutar (exemplo)](_screenshots/dev-local/07-start-local.png)
 
 ## 8. Validar no browser (fumo manual)
 
@@ -433,6 +411,8 @@ Sugestão mínima:
 1. A página inicial / dashboard carrega sem erro visível grave.
 2. Navegue para rotas principais (ex.: **Reduzir logs**, **Interpretação consolidada**), conforme `readme-web.md` (tabela de rotas).
 3. Se usar `AUTH_MODE=local`, teste **Entrar** / **Registo**; se usar `none`, confirme que as áreas necessárias respondem (sem login).
+
+![Ecrã de login local (exemplo com `AUTH_MODE=local`)](_screenshots/dev-local/07-login-local.png)
 
 Fluxos pesados (upload de lotes grandes) dependem de disco temporário e configuração; veja `.env.example` (`CONTRADEF_*`, etc.).
 

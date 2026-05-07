@@ -244,7 +244,7 @@ Para **erros técnicos** (logs, variáveis, base de dados), veja `MANUAL-TECNICO
 
 ## 14. Pasta sugerida para capturas de ecrã
 
-Ao exportar imagens, pode guardá-las em:
+Ao exportar imagens para **este** manual, pode guardá-las em:
 
 `fluxtrace_web/docs/_screenshots/`
 
@@ -255,6 +255,8 @@ com os nomes sugeridos nos comentários HTML deste documento (ou equivalente), e
 ```
 
 *(Os comentários `<!-- ... -->` podem ser removidos após inserir as figuras.)*
+
+Para o manual de **desenvolvimento local** (`MANUAL-DEV-LOCAL.md`), as figuras ficam na subpasta **`dev-local/`** (por exemplo `docs/_screenshots/dev-local/`), com nomes e referências indicados naquele documento.
 
 ---
 
