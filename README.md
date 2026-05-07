@@ -12,7 +12,7 @@ FluxTrace targets analysts and researchers who work with **high-volume Contradef
 
 ## Table of contents
 
-* [1. README organisation](#1-readme-organisation)
+* [1. README organization](#1-readme-organization)
   * [1.1 Document structure](#11-document-structure)
   * [1.2 Contents of this repository](#12-contents-of-this-repository)
   * [1.3 Repository layout](#13-repository-layout)
@@ -33,11 +33,11 @@ FluxTrace targets analysts and researchers who work with **high-volume Contradef
 
 ---
 
-# 1. README organisation
+# 1. README organization
 
 ## 1.1 Document structure
 
-1. **README organisation** — how this file and the repo are structured.
+1. **README organization** — how this file and the repo are structured.
 2. **Relationship to Contradef** — link to the DBI tool and trace format.
 3. **Basic information** — scope, features, architecture, runtime model.
 4. **Dependencies** — Node, pnpm, PostgreSQL, optional tooling.
@@ -78,7 +78,7 @@ fluxtrace/                         ← repository root (name may differ when ext
 
 | Project | Role |
 |---------|------|
-| [**Contradef**](https://github.com/contradef) (organisation [**github.com/contradef**](https://github.com/contradef)) | **Dynamic binary instrumentation** (Intel Pin): records instruction flow, memory, API calls into **`*.cdf`** (and related) traces inside a **controlled** Windows analysis VM. |
+| [**Contradef**](https://github.com/contradef) (organization [**github.com/contradef**](https://github.com/contradef)) | **Dynamic binary instrumentation** (Intel Pin): records instruction flow, memory, API calls into **`*.cdf`** (and related) traces inside a **controlled** Windows analysis VM. |
 | **FluxTrace** (this repo) | **Web platform** to upload, reduce, store, and **analyse** Contradef-oriented workloads: dashboards, correlation, consolidated interpretation, exports, optional VT/MITRE when configured. |
 
 > **Important:** Running **malware samples** belongs in an **isolated, offline VM** with snapshots, as described in the Contradef documentation. FluxTrace is typically run on an **analyst workstation or server** that processes **already collected** trace bundles — still treat uploads as **untrusted** and harden the deployment (auth, network, backups).
@@ -145,7 +145,7 @@ flowchart LR
 | Dependency | Notes |
 |------------|--------|
 | **Git** | Clone and update this repository. |
-| **Node.js** | **20 LTS** or **22** (see `fluxtrace_web/package.json` / organisation policy). |
+| **Node.js** | **20 LTS** or **22** (see `fluxtrace_web/package.json` / organization policy). |
 | **Corepack + pnpm** | `corepack enable`; install with **`pnpm install`** inside **`fluxtrace_web/`** (do not rely on `npm install` for the app root). |
 | **PostgreSQL** | Required for normal operation (`DATABASE_URL`). |
 | **Optional: Docker** | Convenient for a local Postgres container (see `MANUAL-DEV-LOCAL.md`). |
@@ -242,7 +242,7 @@ If both succeed, the toolchain is consistent. Optionally run **`pnpm build`** to
 * **`test-samples/README.md`** — download mirrors, **Git LFS** usage, optional performance reference table (package names = SHA-256 of bundles).
 * Large binaries may **not** be present in shallow clones; follow the README for **Drive** or **LFS** fetch instructions.
 
-Heavy paths and legacy trees may have been trimmed from some clones; recover from your organisation’s **canonical** Git remote if files are missing.
+Heavy paths and legacy trees may have been trimmed from some clones; recover from your organization’s **canonical** Git remote if files are missing.
 
 ---
 
