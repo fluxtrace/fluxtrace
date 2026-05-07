@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FluxTrace">
+  <defs>
+    <linearGradient id="ftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <g transform="scale(16)">
+    <rect width="32" height="32" rx="8" fill="#0b1120"/>
+    <path
+      d="M6 21 C10 11, 13 26, 17 16 S21 13, 25 17"
+      fill="none"
+      stroke="url(#ftGrad)"
+      stroke-width="2.2"
+      stroke-linecap="round"
+    />
+    <path d="M24 13l6 6-6 6" fill="none" stroke="url(#ftGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="7" cy="21" r="2.1" fill="url(#ftGrad)"/>
+    <circle cx="18" cy="15" r="2.1" fill="url(#ftGrad)" opacity="0.9"/>
+  </g>
+</svg>
