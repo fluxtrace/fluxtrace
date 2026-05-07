@@ -1,6 +1,6 @@
 # Manual do utilizador — FluxTrace
 
-Este guia destina-se a **utilizadores da aplicação web** FluxTrace (correlação e rasto de fluxo em logs Contradef). Para instalação, servidores e variáveis de ambiente, veja o **Manual técnico** (`MANUAL-TECNICO.md`) e o [`README.md`](../README.md) na raiz do pacote.
+Este guia destina-se a **utilizadores da aplicação web** FluxTrace (correlação e rasto de fluxo em logs Contradef). Para **instalação local passo a passo** (ambiente, VS Code, Postgres, arranque), veja [`MANUAL-DEV-LOCAL.md`](./MANUAL-DEV-LOCAL.md). Para servidores, variáveis e arquitectura, veja o **Manual técnico** (`MANUAL-TECNICO.md`) e o [`readme-web.md`](../readme-web.md) na raiz do pacote `fluxtrace_web/`.
 
 **Ambiente:** o sistema corre no **browser** (recomendado: navegador recente). O idioma da interface pode ser alterado quando a app disponibiliza o selector de idioma (conjunto com o tema claro/escuro na barra de ferramentas visível nos ecrãs aplicáveis).
 
@@ -74,7 +74,7 @@ Quando disponível na barra superior:
 
 ## 4. Mapa do menu e rotas
 
-A navegação principal segue as rotas abaixo (alinhado com `frontend/README-FRONT.md`):
+A navegação principal segue as rotas abaixo (alinhado com [`readme-web.md`](../readme-web.md), secção Frontend):
 
 | Caminho (URL) | O que vê |
 |---------------|-----------|
@@ -260,4 +260,4 @@ com os nomes sugeridos nos comentários HTML deste documento (ou equivalente), e
 
 ## 15. Coerência com outros documentos
 
-Este manual descreve o **uso** das funcionalidades visíveis na SPA. A lista de **rotas** e o comportamento de **sessão/troca de senha** estão detalhados em [`frontend/README-FRONT.md`](../frontend/README-FRONT.md). Requisitos de servidor e segurança em [`backend/README-BACK.md`](../backend/README-BACK.md) e [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md).
+Este manual descreve o **uso** das funcionalidades visíveis na SPA. A lista de **rotas** e o comportamento de **sessão/troca de senha** estão em [`readme-web.md`](../readme-web.md) (secção Frontend). Requisitos de servidor e segurança em [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md) e na secção **Backend** do mesmo [`readme-web.md`](../readme-web.md).

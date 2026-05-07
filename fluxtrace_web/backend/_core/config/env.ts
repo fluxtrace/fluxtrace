@@ -1,6 +1,6 @@
 /**
  * Leitura normalizada de `process.env` (servidor Node).
- * Para documentação orientada a operadores: `backend/README-BACK.md` e `backend/.env.example` (copiar para `fluxtrace_web/.env`).
+ * Para documentação orientada a operadores: `readme-web.md` (raiz de `fluxtrace_web/`) e `backend/.env.example` (copiar para `fluxtrace_web/.env`).
  */
 const isNonEmpty = (value: string | undefined): boolean =>
   typeof value === "string" && value.trim().length > 0;

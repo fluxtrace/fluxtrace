@@ -2,9 +2,7 @@
 
 Documento de referência para **desenvolvimento**, **operação** e **integração** com o FluxTrace. Mantém coerência com:
 
-- [`README.md`](../README.md) — raiz do pacote npm (`fluxtrace_web/`)
-- [`frontend/README-FRONT.md`](../frontend/README-FRONT.md) — detalhe do cliente React
-- [`backend/README-BACK.md`](../backend/README-BACK.md) — detalhe do servidor Node
+- [`readme-web.md`](../readme-web.md) — **único README do pacote** (frontend + backend + arranque)
 - [`backend/.env.example`](../backend/.env.example) — variáveis de ambiente
 
 **FluxTrace** é uma aplicação web para **correlação e rasto de fluxo** em logs no contexto Contradef: redução heurística de logs, visualização de fluxo, enriquecimento (ex.: MITRE ATT&CK, VirusTotal), e gestão de utilizadores e lotes de análise.
@@ -54,10 +52,10 @@ flowchart LR
 |------------------|--------|
 | `package.json` | Dependências únicas do projeto; scripts `dev`, `build`, `check`, `test`, `db:push`, etc. |
 | `.env` | **Não versionado.** Variáveis de servidor e `VITE_*`; modelo em `backend/.env.example`. |
-| `frontend/` | Código cliente: React, Vite, Tailwind, shadcn, wouter. Ver `frontend/README-FRONT.md`. |
-| `backend/` | API Express, tRPC, Drizzle, modelos, serviços. Ver `backend/README-BACK.md`. |
+| `frontend/` | Código cliente: React, Vite, Tailwind, shadcn, wouter. Ver [`readme-web.md`](../readme-web.md) (secção Frontend). |
+| `backend/` | API Express, tRPC, Drizzle, modelos, serviços. Ver [`readme-web.md`](../readme-web.md) (secção Backend). |
 | `dist/` | Saída de `pnpm build` (bundle do servidor + assets públicos). |
-| `docs/` | Manuais (`MANUAL-TECNICO.md`, `MANUAL-USUARIO.md`, este índice). |
+| `docs/` | Manuais (`MANUAL-TECNICO.md`, `MANUAL-USUARIO.md`, `MANUAL-DEV-LOCAL.md`). |
 
 ---
 
@@ -77,7 +75,7 @@ Definidos em `frontend/tsconfig.json` (espelhados no Vite):
 
 ### 2.3. Rotas da SPA
 
-Tabela **path → página** em `frontend/README-FRONT.md` (fonte de verdade: `src/app/App.tsx`). Comportamento de **`trpc.auth.me`** (troca obrigatória de senha, redireccionamentos) está documentado no mesmo ficheiro.
+Tabela **path → página** em [`readme-web.md`](../readme-web.md) (secção Frontend; fonte de verdade: `src/app/App.tsx`).
 
 ### 2.4. Comunicação com o backend
 
@@ -104,7 +102,7 @@ Tabela **path → página** em `frontend/README-FRONT.md` (fonte de verdade: `sr
 
 ### 3.3. Organização interna (MVC lógico)
 
-Descrito em `backend/README-BACK.md`: `_core/server`, `_core/config`, `_core/postgres`, `_core/trpc`, `controllers/`, `models/`, `services/`, `shared/`, `drizzle/`, `scripts/`, `tests/`.
+Descrito em [`readme-web.md`](../readme-web.md) (secção Backend): `_core/server`, `_core/config`, `_core/postgres`, `_core/trpc`, `controllers/`, `models/`, `services/`, `shared/`, `drizzle/`, `scripts/`, `tests/`.
 
 ### 3.4. Base de dados
 
@@ -113,14 +111,14 @@ Descrito em `backend/README-BACK.md`: `_core/server`, `_core/config`, `_core/pos
 
 ### 3.5. Integrações relevantes
 
-Variáveis e notas em `backend/README-BACK.md` e `.env.example`:
+Variáveis e notas em [`readme-web.md`](../readme-web.md) (secção Backend) e `.env.example`:
 
 - **PostgreSQL** — `DATABASE_URL`, `DATABASE_SSL` se necessário.
 - **JWT / cookies** — `JWT_SECRET`, modos de auth em `AUTH_MODE` alinhado com `VITE_AUTH_MODE`.
 - **OAuth WebDev / institucional** — `OAUTH_SERVER_URL`, `VITE_OAUTH_PORTAL_URL`, `VITE_APP_ID` (build + runtime).
 - **OIDC (Google/Microsoft)** — `AUTH_MODE=oidc`, credenciais e `PUBLIC_APP_URL`.
 - **VirusTotal** — `VIRUSTOTAL_API_KEY` **só no servidor** (nunca `VITE_`).
-- **Storage / Forge / temporários** — ver `README-BACK` e comentários em `.env.example` (`CONTRADEF_*`).
+- **Storage / Forge / temporários** — ver [`readme-web.md`](../readme-web.md) (Backend) e `.env.example` (`CONTRADEF_*`).
 
 ---
 
@@ -203,7 +201,7 @@ Compila o frontend (`vite build --config frontend/config/vite.config.ts`) e empa
 
 | Área | Convenção (resumo) |
 |------|---------------------|
-| Backend | Testes colocalizados em `services/`, `controllers/`, `models/`; pasta `backend/tests/` para cortes transversais — ver `README-BACK.md`. |
+| Backend | Testes colocalizados em `services/`, `controllers/`, `models/`; pasta `backend/tests/` para cortes transversais — ver [`readme-web.md`](../readme-web.md) ou o código. |
 | Frontend | `*.test.ts(x)` junto ao código; Vitest com `jsdom` onde necessário. |
 
 ---
@@ -219,13 +217,13 @@ Compila o frontend (`vite build --config frontend/config/vite.config.ts`) e empa
 
 ## 9. Deploy (produção)
 
-Checklist detalhada de variáveis no **Render** (e analogia para outros PaaS) em `backend/README-BACK.md` — secção **Deploy no Render**. Inclui matriz `AUTH_MODE=local`, OAuth opcional, OIDC, Postgres, `NODE_VERSION`, etc. O exemplo comentado no `.env.example` deve manter-se alinhado com esse capítulo.
+Checklist detalhada no **Deploy no Render** em [`readme-web.md`](../readme-web.md) (secção Backend).
 
 ---
 
 ## 10. Manutenção e scripts CLI
 
-Tabela de scripts em `backend/README-BACK.md` (`scripts/setup`, `scripts/mitre`, `scripts/db`, `pnpm mitre:ta0005-catalog`, `pnpm db:migrate-rename-jobs-to-batches`, etc.). Pós-instalação: `postinstall` garante executável 7zip quando aplicável.
+Tabela de scripts em [`readme-web.md`](../readme-web.md) (secção Backend).
 
 ---
 
@@ -233,14 +231,15 @@ Tabela de scripts em `backend/README-BACK.md` (`scripts/setup`, `scripts/mitre`,
 
 | Tema | Onde aprofundar |
 |------|------------------|
-| Rotas e pastas do cliente | `frontend/README-FRONT.md` |
-| Drizzle, BD, routers servidor | `backend/README-BACK.md` |
-| Utilização pelos utilizadores | `docs/MANUAL-USUARIO.md` |
+| Rotas e pastas do cliente | [`readme-web.md`](../readme-web.md) — secção Frontend |
+| Drizzle, BD, routers servidor | [`readme-web.md`](../readme-web.md) — secção Backend |
+| Ambiente local, VS Code, Postgres, primeiro arranque | [`MANUAL-DEV-LOCAL.md`](./MANUAL-DEV-LOCAL.md) |
+| Utilização pelos utilizadores | [`MANUAL-USUARIO.md`](./MANUAL-USUARIO.md) |
 | Variáveis linha-a-linha comentadas | `backend/.env.example` |
-| Índice da pasta `docs/` | `docs/README.md` |
+| Documentação única do pacote npm | [`readme-web.md`](../readme-web.md) |
 
 ---
 
 ## 12. Nota de versão deste manual
 
-Este texto foi elaborado para reflectir a estrutura do repositório **após reorganização** de `frontend/` (`config/`, `src/app`, `pages` por domínio, `lib` segmentado) e as descrições dos READMEs citados. Se mudar rotas, variáveis críticas ou o arranque do servidor, actualize **este ficheiro** em paralelo com `README-FRONT.md` e `README-BACK.md` para manter uma única história coerente.
+Este texto foi elaborado para reflectir a estrutura do repositório **após reorganização** de `frontend/` (`config/`, `src/app`, `pages` por domínio, `lib` segmentado). Se mudar rotas, variáveis críticas ou o arranque do servidor, actualize **este ficheiro** em paralelo com [`readme-web.md`](../readme-web.md) para manter uma única história coerente.
