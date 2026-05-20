@@ -1,3 +1,4 @@
+import { existsSync, statSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { TRPCError } from "@trpc/server";
@@ -34,9 +35,12 @@ function xl(): typeof import("xlsx") {
   return xlResolved;
 }
 
-/** Árvore pública onde vive `legacy_artifacts` (referência estável ao repositório). */
-export const LEGACY_ARTIFACTS_GITHUB_TREE =
-  "https://github.com/margefson/AI_correlacion_contradef/tree/main/legacy_artifacts";
+/** Árvore pública onde vive cada função ao subir commits (repo fluxtrace → `funcoes-mapeadas/<nome>`). */
+export const FUNCOES_MAPEADAS_GITHUB_TREE =
+  "https://github.com/fluxtrace/fluxtrace/tree/main/funcoes-mapeadas";
+
+/** @deprecated mesmo valor que FUNCOES_MAPEADAS_GITHUB_TREE — evitar novo uso. */
+export const LEGACY_ARTIFACTS_GITHUB_TREE = FUNCOES_MAPEADAS_GITHUB_TREE;
 
 const FLUXOS_XLSX = "fluxos_mapeados.xlsx";
 const FLUXOS_SHEET = "M1";
@@ -49,10 +53,40 @@ export type FluxoPlanilhaRow = {
 
 const slugSchema = z.string().min(1).max(220).regex(/^[A-Za-z0-9._-]+$/);
 
+/** Pastas alternativas ao `legacy_artifacts` ao nível pai de `fluxtrace_web/` (sem env). */
+const LEGACY_ARTIFACT_FALLBACK_DIRS = [
+  "funcoes-mapeadas",
+  "funcoes_mapeadas",
+  "funcoes-maepadas",
+] as const;
+
+function isExistingDirectory(dir: string): boolean {
+  try {
+    return existsSync(dir) && statSync(dir).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Raiz em disco com `fluxos_mapeados.xlsx` + pastas por função (conteúdo espelhando
+ * https://github.com/fluxtrace/fluxtrace/tree/main/funcoes-mapeadas ).
+ *
+ * - `FUNCOES_MAPEADAS`: caminho absoluto (recomendado em produção ou pasta fora da árvore padrão).
+ * - Sem env: tenta `../legacy_artifacts`, depois as pastas alternativas (ex.: `funcoes-mapeadas`) acima de `fluxtrace_web`.
+ */
 function legacyArtifactsRoot(): string {
-  const fromEnv = process.env.LEGACY_ARTIFACTS_ROOT?.trim();
+  const fromEnv =
+    process.env.FUNCOES_MAPEADAS?.trim() || process.env.LEGACY_ARTIFACTS_ROOT?.trim();
   if (fromEnv) return path.resolve(fromEnv);
-  return path.resolve(process.cwd(), "..", "legacy_artifacts");
+  const base = path.resolve(process.cwd(), "..");
+  const legacy = path.join(base, "legacy_artifacts");
+  if (isExistingDirectory(legacy)) return legacy;
+  for (const name of LEGACY_ARTIFACT_FALLBACK_DIRS) {
+    const alternate = path.join(base, name);
+    if (isExistingDirectory(alternate)) return alternate;
+  }
+  return legacy;
 }
 
 function workbookPath(root: string): string {
@@ -100,7 +134,7 @@ async function listFilesRecursive(upTo: string, maxDepth: number): Promise<strin
 }
 
 function githubFolderUrl(slug: string): string {
-  return `${LEGACY_ARTIFACTS_GITHUB_TREE}/${encodeURIComponent(slug)}`;
+  return `${FUNCOES_MAPEADAS_GITHUB_TREE}/${encodeURIComponent(slug)}`;
 }
 
 function fluxoMarkdownFilename(slug: string): string {
@@ -111,7 +145,7 @@ function fluxoMarkdownFilename(slug: string): string {
 function placeholderFlowMarkdown(slug: string): string {
   return `# Fluxo ${slug}
 
-Esboço automático com diagrama inicial; substituir quando a metodologia M1 estiver disponível nesta pasta em \`legacy_artifacts/${slug}/\`.
+Esboço automático com diagrama inicial; substituir quando a metodologia M1 estiver disponível nesta pasta em \`funcoes-mapeadas/${slug}/\`.
 
 \`\`\`mermaid
 flowchart LR
@@ -248,7 +282,7 @@ export const legacyArtifactsRouter = router({
     const root = legacyArtifactsRoot();
     return {
       legacyRootResolved: root,
-      githubTree: LEGACY_ARTIFACTS_GITHUB_TREE,
+      githubTree: FUNCOES_MAPEADAS_GITHUB_TREE,
       fluxosSpreadsheetRelative: `${path.basename(root)}/${FLUXOS_XLSX}`,
     };
   }),

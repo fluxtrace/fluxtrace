@@ -66,7 +66,7 @@ import {
 import { cn } from "@/lib/utils";
 import i18n from "@/i18n/config";
 import type { TFunction } from "i18next";
-import { type ChangeEvent, type DragEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { Trans, useTranslation } from "react-i18next";
@@ -608,7 +608,7 @@ export default function ReduceLogs() {
 
   const batchListQuery = trpc.analysis.list.useQuery(
     { limit: 100 },
-    { refetchInterval: 10_000, enabled: trackedBatchIds.length > 0 },
+    { refetchInterval: 10_000, enabled: Boolean(user && !authLoading) },
   );
 
   const batchRowById = useMemo(() => {
@@ -654,23 +654,6 @@ export default function ReduceLogs() {
     setSelectedBatchId(visibleTrackedLotIds[0] ?? null);
   }, [visibleTrackedLotIds, selectedBatchId]);
 
-  function canServerDeleteBatch(lotId: string) {
-    if (authLoading || !user) {
-      return false;
-    }
-    if (lotId === LOCAL_UPLOAD_LOT_ID) {
-      return false;
-    }
-    if (lotId === uploadSessionBatchId) {
-      return true;
-    }
-    const row = batchRowById.get(lotId);
-    if (!row) {
-      return false;
-    }
-    return row.createdByUserId != null && row.createdByUserId === user.id;
-  }
-
   const isLocalUploadLotSelected = selectedBatchId === LOCAL_UPLOAD_LOT_ID;
 
   const submittedDetailQuery = trpc.analysis.detail.useQuery(
@@ -685,6 +668,32 @@ export default function ReduceLogs() {
   );
 
   const uploadedDetail = isLocalUploadLotSelected ? null : (submittedDetailQuery.data ?? null);
+
+  const canServerDeleteBatch = useCallback(
+    (lotId: string) => {
+      if (authLoading || !user) return false;
+      if (lotId === LOCAL_UPLOAD_LOT_ID) return false;
+      if (lotId === uploadSessionBatchId) return true;
+      const row = batchRowById.get(lotId);
+      if (row?.createdByUserId != null && row.createdByUserId === user.id) return true;
+      if (
+        selectedBatchId === lotId
+        && uploadedDetail?.batch.createdByUserId != null
+        && uploadedDetail.batch.createdByUserId === user.id
+      ) {
+        return true;
+      }
+      return false;
+    },
+    [
+      authLoading,
+      user,
+      uploadSessionBatchId,
+      batchRowById,
+      selectedBatchId,
+      uploadedDetail?.batch.createdByUserId,
+    ],
+  );
 
   useEffect(() => {
     const el = activityLogRef.current;

@@ -9,6 +9,16 @@ import { MitreDefenseEvasionPanel } from "@/components/mitre/MitreDefenseEvasion
 import { VirusTotalIntegratedPanel } from "@/components/virus-total/VirusTotalIntegratedPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +42,7 @@ import { buildFlowJourneyNarrative, getFlowNodeDetailsWithFallback } from "@/lib
 import { formatBytes, formatDateTimeManaus } from "@/lib/core/format";
 import { downloadAnalysisFlowGraphJson, downloadAnalysisSummaryJson } from "@/lib/analysis/analysisJsonExport";
 import { downloadReduceLogsAnalysisExcel, downloadReduceLogsFlowExcel } from "@/lib/reduce-logs/reduceLogsExcelExport";
+import { removeTrackedBatchIdFromStorage } from "@/lib/reduce-logs/reduceLogsSession";
 import { asRecord } from "@/lib/core/payload";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/api/trpc";
@@ -49,6 +60,7 @@ import {
   Hash,
   ShieldAlert,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -56,6 +68,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "wouter";
 import { toast } from "sonner";
 import { buildMermaidAiLiveViewUrl } from "@/lib/analysis/mermaidLiveLink";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 /** Últimos 5 hex do SHA ou do hash embutido no nome da amostra (submissões longas sem coluna SHA). */
 function sampleHashTail5(batchRow: { sampleSha256?: string | null; sampleName: string }): string {
@@ -98,10 +111,25 @@ function consolidatedBatchSelectTitle(batchRow: {
   return parts.filter(Boolean).join("\n");
 }
 
+/** Preferir `event:` quando existir no grafo; caso contrário `phase:` (evita foco em ID órfão). */
+function resolveMitreFlowGraphNodeId(
+  occ: MitreEvidenceOccurrence,
+  flowNodes: Array<{ id: string }> | undefined,
+): string | null {
+  if (!flowNodes?.length) return null;
+  const ids = new Set(flowNodes.map((n) => n.id));
+  if (occ.graphNodeId && ids.has(occ.graphNodeId)) return occ.graphNodeId;
+  if (ids.has(occ.phaseNodeId)) return occ.phaseNodeId;
+  return null;
+}
+
 function InterpretacaoConsolidadaContent() {
   const { t } = useTranslation();
   const { sidebarCollapsed } = useDashboardShell();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
+  const utils = trpc.useUtils();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [eventSearch, setEventSearch] = useState("");
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string | null>(null);
   const [interpretationTab, setInterpretationTab] = useState("overview");
@@ -144,6 +172,16 @@ function InterpretacaoConsolidadaContent() {
   const selectedBatchFromList = useMemo(
     () => (selectedBatchId ? (batchesRecentFirst.find((j) => j.batchId === selectedBatchId) ?? null) : null),
     [batchesRecentFirst, selectedBatchId],
+  );
+
+  const deleteBatchMutation = trpc.analysis.deleteBatch.useMutation();
+
+  const canDeleteSelectedBatch = Boolean(
+    !authLoading
+      && user
+      && selectedBatchFromList
+      && typeof selectedBatchFromList.createdByUserId === "number"
+      && selectedBatchFromList.createdByUserId === user.id,
   );
 
   useEffect(() => {
@@ -296,18 +334,34 @@ function InterpretacaoConsolidadaContent() {
         toast.error(t("interpretacao.toastSelectBatch"));
         return;
       }
+      const flowNodes = selectedDetail?.flowGraph.nodes;
+      const target = resolveMitreFlowGraphNodeId(occ, flowNodes);
+
       setInterpretationTab("graph");
-      const target = occ.graphNodeId ?? occ.phaseNodeId;
       skipClearTraceOnGraphSelect.current = true;
       setMitreTraceTarget({
         batchId: selectedBatchId,
-        targetNodeId: target,
+        targetNodeId: target ?? occ.graphNodeId ?? occ.phaseNodeId,
         phaseNodeId: occ.phaseNodeId,
         eventNodeId: occ.graphNodeId,
         evidenceFileName: occ.fileName,
         evidenceLineNumber: occ.lineNumber,
       });
-      focusFlowNode(target);
+
+      const applyFocus = () => {
+        if (target) {
+          focusFlowNode(target);
+        } else if (flowNodes?.length) {
+          toast.warning(t("interpretacao.mitreTraceNoGraphNode"));
+        }
+      };
+
+      queueMicrotask(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(applyFocus);
+        });
+      });
+
       toast.info(
         t("interpretacao.mitreToast", {
           file: occ.fileName,
@@ -316,7 +370,7 @@ function InterpretacaoConsolidadaContent() {
         }),
       );
     },
-    [selectedBatchId, focusFlowNode, t],
+    [selectedBatchId, selectedDetail?.flowGraph.nodes, focusFlowNode, t],
   );
 
   function handleExportFlowExcel() {
@@ -355,6 +409,34 @@ function InterpretacaoConsolidadaContent() {
       toast.success(t("interpretacao.toastSummaryOk"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("interpretacao.toastSummaryFail"));
+    }
+  }
+
+  async function handleConfirmDeleteBatch() {
+    if (!selectedBatchId || !canDeleteSelectedBatch) return;
+    const deletedId = selectedBatchId;
+    const nextId = batchesRecentFirst.map((b) => b.batchId).filter((id) => id !== deletedId)[0];
+    try {
+      await deleteBatchMutation.mutateAsync({ batchId: deletedId });
+      toast.success(t("interpretacao.deleteToastOk"));
+      setDeleteConfirmOpen(false);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          if (nextId) {
+            p.set("batch", nextId);
+          } else {
+            p.delete("batch");
+          }
+          return p;
+        },
+        { replace: true },
+      );
+      await utils.analysis.list.invalidate();
+      await utils.analysis.detail.invalidate({ batchId: deletedId });
+      removeTrackedBatchIdFromStorage(deletedId);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("interpretacao.deleteToastFail"));
     }
   }
 
@@ -470,6 +552,21 @@ function InterpretacaoConsolidadaContent() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {canDeleteSelectedBatch && selectedBatchId ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="shrink-0 border-rose-600/50 bg-rose-600/90 text-white hover:bg-rose-600 dark:border-rose-500/60 dark:bg-rose-700/90 dark:hover:bg-rose-600"
+                        disabled={deleteBatchMutation.isPending}
+                        onClick={() => setDeleteConfirmOpen(true)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" aria-hidden />
+                        {t("interpretacao.deleteBatch")}
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
                 {selectedBatchId ? (
                   <div
@@ -965,6 +1062,27 @@ function InterpretacaoConsolidadaContent() {
             </CardContent>
           </Card>
         </section>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("interpretacao.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("interpretacao.deleteConfirmDesc", { id: selectedBatchId ?? "" })}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteBatchMutation.isPending}>{t("interpretacao.deleteCancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteBatchMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmDeleteBatch();
+              }}
+            >
+              {deleteBatchMutation.isPending ? t("interpretacao.deletePending") : t("interpretacao.deleteConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

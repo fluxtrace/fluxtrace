@@ -17,6 +17,7 @@ import Register from "@/pages/auth/Register";
 import Profile from "@/pages/account/Profile";
 import ReduceLogs from "@/pages/reduce-logs/ReduceLogs";
 import FuncoesMapeadas from "@/pages/analysis/FuncoesMapeadas";
+import FluxoMalware from "@/pages/analysis/FluxoMalware";
 
 const FORCE_PASSWORD_PATH = "/trocar-senha-obrigatorio";
 
@@ -65,6 +66,7 @@ function AppRouter() {
       <Route path="/register" component={Register} />
       <Route path="/interpretacao-consolidada" component={InterpretacaoConsolidada} />
       <Route path="/reduce-logs" component={ReduceLogs} />
+      <Route path="/funcoes-mapeadas/fluxo-malware" component={FluxoMalware} />
       <Route path="/funcoes-mapeadas" component={FuncoesMapeadas} />
       <Route path="/component-showcase" component={ComponentsShowcase} />
       <Route path="/404" component={NotFound} />

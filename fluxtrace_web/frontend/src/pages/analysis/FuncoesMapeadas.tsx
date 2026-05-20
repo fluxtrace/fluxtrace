@@ -41,7 +41,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 const GITHUB_LEGACY_TREE =
-  "https://github.com/margefson/AI_correlacion_contradef/tree/main/legacy_artifacts";
+  "https://github.com/fluxtrace/fluxtrace/tree/main/funcoes-mapeadas";
 
 function FuncoesMapeadasContent() {
   const { t } = useTranslation();
@@ -145,7 +145,111 @@ function FuncoesMapeadasContent() {
     <div className="space-y-6 pb-10">
       <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{t("funcoes.title")}</h1>
 
-      <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,280px)_1fr] lg:gap-6 lg:min-h-[min(70vh,720px)]">
+      <Card className="border-border/80 dark:border-white/10">
+        <CardHeader className="flex flex-col gap-2 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
+          <div>
+            <CardTitle className="text-base">{t("funcoes.sheetCardTitle")}</CardTitle>
+            <CardDescription className="mt-1 text-xs text-muted-foreground">
+              {t("funcoes.sheetCardHint")}
+            </CardDescription>
+          </div>
+          {isAdmin ? (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1"
+                disabled={syncBacklog.isPending}
+                onClick={() => syncBacklog.mutate()}
+              >
+                <FolderSync className="h-4 w-4" /> {t("funcoes.syncBacklog")}
+              </Button>
+              <Button size="sm" className="h-9 gap-1" onClick={openNewRow}>
+                <Plus className="h-4 w-4" /> {t("funcoes.newRow")}
+              </Button>
+            </div>
+          ) : (
+            <Badge variant="outline" className="w-fit text-[10px]">
+              {t("funcoes.adminBadge")}
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          {planilha.isLoading ? (
+            <p className="text-xs text-muted-foreground">{t("funcoes.readingSheet")}</p>
+          ) : planilha.isError ? (
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-xs text-destructive-foreground dark:border-destructive/50">
+              {t("funcoes.sheetLoadError")}
+            </p>
+          ) : (
+            <div className="rounded-lg border border-border/60 overflow-hidden dark:border-white/10">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[220px]">{t("funcoes.colFuncao")}</TableHead>
+                    <TableHead>{t("funcoes.colFluxo")}</TableHead>
+                    {isAdmin ? <TableHead className="text-right">{t("funcoes.colActions")}</TableHead> : null}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(planilha.data?.rows ?? []).length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        className="text-xs text-muted-foreground"
+                        colSpan={isAdmin ? 3 : 2}
+                      >
+                        {t("funcoes.sheetEmpty")}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (planilha.data?.rows ?? []).map((row) => (
+                      <TableRow key={row.funcao}>
+                        <TableCell className="align-top font-mono text-xs font-medium">{row.funcao}</TableCell>
+                        <TableCell className="max-w-xl align-top">
+                          <a
+                            href={row.effectiveFluxoUrl}
+                            className="break-all text-xs text-[var(--auth-brand)] hover:underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {row.effectiveFluxoUrl}
+                          </a>
+                        </TableCell>
+                        {isAdmin ? (
+                          <TableCell className="text-right align-top">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title={t("funcoes.editRowTitle")}
+                                onClick={() => openEditRow(row.funcao, row.fluxoUrl ?? row.effectiveFluxoUrl)}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                title={t("funcoes.deleteRowTitle")}
+                                onClick={() => setDeleteTarget(row.funcao)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        ) : null}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,280px)_1fr] lg:gap-6 lg:min-h-[min(58vh,600px)]">
         <Card className="flex h-full min-h-0 flex-col border-border/80 dark:border-white/10">
           <CardHeader className="shrink-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("funcoes.foldersTitle")}</CardTitle>
@@ -277,92 +381,6 @@ function FuncoesMapeadasContent() {
           )}
         </Card>
       </div>
-
-      <Card className="border-border/80 dark:border-white/10">
-        <CardHeader className="flex flex-col gap-2 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10">
-          <div>
-            <CardTitle className="text-base">{t("funcoes.sheetCardTitle")}</CardTitle>
-          </div>
-          {isAdmin ? (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1"
-                disabled={syncBacklog.isPending}
-                onClick={() => syncBacklog.mutate()}
-              >
-                <FolderSync className="h-4 w-4" /> {t("funcoes.syncBacklog")}
-              </Button>
-              <Button size="sm" className="h-9 gap-1" onClick={openNewRow}>
-                <Plus className="h-4 w-4" /> {t("funcoes.newRow")}
-              </Button>
-            </div>
-          ) : (
-            <Badge variant="outline" className="w-fit text-[10px]">
-              {t("funcoes.adminBadge")}
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="p-4 pt-2">
-          {planilha.isLoading ? (
-            <p className="text-xs text-muted-foreground">{t("funcoes.readingSheet")}</p>
-          ) : (
-            <div className="rounded-lg border border-border/60 overflow-hidden dark:border-white/10">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-[220px]">{t("funcoes.colFuncao")}</TableHead>
-                    <TableHead>{t("funcoes.colFluxo")}</TableHead>
-                    {isAdmin ? <TableHead className="text-right">{t("funcoes.colActions")}</TableHead> : null}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(planilha.data?.rows ?? []).map(row => (
-                    <TableRow key={row.funcao}>
-                      <TableCell className="align-top font-mono text-xs font-medium">{row.funcao}</TableCell>
-                      <TableCell className="max-w-xl align-top">
-                        <a
-                          href={row.effectiveFluxoUrl}
-                          className="break-all text-xs text-[var(--auth-brand)] hover:underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {row.effectiveFluxoUrl}
-                        </a>
-                      </TableCell>
-                      {isAdmin ? (
-                        <TableCell className="text-right align-top">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              title={t("funcoes.editRowTitle")}
-                              onClick={() => openEditRow(row.funcao, row.fluxoUrl ?? row.effectiveFluxoUrl)}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              title={t("funcoes.deleteRowTitle")}
-                              onClick={() => setDeleteTarget(row.funcao)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      ) : null}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <Dialog open={planilhaDialogOpen} onOpenChange={setPlanilhaDialogOpen}>
         <DialogContent className="max-w-md border-border bg-background dark:border-white/10">

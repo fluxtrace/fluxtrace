@@ -31,6 +31,7 @@ import {
   Bell,
   BrainCircuit,
   FileArchive,
+  GitBranch,
   LayoutDashboard,
   LogOut,
   User,
@@ -44,12 +45,13 @@ import { useTranslation } from "react-i18next";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "@/components/ui/button";
 
-const mainNavDefs = [
+const STATIC_MAIN_NAV = [
   { icon: LayoutDashboard, labelKey: "nav.dashboard" as const, path: "/" },
   { icon: BrainCircuit, labelKey: "nav.consolidated" as const, path: "/interpretacao-consolidada" },
   { icon: FileArchive, labelKey: "nav.reduceLogs" as const, path: "/reduce-logs" },
   { icon: Workflow, labelKey: "nav.mappedFunctions" as const, path: "/funcoes-mapeadas" },
-];
+  { icon: GitBranch, labelKey: "nav.mappedMalwareFlow" as const, path: "/funcoes-mapeadas/fluxo-malware" },
+] as const;
 
 const accountNavDef = {
   icon: User,
@@ -169,14 +171,15 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
   const allNavItems = [
-    ...mainNavDefs,
+    ...STATIC_MAIN_NAV,
     ...(user?.role === "admin" ? [accountNavDef] : []),
     ...(user?.role === "admin" ? [adminNavDef] : []),
   ];
   /** Utilizadores normais acedem a /perfil só pelo menu do rodapé; `allNavItems` não inclui essa rota para eles. */
   const activeMenuItem =
-    allNavItems.find(item => item.path === location) ??
+    allNavItems.find((item) => item.path === location) ??
     (location === "/perfil" ? accountNavDef : undefined);
   const isMobile = useIsMobile();
   const activeLabel = activeMenuItem != null ? t(activeMenuItem.labelKey) : t("nav.home");
@@ -263,7 +266,7 @@ function DashboardLayoutContent({
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="px-0 py-0">
-                  {mainNavDefs.map(item => {
+                  {STATIC_MAIN_NAV.map((item) => {
                     const isActive = location === item.path;
                     const label = t(item.labelKey);
                     return (

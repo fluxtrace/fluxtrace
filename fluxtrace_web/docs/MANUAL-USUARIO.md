@@ -86,7 +86,8 @@ A navegação principal segue as rotas abaixo (alinhado com [`readme-web.md`](..
 | `/admin/usuarios` | **Administração de utilizadores** (só quem tiver permissão) |
 | `/interpretacao-consolidada` | **Interpretação consolidada** (análise, fluxo, painéis) |
 | `/reduce-logs` | **Reduzir logs** (envio e acompanhamento) |
-| `/funcoes-mapeadas` | **Funções mapeadas** |
+| `/funcoes-mapeadas` | **Funções mapeadas** (catálogo / planilha / diagramas) |
+| `/funcoes-mapeadas/fluxo-malware` | **Fluxo malware** — grafo compacto do lote |
 | `/component-showcase` | Galeria de componentes (ambiente de desenvolvimento / demonstração) |
 | `/404` | Página não encontrada (explícita) |
 | *outro URL* | Mensagem de **página não encontrada** |
@@ -172,6 +173,8 @@ Ecrã para explorar o **fluxo**, **evidências** e **painéis** associados a uma
 ## 8. Funções mapeadas (`/funcoes-mapeadas`)
 
 Consulta de **funções** e conteúdos de apoio ligados ao mapeamento (diagramas Mermaid, tabelas, edição conforme permissões).
+
+No menu principal existem dois itens irmãos: **Funções mapeadas** (`/funcoes-mapeadas`) para o catálogo e materiais legacy, e **Fluxo malware** (`/funcoes-mapeadas/fluxo-malware`) para o grafo de correlação compacto por lote (sem submenu).
 
 **Figura 11 — Funções mapeadas**
 

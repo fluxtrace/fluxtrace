@@ -4,7 +4,7 @@
  * backfill spreadsheet URLs when blank.
  *
  * Execute from fluxtrace_web: `pnpm exec tsx backend/scripts/db/sync-legacy-backlog.mts`
- * (cwd must be fluxtrace_web; opcional: LEGACY_ARTIFACTS_ROOT apontando para pasta de artefactos legados).
+ * (cwd must be fluxtrace_web; opcional: FUNCOES_MAPEADAS apontando para pasta dos artefactos).
  */
 import { syncLegacySpreadsheetBacklog } from "../../controllers/analysis/routes/legacyArtifactsRouter";
 

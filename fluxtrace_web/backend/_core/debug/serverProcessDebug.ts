@@ -3,13 +3,10 @@ import os, { freemem, loadavg, tmpdir, totalmem } from "node:os";
 import { join } from "node:path";
 
 import type { ServerProcessDebugSnapshot } from "../../shared/analysis";
+import { getContradefWorkTmpRoot } from "../config/contradefPaths";
 
 /** Alinhado a `WORK_TMP_ROOT` em `analysisService` (extração / redução). */
-const WORK_TMP_ROOT = process.env.CONTRADEF_WORK_TMP?.trim()
-  ? process.env.CONTRADEF_WORK_TMP.trim()
-  : process.platform === "win32"
-    ? join("E:\\", "contradef-tmp", "analysis")
-    : join(tmpdir(), "contradef-tmp", "analysis");
+const WORK_TMP_ROOT = getContradefWorkTmpRoot();
 
 function mb(n: number) {
   return Math.round((n / 1024 / 1024) * 10) / 10;

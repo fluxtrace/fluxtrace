@@ -1,13 +1,12 @@
 import { createReadStream, createWriteStream } from "node:fs";
 import { access, mkdir, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { dirname, join, normalize, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
 
-const WIN_WORK_ROOT = join("E:\\", "contradef-tmp", "analysis");
+import { getContradefWorkTmpRoot } from "../../_core/config/contradefPaths";
 
 function preferredArtifactRoot() {
-  return process.platform === "win32" ? WIN_WORK_ROOT : join(tmpdir(), "contradef-analysis");
+  return getContradefWorkTmpRoot();
 }
 
 export function jobArtifactsDirectory(batchId: string) {

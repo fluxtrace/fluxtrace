@@ -11,6 +11,7 @@ import { promisify } from "node:util";
 import { path7za } from "7zip-bin";
 import { nanoid } from "nanoid";
 
+import { getContradefWorkTmpRoot } from "../../_core/config/contradefPaths";
 import { LOG_HEURISTIC_STAGE_ORDER } from "../../shared/const";
 import {
   addAnalysisEvent,
@@ -25,6 +26,7 @@ import {
   updateAnalysisBatch,
   upsertAnalysisInsight,
 } from "../../models/db";
+import { ENV } from "../../_core/config/env";
 import {
   copyTempFileToLocalArtifact,
   localArtifactExists,
@@ -105,11 +107,7 @@ function logAnalysisBatchFailure(batchId: string, message: string, error: unknow
   }
 }
 
-const WORK_TMP_ROOT = process.env.CONTRADEF_WORK_TMP?.trim()
-  ? process.env.CONTRADEF_WORK_TMP.trim()
-  : process.platform === "win32"
-    ? join("E:\\", "contradef-tmp", "analysis")
-    : join(tmpdir(), "contradef-tmp", "analysis");
+const WORK_TMP_ROOT = getContradefWorkTmpRoot();
 
 let sevenZipExecutablePrepared = false;
 /** Linux (e.g. Render): 7zip-bin often lacks +x; spawn fails with EACCES until chmod. */
@@ -488,8 +486,13 @@ async function listFilesRecursively(rootDir: string): Promise<string[]> {
   return nested.flat();
 }
 
-async function createWorkTempDir(prefix: string) {
-  const candidates = [WORK_TMP_ROOT, tmpdir()];
+async function createWorkTempDir(prefix: string, batchSampleSha256?: string | null) {
+  const ns = normalizeOptionalSampleSha256(
+    typeof batchSampleSha256 === "string" ? batchSampleSha256 : "",
+  );
+  const candidates = ns
+    ? [join(WORK_TMP_ROOT, ns), WORK_TMP_ROOT, tmpdir()]
+    : [WORK_TMP_ROOT, tmpdir()];
   let lastError: unknown = null;
   for (const baseDir of candidates) {
     try {
@@ -503,13 +506,16 @@ async function createWorkTempDir(prefix: string) {
   throw lastError instanceof Error ? lastError : new Error("Não foi possível criar diretório temporário para processamento.");
 }
 
-async function materializeArchiveInput(logFile: StartAnalysisLogInput): Promise<{ archivePath: string; cleanupDir: string | null }> {
+async function materializeArchiveInput(
+  logFile: StartAnalysisLogInput,
+  batchSampleSha256?: string | null,
+): Promise<{ archivePath: string; cleanupDir: string | null }> {
   if (logFile.tempFilePath) {
     return { archivePath: logFile.tempFilePath, cleanupDir: null };
   }
 
   if (hasChunkUploadReference(logFile)) {
-    const tempDir = await createWorkTempDir("contradef-archive-src-");
+    const tempDir = await createWorkTempDir("contradef-archive-src-", batchSampleSha256);
     const archivePath = join(tempDir, basename(logFile.fileName));
     const writer = createWriteStream(archivePath);
 
@@ -540,7 +546,7 @@ async function materializeArchiveInput(logFile: StartAnalysisLogInput): Promise<
 
   if (logFile.base64) {
     const decoded = decodeBase64(logFile.base64);
-    const tempDir = await createWorkTempDir("contradef-archive-src-");
+    const tempDir = await createWorkTempDir("contradef-archive-src-", batchSampleSha256);
     const archivePath = join(tempDir, basename(logFile.fileName));
     await writeFile(archivePath, decoded);
     return { archivePath, cleanupDir: tempDir };
@@ -549,9 +555,12 @@ async function materializeArchiveInput(logFile: StartAnalysisLogInput): Promise<
   throw new Error(`O arquivo compactado ${logFile.fileName} não possui conteúdo submetido.`);
 }
 
-async function expandArchiveContainer(logFile: StartAnalysisLogInput): Promise<StartAnalysisLogInput[]> {
-  const { archivePath, cleanupDir } = await materializeArchiveInput(logFile);
-  const extractRoot = await createWorkTempDir("contradef-archive-extract-");
+async function expandArchiveContainer(
+  logFile: StartAnalysisLogInput,
+  batchSampleSha256?: string | null,
+): Promise<StartAnalysisLogInput[]> {
+  const { archivePath, cleanupDir } = await materializeArchiveInput(logFile, batchSampleSha256);
+  const extractRoot = await createWorkTempDir("contradef-archive-extract-", batchSampleSha256);
 
   try {
     ensure7zaExecutable();
@@ -597,9 +606,10 @@ async function expandArchiveContainer(logFile: StartAnalysisLogInput): Promise<S
 }
 
 async function normalizeSubmittedLogs(input: StartAnalysisBatchInput): Promise<StartAnalysisBatchInput> {
+  const batchShaNs = normalizeOptionalSampleSha256(input.sampleSha256 ?? "");
   const expanded = await Promise.all(input.logFiles.map(async (logFile) => {
     if (!isArchiveContainerFile(logFile.fileName)) return [logFile];
-    return expandArchiveContainer(logFile);
+    return expandArchiveContainer(logFile, batchShaNs);
   }));
 
   const normalized = expanded.flat();
@@ -1113,7 +1123,10 @@ async function generateInsight(params: {
       modelName: response.model ?? "default-llm",
     };
   } catch (error) {
-    console.warn("[Analysis] Falha ao gerar resumo com LLM, usando fallback determinístico.", error);
+    console.warn(
+      "[Analysis] Falha ao gerar resumo com modelo de linguagem (chat completions — configure CONTRADEF_LLM_API_KEY, Forge, ou OPENAI_API_KEY e CONTRADEF_LLM_MODEL / URL conforme o provedor), usando fallback determinístico.",
+      error,
+    );
     return {
       title: `Resumo interpretativo de ${params.analysisName}`,
       classification: params.classification,
@@ -2057,7 +2070,9 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
 
       normalizedEvents.push(...parsed.events);
       mitreAnchorAll.push(...parsed.mitreAnchorEvents);
-      artifacts.push(await buildSourceArtifact(batchId, logFile, parsed.logType));
+      if (!ENV.discardOriginalLogsAfterReduction) {
+        artifacts.push(await buildSourceArtifact(batchId, logFile, parsed.logType));
+      }
     } catch (caught) {
       const base = caught instanceof Error ? caught.message : String(caught);
       const userMsg = isNoSpaceError(caught)

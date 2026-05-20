@@ -241,9 +241,33 @@ Com OAuth: preencher as três; redirect registado: `https://<serviço>.onrender.
 
 `PUBLIC_APP_URL`, credenciais Google/Microsoft conforme `.env.example`.
 
+#### Forge / modelo de linguagem (opcional)
+
+**Storage (uploads):** `BUILT_IN_FORGE_API_URL`, `BUILT_IN_FORGE_API_KEY` — proxy Forge para artefactos remotos.
+
+**Resumo da análise (chat completions):** o cliente usa `backend/_core/integrations/llm.ts`.
+
+- **URL base** (anexa `/v1/chat/completions`): ordem `CONTRADEF_LLM_API_URL` → `BUILT_IN_FORGE_API_URL` → se ambos vazios, `https://api.openai.com`.
+- **Chave Bearer**: ordem `CONTRADEF_LLM_API_KEY` → `BUILT_IN_FORGE_API_KEY` → `OPENAI_API_KEY` (este último é sobretudo para **testes locais** com OpenAI ou outro endpoint compatível sem Forge).
+- **Modelo**: `CONTRADEF_LLM_MODEL` (predefinição `gemini-2.5-flash`, adequada ao proxy Forge). Para OpenAI direto na tua máquina, algo como `gpt-4o-mini`.
+- Extensões Gemini no JSON (`thinking`): activadas por defeito só se o nome do modelo contiver `gemini`; para forçar ou desactivar use `CONTRADEF_LLM_GEMINI_EXTENSIONS` (`1` / `true`).
+
+Sem qualquer chave acima o servidor mantém-se funcional com **resumo determinístico**.
+
+#### Funções mapeadas — cópia local (`funcoes-mapeadas/` no repo FluxTrace)
+
+O menu **Funções mapeadas** lê apenas **ficheiros no disco**: `fluxos_mapeados.xlsx` + pastas por função ([árvore pública no mesmo repositório](https://github.com/fluxtrace/fluxtrace/tree/main/funcoes-mapeadas)). **Não há pull automático** — a cópia local deve existir sob `FUNCOES_MAPEADAS` ou nos defaults ao lado de `fluxtrace_web/`.
+
+1. **Colocar a pasta ao lado do `fluxtrace_web/`** na raiz do mono-repositório FluxTrace (`fluxtrace/` contém `.git`, `fluxtrace_web/` e a pasta dos fluxos — ex.: `D:/MMB/DBI/fluxtrace/funcoes-mapeadas`), usando uma destas formas:
+   - Pasta **`funcoes-mapeadas`** (alinhado ao ramo público FluxTrace — preferido) ou **`legacy_artifacts`** (nome legado compatível ao migrar outros clones); ou
+   - Outros nomes de fallback (**`funcoes_mapeadas`**, **`funcoes-maepadas`**) quando nenhuma das pastas preferidas existir ao mesmo nível (`../` relativamente ao `cwd` habitual do servidor).
+2. **Recomendado:** definir **`FUNCOES_MAPEADAS`** no **`.env`** em `fluxtrace_web/` com o caminho absoluto da cópia (`fluxos_mapeados.xlsx` na raiz dessa pasta). Assim podes ter a pasta noutro disco ou outro nome em dev/produção. Exemplo com a pasta na raiz deste repositório: `FUNCOES_MAPEADAS=D:/MMB/DBI/fluxtrace/funcoes-mapeadas` (ajuste ao nome real da pasta no disco).
+
+Obter ou actualizar materiais de referência **a partir de `fluxtrace`**: trabalhar dentro do ramo onde a pasta **`funcoes-mapeadas/`** já está versionada, ou sincronizar com o estado remoto de [fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace). Reinicia o servidor (`pnpm dev`) depois de alterar o `.env`.
+
 #### Outros
 
-`SKIP_DB_AUTO_PUSH`, `OWNER_OPEN_ID`, `CONTRADEF_WORK_TMP`, `CONTRADEF_REDUCE_LOGS_TMP`, etc. — ver `.env.example`.
+`SKIP_DB_AUTO_PUSH`, `OWNER_OPEN_ID`, `CONTRADEF_WORK_TMP` (trabalho da análise e artefactos no disco), `CONTRADEF_REDUCE_LOGS_TMP` (temporários do upload multipart legado), `CONTRADEF_DISCARD_ORIGINAL_LOGS_AFTER_SUCCESS` (`1` = não guardar log bruto após redução; poupa espaço local). No Windows, se omitires ambos paths, o backend usa por defeito `F:\contradef-tmp\...` — ver `backend/_core/config/contradefPaths.ts` e `.env.example`.
 
 **Build/start:** ver `render.yaml` na raiz do repositório Git (se existir).
 

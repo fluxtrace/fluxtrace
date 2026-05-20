@@ -11,6 +11,7 @@
     "start": "node dist/index.js",
     "check": "tsc --noEmit -p frontend/tsconfig.json && tsc --noEmit -p backend/tsconfig.json",
     "legacy:sync-backlog": "tsx backend/scripts/db/sync-legacy-backlog.mts",
+    "legacy:patch-github-urls": "tsx backend/scripts/patch-fluxos-github-base.mts",
     "format": "prettier --config frontend/config/prettier/.prettierrc --ignore-path frontend/config/prettier/.prettierignore --write frontend backend package.json",
     "test": "vitest run -c frontend/config/vitest.config.ts && vitest run -c backend/vitest.config.ts",
     "mitre:ta0005-catalog": "node backend/scripts/mitre/generate-ta0005-catalog.mjs",

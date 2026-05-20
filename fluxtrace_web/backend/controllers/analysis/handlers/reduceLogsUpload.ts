@@ -1,8 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import { createHash } from "node:crypto";
 import { createWriteStream } from "node:fs";
-import { mkdir, unlink } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, rename, rm, unlink } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 import Busboy from "busboy";
@@ -14,19 +13,8 @@ import { startAnalysisBatch } from "../../../services/analysis/analysisService";
 import { storageGetBuffer, storagePutExact } from "../../../models/storage";
 import { createContext } from "../../../_core/server/context";
 import { ENV } from "../../../_core/config/env";
+import { getContradefReduceLogsTmpDir } from "../../../_core/config/contradefPaths";
 
-function resolveReduceLogsTempDir(): string {
-  const fromEnv = process.env.CONTRADEF_REDUCE_LOGS_TMP?.trim();
-  if (fromEnv) {
-    return fromEnv;
-  }
-  if (process.platform === "win32") {
-    return join("E:\\", "contradef-tmp", "reduce-logs");
-  }
-  return join(tmpdir(), "contradef-tmp", "reduce-logs");
-}
-
-const TEMP_UPLOAD_DIR = resolveReduceLogsTempDir();
 const MAX_MULTIPART_FILES = 20;
 const MAX_MULTIPART_FILE_BYTES = 6 * 1024 * 1024 * 1024;
 const MAX_CHUNK_BYTES = 16 * 1024 * 1024;
@@ -505,7 +493,9 @@ async function startBatchFromPreparedFiles(input: {
 }
 
 async function handleLegacyMultipartUpload(req: Request, res: Response, userId: number) {
-  await mkdir(TEMP_UPLOAD_DIR, { recursive: true });
+  const stagingId = nanoid(18);
+  const stagingDir = join(getContradefReduceLogsTmpDir(), "_staging", stagingId);
+  await mkdir(stagingDir, { recursive: true });
 
   const uploadedLogs: TempUploadedLog[] = [];
   const tempPaths: string[] = [];
@@ -551,7 +541,7 @@ async function handleLegacyMultipartUpload(req: Request, res: Response, userId: 
       }
 
       const originalName = basename(info.filename || `log-${nanoid(6)}.cdf`);
-      const tempFilePath = join(TEMP_UPLOAD_DIR, `${Date.now()}-${nanoid(8)}-${originalName}`);
+      const tempFilePath = join(stagingDir, `${Date.now()}-${nanoid(8)}-${originalName}`);
       tempPaths.push(tempFilePath);
 
       const writeStream = createWriteStream(tempFilePath);
@@ -623,6 +613,15 @@ async function handleLegacyMultipartUpload(req: Request, res: Response, userId: 
 
     const sampleSha256 = resolveRequiredReduceLogsSampleSha256(fields.sampleSha256);
 
+    const batchDir = join(getContradefReduceLogsTmpDir(), sampleSha256);
+    await mkdir(batchDir, { recursive: true });
+    for (const log of uploadedLogs) {
+      const dest = join(batchDir, basename(log.tempFilePath));
+      await rename(log.tempFilePath, dest);
+      log.tempFilePath = dest;
+    }
+    await rm(stagingDir, { recursive: true, force: true }).catch(() => undefined);
+
     const result = await startAnalysisBatch({
       analysisName: fields.analysisName,
       focusTerms: parseCsvInput(fields.focusTerms),
@@ -641,6 +640,7 @@ async function handleLegacyMultipartUpload(req: Request, res: Response, userId: 
     res.json(result);
   } catch (error) {
     await cleanupTempFiles(tempPaths);
+    await rm(stagingDir, { recursive: true, force: true }).catch(() => undefined);
     const message = error instanceof Error ? error.message : "Não foi possível receber os logs enviados para redução.";
     res.status(400).json(buildErrorPayload(400, message));
   }

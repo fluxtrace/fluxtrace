@@ -258,7 +258,7 @@ describe("Home dashboard", () => {
           summaryMarkdown: "## Sumário\nA amostra destaca mecanismos de detecção de análise.",
         },
         commit: {
-          repository: "margefson/AI_correlacion_contradef",
+          repository: "fluxtrace/fluxtrace",
           branch: "main",
           commitHash: "abc123def456",
           status: "completed",

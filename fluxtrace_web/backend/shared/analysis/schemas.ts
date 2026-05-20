@@ -165,6 +165,8 @@ export const analysisBatchSummarySchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   completedAt: z.coerce.date().nullable().optional(),
+  /** Dono da submissão; necessário para permissões client-side (ex.: eliminar lote). */
+  createdByUserId: z.number().int().nullable().optional(),
 });
 export type AnalysisBatchSummary = z.infer<typeof analysisBatchSummarySchema>;
 

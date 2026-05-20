@@ -274,7 +274,10 @@ function GraphViewportFocus({ pulse, nodeId }: { pulse: number; nodeId: string |
 
   useEffect(() => {
     if (!pulse || !nodeId) return;
-    const t = window.setTimeout(() => {
+    let cancelled = false;
+
+    const fit = () => {
+      if (cancelled) return;
       try {
         void rf.fitView({
           nodes: [{ id: nodeId }],
@@ -284,10 +287,21 @@ function GraphViewportFocus({ pulse, nodeId }: { pulse: number; nodeId: string |
           minZoom: 0.12,
         });
       } catch {
-        /* store ainda não pronto */
+        /* viewport / store ainda não prontos */
       }
-    }, 60);
-    return () => window.clearTimeout(t);
+    };
+
+    // Ao mudar da abra Visão geral → Fluxo o painel pode montar com dimensão 0; um único timeout curto falha por vezes.
+    const id = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(fit);
+    });
+    const retry = window.setTimeout(fit, 260);
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(id);
+      window.clearTimeout(retry);
+    };
   }, [pulse, nodeId, rf]);
 
   return null;

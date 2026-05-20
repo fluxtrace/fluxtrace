@@ -1,5 +1,13 @@
 import { ENV } from "../config/env";
 
+/**
+ * Cliente HTTP estilo OpenAI Chat Completions (`/v1/chat/completions`).
+ *
+ * Credenciais e URL (`ENV.llmApiKey`, base para completions): prioridade `CONTRADEF_LLM_*`,
+ * depois `BUILT_IN_FORGE_*`, depois `OPENAI_API_KEY` só para chave (útil em dev local).
+ * Ver `backend/_core/config/env.ts`.
+ */
+
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
 export type TextContent = {
@@ -209,14 +217,19 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://api.openai.com/v1/chat/completions";
+const resolveChatCompletionsUrl = () => {
+  const base = ENV.llmApiUrl.trim() || ENV.forgeApiUrl.trim();
+  if (base.length > 0) {
+    return `${base.replace(/\/$/, "")}/v1/chat/completions`;
+  }
+  return "https://api.openai.com/v1/chat/completions";
+};
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!ENV.llmApiKey.trim()) {
+    throw new Error(
+      "LLM credentials missing: set CONTRADEF_LLM_API_KEY, or BUILT_IN_FORGE_API_KEY, or OPENAI_API_KEY for a compatible chat-completions endpoint (optional CONTRADEF_LLM_API_URL / BUILT_IN_FORGE_API_URL as base URL)",
+    );
   }
 };
 
@@ -280,7 +293,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model: ENV.llmModel,
     messages: messages.map(normalizeMessage),
   };
 
@@ -296,9 +309,14 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
+  const maxTok = params.maxTokens ?? params.max_tokens;
+  if (ENV.llmGeminiExtensions) {
+    payload.max_tokens = maxTok ?? 32768;
+    payload.thinking = {
+      budget_tokens: 128,
+    };
+  } else {
+    payload.max_tokens = maxTok ?? 8192;
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({
@@ -312,11 +330,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(resolveChatCompletionsUrl(), {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${ENV.llmApiKey}`,
     },
     body: JSON.stringify(payload),
   });

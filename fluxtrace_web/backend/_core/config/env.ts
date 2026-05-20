@@ -144,6 +144,15 @@ export function validateProductionEnv(): void {
 
 const authMode = resolveAuthModeFromEnv();
 
+function envTruthy(value: string | undefined): boolean {
+  const v = value?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+/** Modelo chat completions da análise; default mantém compat com proxy Forge Gemini. */
+const resolvedContradefLlmModel =
+  process.env.CONTRADEF_LLM_MODEL?.trim() || "gemini-2.5-flash";
+
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",
   /** appId value embedded in the session JWT (WebDev: VITE_APP_ID; OIDC: "oidc"; none: "none"; local: "local"). */
@@ -177,6 +186,35 @@ export const ENV = {
           (process.env.NODE_ENV !== "production" ? "http://localhost:9999" : ""),
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   isProduction: process.env.NODE_ENV === "production",
+  /** Base URL do proxy Forge (opcional). Uploads e, na ausência de `llmApiUrl`, também chat completions; ver `integrations/llm.ts`. */
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
+  /** Bearer Forge — storage partilhado, mapas, etc. Para texto LLM usa-se `llmApiKey` (pode reutilizar a mesma chave via fallback). */
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  /**
+   * Base URL só para chat completions de análise (testes locais: LM Studio, Ollama OpenAI-compatível…).
+   * Se vazio, usa-se `forgeApiUrl`; se ambos vazios, o cliente assume `https://api.openai.com/v1/chat/completions`.
+   */
+  llmApiUrl: process.env.CONTRADEF_LLM_API_URL?.trim() ?? "",
+  /**
+   * Bearer para `/v1/chat/completions`: prioridade `CONTRADEF_LLM_API_KEY` → `BUILT_IN_FORGE_API_KEY` → `OPENAI_API_KEY`.
+   * Último caso útil em máquina local com API OpenAI ou provedor compatível sem Forge.
+   */
+  llmApiKey: (() => {
+    const a = process.env.CONTRADEF_LLM_API_KEY?.trim();
+    if (a) return a;
+    const b = process.env.BUILT_IN_FORGE_API_KEY?.trim();
+    if (b) return b;
+    return process.env.OPENAI_API_KEY?.trim() ?? "";
+  })(),
+  /** Nome do modelo esperado pelo endpoint (ex.: `gpt-4o-mini`, modelo LM Studio, ou `gemini-…` no proxy Forge). */
+  llmModel: resolvedContradefLlmModel,
+  /** Se verdadeiro, envia extras estilo Gemini (`thinking`). Por defeito só quando `llmModel` contém «gemini». */
+  llmGeminiExtensions:
+    envTruthy(process.env.CONTRADEF_LLM_GEMINI_EXTENSIONS) ||
+    /gemini/i.test(resolvedContradefLlmModel),
+  /**
+   * Após redução bem-sucedida, não gravar cópias do log bruto (artefatos `source/…`; útil para testes locais / disco limitado).
+   * Eventos, `reports/reduced-logs.json`, fluxo e relatório mantêm-se. Pré-visualização do log original fica indisponível neste servidor.
+   */
+  discardOriginalLogsAfterReduction: envTruthy(process.env.CONTRADEF_DISCARD_ORIGINAL_LOGS_AFTER_SUCCESS),
 };
