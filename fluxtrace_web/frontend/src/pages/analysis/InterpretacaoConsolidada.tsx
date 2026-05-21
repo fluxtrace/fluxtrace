@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -53,6 +53,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BrainCircuit,
+  Cpu,
   ExternalLink,
   FileDown,
   FileSpreadsheet,
@@ -121,6 +122,45 @@ function resolveMitreFlowGraphNodeId(
   if (occ.graphNodeId && ids.has(occ.graphNodeId)) return occ.graphNodeId;
   if (ids.has(occ.phaseNodeId)) return occ.phaseNodeId;
   return null;
+}
+
+/** Identificação visível para o modo de interpretação textual (modelo registado pela análise). */
+function InterpretationSourceBadge({ modelName }: { modelName?: string | null }) {
+  const { t } = useTranslation();
+  const trimmed = typeof modelName === "string" ? modelName.trim() : "";
+  const isSkippedEnv = trimmed === "deterministic-skipped-env";
+  const isFallback = trimmed === "deterministic-fallback";
+  const isDeterministic = isSkippedEnv || isFallback;
+
+  const modeLabel = !trimmed
+    ? t("interpretacao.llmBadgeUnknownShort")
+    : isSkippedEnv
+      ? t("interpretacao.llmBadgeSkippedEnvShort")
+      : isFallback
+        ? t("interpretacao.llmBadgeFallbackShort")
+        : t("interpretacao.llmBadgeLlmShort");
+
+  const modelLine = !trimmed ? t("interpretacao.llmBadgeNoModelRecorded") : trimmed;
+
+  return (
+    <div className="flex max-w-[min(100%,26rem)] shrink-0 flex-col items-end gap-1 text-right">
+      <Badge
+        variant="outline"
+        className="gap-1.5 border-cyan-500/45 bg-cyan-500/[0.13] px-3 py-1 text-xs font-medium text-cyan-950 shadow-sm dark:border-cyan-400/40 dark:bg-cyan-950/55 dark:text-cyan-50"
+      >
+        {isDeterministic ? <Cpu className="h-3.5 w-3.5 opacity-95" aria-hidden /> : <Sparkles className="h-3.5 w-3.5 opacity-95" aria-hidden />}
+        <span>{modeLabel}</span>
+      </Badge>
+      <span className="break-all font-mono text-[11px] leading-snug text-muted-foreground opacity-95" translate="no">
+        {modelLine}
+      </span>
+      {isDeterministic ? (
+        <p className="max-w-[20rem] text-[10px] leading-snug text-muted-foreground opacity-95">
+          {t("interpretacao.llmBadgeDeterministicExplain")}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 function InterpretacaoConsolidadaContent() {
@@ -643,7 +683,13 @@ function InterpretacaoConsolidadaContent() {
                     <TabsContent value="overview" className="space-y-4">
                       <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
                         <Card className="border-border bg-card text-card-foreground shadow-sm dark:border-white/10 dark:bg-white/5">
-                          <CardContent className="pt-5 pb-6">
+                          <CardHeader>
+                            <CardTitle className="text-lg">{t("interpretacao.verdictTitle")}</CardTitle>
+                            <CardAction>
+                              <InterpretationSourceBadge modelName={selectedDetail.insight?.modelName} />
+                            </CardAction>
+                          </CardHeader>
+                          <CardContent className="pb-6 pt-2">
                             <div className="prose max-w-none text-foreground dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground dark:prose-headings:text-white dark:prose-p:text-muted-foreground">
                               <Streamdown>{selectedDetail.insight?.summaryMarkdown ?? t("interpretacao.summaryUnavailable")}</Streamdown>
                             </div>

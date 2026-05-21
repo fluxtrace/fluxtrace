@@ -1,0 +1,21 @@
+# pnpm ≥11 — patches e overrides (deixaram de ser lidos de package.json » "pnpm").
+# https://pnpm.io/11.x/migration
+
+packages:
+  - "."
+
+patchedDependencies:
+  wouter@3.7.1: frontend/config/patches/wouter@3.7.1.patch
+
+overrides:
+  tailwindcss>nanoid: 3.3.7
+
+# Equivalente prático ao antigo npm `legacy-peer-deps` (vite 7 × peer declarado pelo plugin jsx-loc).
+peerDependencyRules:
+  allowAny:
+    - vite
+
+# pnpm ≥11 só executa scripts de build quando explicitamente permitidos.
+allowBuilds:
+  "@tailwindcss/oxide": true
+  esbuild: true

@@ -29,6 +29,7 @@ import {
 import { ENV } from "../../_core/config/env";
 import {
   copyTempFileToLocalArtifact,
+  jobArtifactsDirectory,
   localArtifactExists,
   persistBatchArtifactBuffer,
   storageGetBuffer,
@@ -1053,6 +1054,18 @@ async function generateInsight(params: {
   recommendations: string[];
 }) {
   const fallbackMarkdown = buildFallbackSummary(params);
+  if (ENV.skipInsightLlm) {
+    return {
+      title: `Resumo interpretativo de ${params.analysisName}`,
+      classification: params.classification,
+      riskLevel: params.riskLevel,
+      currentPhase: params.currentPhase,
+      techniques: params.techniques,
+      recommendations: params.recommendations,
+      summaryMarkdown: fallbackMarkdown,
+      modelName: "deterministic-skipped-env",
+    };
+  }
   const payload = {
     analysisName: params.analysisName,
     classification: params.classification,
@@ -1123,10 +1136,17 @@ async function generateInsight(params: {
       modelName: response.model ?? "default-llm",
     };
   } catch (error) {
-    console.warn(
-      "[Analysis] Falha ao gerar resumo com modelo de linguagem (chat completions — configure CONTRADEF_LLM_API_KEY, Forge, ou OPENAI_API_KEY e CONTRADEF_LLM_MODEL / URL conforme o provedor), usando fallback determinístico.",
-      error,
-    );
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("LLM credentials missing")) {
+      console.warn(
+        "[Analysis] LLM não configurado (OPENAI_API_KEY, CONTRADEF_LLM_API_KEY ou Forge) — a usar resumo determinístico. Ver .env.example / readme-web.md.",
+      );
+    } else {
+      console.warn(
+        "[Analysis] Falha ao gerar resumo com modelo de linguagem (chat completions — configure CONTRADEF_LLM_API_KEY, Forge, ou OPENAI_API_KEY e CONTRADEF_LLM_MODEL / URL conforme o provedor), usando fallback determinístico.",
+        error,
+      );
+    }
     return {
       title: `Resumo interpretativo de ${params.analysisName}`,
       classification: params.classification,
@@ -1195,7 +1215,14 @@ async function uploadArtifactOptional(
   try {
     return await uploadArtifact(batchId, relativePath, buffer, mimeType);
   } catch (error) {
-    console.warn(`[Analysis] Não foi possível persistir o artefato ${relativePath} no storage compartilhado.`, error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("Storage proxy credentials missing")) {
+      console.warn(
+        `[Analysis] Forge storage não configurado (BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY) — a gravar ${relativePath} só em disco local: ${jobArtifactsDirectory(batchId)}`,
+      );
+    } else {
+      console.warn(`[Analysis] Não foi possível persistir o artefato ${relativePath} no storage compartilhado.`, error);
+    }
     try {
       await persistBatchArtifactBuffer(batchId, relativePath, buffer);
     } catch (persistError) {

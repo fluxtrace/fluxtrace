@@ -108,10 +108,16 @@ Fonte: **`src/app/App.tsx`**.
 | `/admin/usuarios` | `AdminUsers` | `src/pages/admin/AdminUsers.tsx` |
 | `/interpretacao-consolidada` | `InterpretacaoConsolidada` | `src/pages/analysis/InterpretacaoConsolidada.tsx` |
 | `/reduce-logs` | `ReduceLogs` | `src/pages/reduce-logs/ReduceLogs.tsx` |
+| `/funcoes-mapeadas/fluxo-malware` | `FluxoMalware` | `src/pages/analysis/FluxoMalware.tsx` |
+| `/analisar-json-vt` | `VtJsonCompare` | `src/pages/analysis/VtJsonCompare.tsx` |
 | `/funcoes-mapeadas` | `FuncoesMapeadas` | `src/pages/analysis/FuncoesMapeadas.tsx` |
 | `/component-showcase` | `ComponentShowcase` | `src/pages/dev/ComponentShowcase.tsx` |
 | `/404` | `NotFound` | `src/pages/errors/NotFound.tsx` |
 | *outros* | `NotFound` | última rota do `Switch` |
+
+**Analisar JSON VT (`/analisar-json-vt`; redirecionamento de `/funcoes-mapeadas/analisar-json-vt`):** o lote escolhido não vai na query string — fica em `sessionStorage` (`fluxtrace.vtJsonCompare.batchId`). As mutations tRPC enviam `batchId` no corpo (POST). Inclui mutation `analysis.compareVtJsonExport` — compara o ficheiro importado com o lote seleccionado. Dois formatos: relatório de ficheiro VT v3 com `last_analysis_stats`, ou mapa de hashes (ex. `respostas_virustotal.json`) com respostas **behaviour_mitre_trees**; neste caso cruza técnicas **MITRE TA0005** com `mitreDefenseEvasion` do lote e ainda mostra contexto da API VT (`VIRUSTOTAL_API_KEY`). Para o mesmo formato *multi-hash*, a página oferece **modo unificado:** query `analysis.unifiedVtMitreFluxtraceExport` descarrega um JSON agregado (chaves = SHA-256, valor = objeto com `_fluxtrace` + mitre + relatório VT); mutation `analysis.compareUnifiedVtMitreExport` compara o ficheiro importado com esse agregado gerado no servidor (últimos *N* lotes acessíveis). O tamanho máximo do JSON enviado nas duas mutations é `VT_COMPARE_EXTERNAL_JSON_MAX_CHARS` (~15 MB de texto, ver `backend/shared/virusTotal/vtJsonCompareLimits.ts`), coerente com `express.json({ limit: "50mb" })`. Resumo interpretativo opcional via LLM (`CONTRADEF_LLM_API_KEY` / `CONTRADEF_SKIP_LLM` / mesma lógica do insight).
+
+**Interpretação consolidada (`/interpretacao-consolidada`):** o cartão «Veredito técnico» inclui etiqueta sobre o modo de interpretação textual (`insight.modelName`). MITRE ATT&CK (TA0005) e VirusTotal continuam apenas nos separadores sob «Indicadores da análise».
 
 **Sessão (`trpc.auth.me`):** se `mustChangePassword`, redireciona para `/trocar-senha-obrigatorio`; utilizador sem sessão nessa rota vai para `/login`; após corrigir senha, redireciona para `/`. Enquanto carrega pode aparecer `FullScreenLoad`.
 
@@ -251,6 +257,8 @@ Com OAuth: preencher as três; redirect registado: `https://<serviço>.onrender.
 - **Chave Bearer**: ordem `CONTRADEF_LLM_API_KEY` → `BUILT_IN_FORGE_API_KEY` → `OPENAI_API_KEY` (este último é sobretudo para **testes locais** com OpenAI ou outro endpoint compatível sem Forge).
 - **Modelo**: `CONTRADEF_LLM_MODEL` (predefinição `gemini-2.5-flash`, adequada ao proxy Forge). Para OpenAI direto na tua máquina, algo como `gpt-4o-mini`.
 - Extensões Gemini no JSON (`thinking`): activadas por defeito só se o nome do modelo contiver `gemini`; para forçar ou desactivar use `CONTRADEF_LLM_GEMINI_EXTENSIONS` (`1` / `true`).
+- **Sem chaves e sem redes externas**: `CONTRADEF_SKIP_LLM=1` faz o servidor **não tentar** chat completions — usa sempre o **resumo determinístico** e não regista avisos de falta de credencial LLM (`backend/.env.example`).
+
 
 Sem qualquer chave acima o servidor mantém-se funcional com **resumo determinístico**.
 

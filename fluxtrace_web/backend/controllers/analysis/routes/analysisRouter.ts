@@ -29,6 +29,13 @@ import {
   virusTotalLookupIp,
   virusTotalLookupPublicUrl,
 } from "../../../services/virusTotal/virusTotalLookup";
+import { compareVtJsonWithBatch } from "../../../services/virusTotal/compareVtJsonWithBatch";
+import { compareUnifiedVtMitreExports } from "../../../services/virusTotal/compareUnifiedVtMitreExports";
+import {
+  buildFluxtraceUnifiedMitreVtExport,
+  resolveBatchIdsForUnifiedExport,
+} from "../../../services/virusTotal/fluxtraceUnifiedMitreExport";
+import { VT_COMPARE_EXTERNAL_JSON_MAX_CHARS } from "../../../shared/virusTotal/vtJsonCompareLimits";
 import { protectedProcedure, router } from "../../../_core/trpc";
 
 const listBatchesInputSchema = z.object({
@@ -52,6 +59,35 @@ const submitBatchInputSchema = z.object({
 
 const batchIdInputSchema = z.object({
   batchId: z.string().min(1),
+});
+
+const compareVtJsonExportInputSchema = z.object({
+  batchId: z.string().min(1),
+  externalJson: z
+    .string()
+    .min(2)
+    .max(
+      VT_COMPARE_EXTERNAL_JSON_MAX_CHARS,
+      `JSON demasiado grande (máx. ~${Math.round(VT_COMPARE_EXTERNAL_JSON_MAX_CHARS / 1_000_000)} MB de texto).`,
+    ),
+});
+
+const unifiedVtMitreExportInputSchema = z.object({
+  maxBatches: z.number().int().min(1).max(50).optional().default(25),
+  batchIds: z.array(z.string().min(1)).max(50).optional(),
+});
+
+const compareUnifiedVtMitreExportInputSchema = z.object({
+  externalJson: z
+    .string()
+    .min(2)
+    .max(
+      VT_COMPARE_EXTERNAL_JSON_MAX_CHARS,
+      `JSON demasiado grande (máx. ~${Math.round(VT_COMPARE_EXTERNAL_JSON_MAX_CHARS / 1_000_000)} MB de texto).`,
+    ),
+  includeLlmInterpretation: z.boolean().optional(),
+  maxBatches: z.number().int().min(1).max(50).optional().default(25),
+  batchIds: z.array(z.string().min(1)).max(50).optional(),
 });
 
 /**
@@ -125,6 +161,71 @@ export const analysisRouter = router({
     }
 
     return virusTotalLookupFile({ sha256Lowercase: sha256, apiKey });
+  }),
+
+  /**
+   * Compara um JSON exportado por outro sistema (tipicamente espelhando a API VT v3) com o snapshot
+   * VirusTotal do mesmo lote obtido pelo servidor (`virusTotalLookupFile`). Não persiste ficheiros.
+   */
+  compareVtJsonExport: protectedProcedure.input(compareVtJsonExportInputSchema).mutation(async ({ ctx, input }) => {
+    const user = ctx.user!;
+    const batchRow = await getAnalysisBatchByBatchId(input.batchId);
+    if (!batchRow) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Lote não encontrado." });
+    }
+    if (!canAccessBatch(user, batchRow)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Só pode comparar lotes de análise que tem permissão para ver.",
+      });
+    }
+    const apiKey = process.env.VIRUSTOTAL_API_KEY?.trim() ?? "";
+    return compareVtJsonWithBatch({
+      batchId: input.batchId,
+      externalJsonText: input.externalJson,
+      apiKey,
+    });
+  }),
+
+  /**
+   * Mapa agregado SHA-256 → mitre/VT a partir de vários lotes (útil para guardar ao lado de exports externos).
+   */
+  unifiedVtMitreFluxtraceExport: protectedProcedure.input(unifiedVtMitreExportInputSchema).query(async ({ ctx, input }) => {
+    const user = ctx.user!;
+    const batchIds = await resolveBatchIdsForUnifiedExport({
+      userId: user.id,
+      isGlobalScope: isGlobalAnalysisScope(user),
+      batchIdsFilter: input.batchIds,
+      maxBatches: input.maxBatches,
+    });
+    const apiKey = process.env.VIRUSTOTAL_API_KEY?.trim() ?? "";
+    return buildFluxtraceUnifiedMitreVtExport({ apiKey, batchIds });
+  }),
+
+  /**
+   * Compara um JSON agregado por hash (`behaviour_mitre_trees`) com um agregado construído no servidor a partir dos últimos N lotes (ou `batchIds`).
+   */
+  compareUnifiedVtMitreExport: protectedProcedure.input(compareUnifiedVtMitreExportInputSchema).mutation(async ({ ctx, input }) => {
+    const user = ctx.user!;
+    const batchIds = await resolveBatchIdsForUnifiedExport({
+      userId: user.id,
+      isGlobalScope: isGlobalAnalysisScope(user),
+      batchIdsFilter: input.batchIds,
+      maxBatches: input.maxBatches,
+    });
+    if (batchIds.length === 0) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Não há lotes acessíveis para agregar (verifique o limite ou a lista de IDs).",
+      });
+    }
+    const apiKey = process.env.VIRUSTOTAL_API_KEY?.trim() ?? "";
+    return compareUnifiedVtMitreExports({
+      externalJsonText: input.externalJson,
+      apiKey,
+      batchIds,
+      includeLlmInterpretation: input.includeLlmInterpretation ?? false,
+    });
   }),
 
   /**

@@ -31,6 +31,7 @@ import {
   Bell,
   BrainCircuit,
   FileArchive,
+  FileJson,
   GitBranch,
   LayoutDashboard,
   LogOut,
@@ -51,6 +52,7 @@ const STATIC_MAIN_NAV = [
   { icon: FileArchive, labelKey: "nav.reduceLogs" as const, path: "/reduce-logs" },
   { icon: Workflow, labelKey: "nav.mappedFunctions" as const, path: "/funcoes-mapeadas" },
   { icon: GitBranch, labelKey: "nav.mappedMalwareFlow" as const, path: "/funcoes-mapeadas/fluxo-malware" },
+  { icon: FileJson, labelKey: "nav.vtJsonCompare" as const, path: "/analisar-json-vt" },
 ] as const;
 
 const accountNavDef = {

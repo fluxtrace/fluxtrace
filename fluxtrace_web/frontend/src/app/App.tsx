@@ -18,8 +18,26 @@ import Profile from "@/pages/account/Profile";
 import ReduceLogs from "@/pages/reduce-logs/ReduceLogs";
 import FuncoesMapeadas from "@/pages/analysis/FuncoesMapeadas";
 import FluxoMalware from "@/pages/analysis/FluxoMalware";
+import VtJsonCompare from "@/pages/analysis/VtJsonCompare";
+import { persistVtJsonCompareBatchId } from "@/lib/vtJsonCompareSession";
 
 const FORCE_PASSWORD_PATH = "/trocar-senha-obrigatorio";
+
+/** Compat: URL antiga sem expor `batch` na nova rota — grava em sessionStorage e redireciona limpo. */
+function LegacyAnalisarJsonVtRedirect() {
+  const [, setLocation] = useLocation();
+  useLayoutEffect(() => {
+    try {
+      const u = new URL(window.location.href);
+      const batch = u.searchParams.get("batch")?.trim();
+      if (batch) persistVtJsonCompareBatchId(batch);
+    } catch {
+      /* ignore */
+    }
+    setLocation("/analisar-json-vt", { replace: true });
+  }, [setLocation]);
+  return null;
+}
 
 function FullScreenLoad() {
   const { t } = useTranslation();
@@ -67,6 +85,8 @@ function AppRouter() {
       <Route path="/interpretacao-consolidada" component={InterpretacaoConsolidada} />
       <Route path="/reduce-logs" component={ReduceLogs} />
       <Route path="/funcoes-mapeadas/fluxo-malware" component={FluxoMalware} />
+      <Route path="/analisar-json-vt" component={VtJsonCompare} />
+      <Route path="/funcoes-mapeadas/analisar-json-vt" component={LegacyAnalisarJsonVtRedirect} />
       <Route path="/funcoes-mapeadas" component={FuncoesMapeadas} />
       <Route path="/component-showcase" component={ComponentsShowcase} />
       <Route path="/404" component={NotFound} />

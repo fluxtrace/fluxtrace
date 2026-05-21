@@ -1,9 +1,10 @@
 import { VirusTotalSampleCard } from "@/components/virus-total/VirusTotalSampleCard";
+import { VirusTotalEngineStatsBlock } from "@/components/virus-total/VirusTotalEngineStatsBlock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatBytes, formatDateTimeManaus } from "@/lib/core/format";
 import { trpc } from "@/lib/api/trpc";
-import type { VirusTotalAnalysisStats, VirusTotalBehaviourPack } from "@shared/virusTotal/virusTotalReport";
+import type { VirusTotalBehaviourPack } from "@shared/virusTotal/virusTotalReport";
 import { skipToken } from "@tanstack/react-query";
 import { AlertTriangle, ExternalLink, Loader2, RefreshCw, ShieldQuestion } from "lucide-react";
 import { useState } from "react";
@@ -55,71 +56,6 @@ function humanVtErrorTitle(code: string): string {
     default:
       return "Resposta VirusTotal";
   }
-}
-
-/** Soma de todos os valores numéricos em `last_analysis_stats` (engines participantes nos vários buckets). */
-function vtLastAnalysisStatsTotal(stats: VirusTotalAnalysisStats): number {
-  return Object.values(stats).reduce<number>((acc, v) => {
-    return typeof v === "number" && Number.isFinite(v) ? acc + v : acc;
-  }, 0);
-}
-
-function formatShareOfEngines(part: number, total: number): string | null {
-  if (total <= 0 || part <= 0) return null;
-  return new Intl.NumberFormat("pt-BR", {
-    style: "percent",
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(part / total);
-}
-
-function statLine(
-  label: string,
-  value: number | undefined,
-  tone: "muted" | "risk" | "ok",
-  opts?: { engineTotal?: number },
-) {
-  const n = typeof value === "number" ? value : 0;
-  const toneCls =
-    tone === "risk" ? "text-rose-200" : tone === "ok" ? "text-emerald-200/95" : "text-muted-foreground";
-  const share =
-    typeof opts?.engineTotal === "number" && opts.engineTotal > 0 ? formatShareOfEngines(n, opts.engineTotal) : null;
-
-  return (
-    <div className="flex items-center justify-between gap-4 py-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
-        <span className={`font-medium ${toneCls}`}>{n}</span>
-        {share !== null ? <span className="text-[11px] font-normal text-muted-foreground">{share}</span> : null}
-      </span>
-    </div>
-  );
-}
-
-function StatsBlock({ stats }: { stats: VirusTotalAnalysisStats | null }) {
-  if (!stats) {
-    return <p className="text-sm text-muted-foreground">Não há contagens das engines nesta resposta VT.</p>;
-  }
-  const engineTotal = vtLastAnalysisStatsTotal(stats);
-  const timeoutFailures = (stats.timeout ?? 0) + (stats.failure ?? 0) + (stats.confirmed_timeout ?? 0);
-
-  return (
-    <div className="rounded-xl border border-border bg-muted/40 px-3 dark:border-white/10 dark:bg-slate-950/60">
-      <div className="divide-y divide-border/60 dark:divide-white/10">
-        {statLine("Maliciosas", stats.malicious, "risk", { engineTotal })}
-        {statLine("Suspeitas", stats.suspicious, "risk", { engineTotal })}
-        {statLine("Harmless", stats.harmless, "ok", { engineTotal })}
-        {statLine("Não detectado", stats.undetected, "muted", { engineTotal })}
-        {statLine("Timeout / falhas", timeoutFailures, "muted", { engineTotal })}
-      </div>
-      <div className="flex items-center justify-between gap-4 border-t border-border/70 py-1.5 text-sm font-semibold dark:border-white/15">
-        <span className="text-foreground">
-          Total de engines (<code className="rounded px-1 text-xs font-normal">last_analysis_stats</code>)
-        </span>
-        <span className="tabular-nums text-foreground">{engineTotal}</span>
-      </div>
-    </div>
-  );
 }
 
 function StringListBlock({ heading, rows }: { heading: string; rows: readonly string[] }) {
@@ -324,7 +260,7 @@ function ManualUrlVtBlock() {
           </div>
           <div>
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Motores (`last_analysis_stats`)</p>
-            <StatsBlock stats={urlReport.data.stats} />
+            <VirusTotalEngineStatsBlock stats={urlReport.data.stats} />
           </div>
           <StringListBlock heading="Detecções / nomeações pelas engines (amostra)" rows={urlReport.data.threatNamesSample} />
         </div>
@@ -460,7 +396,7 @@ function ManualDomainVtBlock() {
           </div>
           <div>
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Motores (`last_analysis_stats`)</p>
-            <StatsBlock stats={domainReport.data.stats} />
+            <VirusTotalEngineStatsBlock stats={domainReport.data.stats} />
           </div>
           <StringListBlock heading="Detecções / nomeações pelas engines (amostra)" rows={domainReport.data.threatNamesSample} />
         </div>
@@ -596,7 +532,7 @@ function ManualIpVtBlock() {
           ) : null}
           <div>
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Motores (`last_analysis_stats`)</p>
-            <StatsBlock stats={ipReport.data.stats} />
+            <VirusTotalEngineStatsBlock stats={ipReport.data.stats} />
           </div>
           <StringListBlock heading="Detecções / nomeações pelas engines (amostra)" rows={ipReport.data.threatNamesSample} />
         </div>
@@ -723,7 +659,7 @@ export function VirusTotalIntegratedPanel({ batchId: _jobId, sampleSha256 }: Pro
 
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">Motores (`last_analysis_stats`)</p>
-              <StatsBlock stats={report.data.stats} />
+              <VirusTotalEngineStatsBlock stats={report.data.stats} />
             </div>
           </div>
 

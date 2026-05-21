@@ -217,4 +217,6 @@ export const ENV = {
    * Eventos, `reports/reduced-logs.json`, fluxo e relatório mantêm-se. Pré-visualização do log original fica indisponível neste servidor.
    */
   discardOriginalLogsAfterReduction: envTruthy(process.env.CONTRADEF_DISCARD_ORIGINAL_LOGS_AFTER_SUCCESS),
+  /** Se verdadeiro, não chama `/v1/chat/completions` no resumo da análise (sempre fallback determinístico; útil em dev sem API key). */
+  skipInsightLlm: envTruthy(process.env.CONTRADEF_SKIP_LLM),
 };

@@ -225,6 +225,15 @@ const resolveChatCompletionsUrl = () => {
   return "https://api.openai.com/v1/chat/completions";
 };
 
+/** Novos modelos OpenAI (ex.: GPT-5.x, série o*) rejeitam `max_tokens` — usar `max_completion_tokens`. */
+function openAiOfficialUsesMaxCompletionTokens(url: string, model: string): boolean {
+  if (!url.includes("api.openai.com")) return false;
+  const m = model.trim().toLowerCase();
+  if (m.includes("gpt-5")) return true;
+  if (/^o\d/i.test(m)) return true;
+  return false;
+}
+
 const assertApiKey = () => {
   if (!ENV.llmApiKey.trim()) {
     throw new Error(
@@ -292,6 +301,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
 
+  const completionsUrl = resolveChatCompletionsUrl();
   const payload: Record<string, unknown> = {
     model: ENV.llmModel,
     messages: messages.map(normalizeMessage),
@@ -310,13 +320,21 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   }
 
   const maxTok = params.maxTokens ?? params.max_tokens;
-  if (ENV.llmGeminiExtensions) {
-    payload.max_tokens = maxTok ?? 32768;
+  const limit = maxTok ?? (ENV.llmGeminiExtensions ? 32768 : 8192);
+  const useOpenAiCompletionTokens = openAiOfficialUsesMaxCompletionTokens(
+    completionsUrl,
+    ENV.llmModel,
+  );
+
+  if (ENV.llmGeminiExtensions && !useOpenAiCompletionTokens) {
+    payload.max_tokens = limit;
     payload.thinking = {
       budget_tokens: 128,
     };
+  } else if (useOpenAiCompletionTokens) {
+    payload.max_completion_tokens = limit;
   } else {
-    payload.max_tokens = maxTok ?? 8192;
+    payload.max_tokens = limit;
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({
@@ -330,7 +348,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveChatCompletionsUrl(), {
+  const response = await fetch(completionsUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
