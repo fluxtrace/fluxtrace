@@ -6,26 +6,40 @@ Os `.zip` grandes são versionados com **[Git LFS](https://git-lfs.com/)** (ver 
 
 Para correr a aplicação com estes dados: **`fluxtrace_web/readme-web.md`**.
 
+Cada pacote é um diretório nomeado pelo **SHA-256** do bundle, com ficheiros Contradef (`FunctionInterceptor`, `TraceFcnCall.M1`/`.M2`, `TraceInstructions`, `TraceMemory`, `TraceDisassembly`, etc.).
+
+---
+
+## Inventário (16 pacotes)
+
+Ordenação por tamanho **descomprimido** de `TraceInstructions.cdf` dentro do `.zip` (referência objectiva para escolher carga de teste). A coluna **SHA-256** coincide com o **nome do ficheiro** `.zip` (sem extensão).
+
+| Rótulo convencional | SHA-256 (pacote `.zip`) | `TraceInstructions.cdf` (≈) | Arquivo `.zip` (≈) | Tempo envio + processamento (ref.) |
+| ------------------- | ------------------------- | ----------------------------- | ------------------- | ----------------------------------- |
+| `amostra_100k.csv` | `a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe` | 0,35 GiB | 24 MiB | ~50 s |
+| `amostra_200k.csv` | `b640c53e2c02f08aa8ca3db62c628abcaa1694ffec33a59d69d88f5e2d1552aa` | 0,40 GiB | 28 MiB | ~45 s |
+| `amostra_500k.csv` | `6e89b763cd4dd79f0c3082f09813efbd3dac4374a95455fe86ed27c363309a45` | 0,69 GiB | 46 MiB | ~20 s |
+| `amostra_1M.csv` | `1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69` | 1,91 GiB | 164 MiB | ~25 s |
+| `amostra_5M.csv` | `7de3df7d279686adf7a3f9a3160dbbd35be0024cd3de2a22cae911efb61fef8c` | 2,31 GiB | 187 MiB | ~150 s (~2,5 min) |
+| `amostra_10M.csv` | `36685efcf34c7a7a6f6dd2e48199e4700b5ab8fe3945a50297703dd8daced74f` | 3,92 GiB | 130 MiB | ~180 s (~3 min) |
+| `amostra_20M.csv` | `17c7986320e427a1106f3bbed1e122bcb0d9d38611d159c120df11d9689f4ec4` | 4,76 GiB | 351 MiB | ~350 s (~5,8 min) |
+| — | `66ebbc7d5f4e3c2b392af7f624ad328c8b4dc2e198f7bf585506b132607e9fbd` | 4,80 GiB | 356 MiB | a medir |
+| — | `0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343` | 7,11 GiB | 844 MiB | a medir |
+| — | `1693df9d970e011cf1c827fceaf49a3724f4478bc0ed7dc50f2d90ea417b6d38` | 8,17 GiB | 708 MiB | a medir |
+| — | `a50581cd1845d7072037b1f42e30139b6a48cdb0b28edd3368d3bb31a31007bc` | 10,33 GiB | 468 MiB | a medir |
+| — | `49aa74387680de248f21af321c6721c305a29a071279b5526627921daa812e42` | 15,03 GiB | 1,52 GiB | a medir |
+| — | `fcd9f0a39b3e64d352e9e55df8d4b033814e65ee1c9ba299a5ef9d5e31829c29` | 15,05 GiB | 575 MiB | a medir |
+| — | `166ffce34fd49a69076a31cc5c7eb23584b47c153f744936e240f871144990be` | 18,00 GiB | 1,22 GiB | a medir |
+| — | `574482778792874721df6f4461490efbc7bbc6dfb833184f20e77ecd61e68270` | 19,43 GiB | 1,75 GiB | a medir |
+| `amostra_50M.csv` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | 24,08 GiB | 366 MiB | ~550 s (~9,2 min) |
+
 ### Tempos de envio + processamento (referência)
 
-Valores **aproximados** alinhados ao gráfico **«Tempo envio + processamento — lotes concluídos»** do dashboard (somatório upload + processamento; lotes antigos podem estar **estimados** por regressão pelo tamanho). Dependem de rede, carga do servidor e do ambiente.
+Valores **aproximados** na coluna **Tempo** aplicam-se às entradas com rótulo `amostra_*` usadas no gráfico **«Tempo envio + processamento — lotes concluídos»** do dashboard (somatório upload + processamento; lotes antigos podem estar **estimados** por regressão). Dependem de rede, CPU, disco e carga do servidor.
 
-A coluna **SHA-256** é o identificador do pacote: coincide com o **nome do ficheiro `.zip`** em `test-samples/` (sem `.zip`). O rótulo **ficheiro** é o nome convencional usado nos relatórios / gráfico; dentro do arquivo vêm sobretudo `.cdf` Contradef (não um `.csv` com esse nome).
+Os **seis pacotes** sem rótulo `amostra_*` na parte inferior da tabela (SHA `0e3e95ee…` até `57448277…`) são **amostras adicionais** para testes de escala e acompanhamento de processamento em localhost; os tempos **a medir** devem ser registados após corridas no teu ambiente e, se fizer sentido, integrados no gráfico com novos rótulos.
 
-| Ficheiro (rótulo) | SHA-256 (pacote `.zip`) | Tempo de processamento (aprox.) |
-| ----------------- | ------------------------- | -------------------------------- |
-| `amostra_100k.csv` | `a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe` | ~50 s |
-| `amostra_200k.csv` | `b640c53e2c02f08aa8ca3db62c628abcaa1694ffec33a59d69d88f5e2d1552aa` | ~45 s |
-| `amostra_500k.csv` | `6e89b763cd4dd79f0c3082f09813efbd3dac4374a95455fe86ed27c363309a45` | ~20 s |
-| `amostra_1M.csv` | `1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69` | ~25 s |
-| `amostra_5M.csv` | `7de3df7d279686adf7a3f9a3160dbbd35be0024cd3de2a22cae911efb61fef8c` | ~150 s (~2,5 min) |
-| `amostra_10M.csv` | `36685efcf34c7a7a6f6dd2e48199e4700b5ab8fe3945a50297703dd8daced74f` | ~180 s (~3 min) |
-| `amostra_20M.csv` | `17c7986320e427a1106f3bbed1e122bcb0d9d38611d159c120df11d9689f4ec4` | ~350 s (~5,8 min) |
-| `amostra_50M.csv` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | ~550 s (~9,2 min) |
-
-Na mesma pasta existem ainda os pacotes `66ebbc7d5f4e3c2b392af7f624ad328c8b4dc2e198f7bf585506b132607e9fbd` e `a50581cd1845d7072037b1f42e30139b6a48cdb0b28edd3368d3bb31a31007bc` (tamanho intermédio entre as entradas «10M» e «50M» da tabela); não entram no gráfico de referência acima.
-
-A coluna **Ficheiro** foi alinhada à coluna **SHA-256** por **ordem crescente** do tamanho em arquivo de `TraceInstructions.cdf` em cada `.zip`. Se no dashboard o nome do lote (`sampleName`) for diferente destes rótulos, use o **SHA-256** como identificador certo do pacote e confira o nome no detalhe do lote ou na exportação.
+O rótulo **ficheiro** (`amostra_100k.csv`, etc.) é convencional nos relatórios; dentro do `.zip` vêm sobretudo `.cdf` Contradef (não um `.csv` com esse nome). Se no dashboard o `sampleName` do lote for diferente, use sempre o **SHA-256** como identificador do pacote.
 
 ---
 
@@ -50,11 +64,11 @@ cd fluxtrace
 git lfs pull
 ```
 
-Quota LFS no GitHub (plano gratuito ~1 GiB); volumes maiores: Drive ou outro armazenamento LFS.
+Quota LFS no GitHub (plano gratuito ~1 GiB); volumes maiores: use o Google Drive ou outro armazenamento LFS.
 
 | Opção | Quando usar |
 |-------|-------------|
-| **1 — Google Drive** | Download simples |
+| **1 — Google Drive** | Download simples dos `.zip` |
 | **2 — FSF (Git LFS)** | Clone do repositório com os `.zip` em `test-samples/` |
 
 ---
@@ -67,3 +81,5 @@ git add test-samples/
 git commit -m "test-samples: …"
 git push
 ```
+
+Ao acrescentar pacotes, actualize **esta tabela** (SHA-256, tamanho de `TraceInstructions.cdf`, tamanho do `.zip` e, quando existir, tempo de referência).

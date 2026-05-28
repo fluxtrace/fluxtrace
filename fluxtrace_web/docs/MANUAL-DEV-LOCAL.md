@@ -1,61 +1,54 @@
-# Manual — correr FluxTrace localmente (desenvolvimento e testes)
+﻿# Manual â€” correr FluxTrace localmente (desenvolvimento e testes)
 
-Guia **passo a passo** para instalar o ambiente, configurar variáveis, subir a aplicação no **Visual Studio Code** (ou outro editor) e validar com testes automáticos. Complementa [`readme-web.md`](../readme-web.md) e [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md).
+Guia **passo a passo** para instalar o ambiente, configurar variÃ¡veis, subir a aplicaÃ§Ã£o no **Visual Studio Code** (ou outro editor) e validar com testes automÃ¡ticos. Complementa [`readme-web.md`](../readme-web.md) e [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md).
 
-**Ideia geral:** um único processo Node serve a API e o **Vite** em desenvolvimento; o browser acede à mesma origem (o mesmo host e porta). Normalmente isso é **`http://localhost:3000/`** — porta **3000**, desde que não defina `PORT` no `.env` e que nada mais esteja a usar essa porta; caso contrário o servidor tenta 3001, 3002, … e **mostra no terminal** qual usar. Não é preciso correr `frontend` e `backend` em portas separadas.
+**Ideia geral:** um Ãºnico processo Node serve a API e o **Vite** em desenvolvimento; o browser acede Ã  mesma origem (o mesmo host e porta). Normalmente isso Ã© **`http://localhost:3000/`** â€” porta **3000**, desde que nÃ£o defina `PORT` no `.env` e que nada mais esteja a usar essa porta; caso contrÃ¡rio o servidor tenta 3001, 3002, â€¦ e **mostra no terminal** qual usar. NÃ£o Ã© preciso correr `frontend` e `backend` em portas separadas.
 
-### Máquina nova (nada instalado) — ordem recomendada
+### MÃ¡quina nova (nada instalado) â€” ordem recomendada
 
-Siga **por ordem**; não precisa de ler o resto do manual “de uma vez” — volte a cada secção quando chegar àquela etapa.
+Siga **por ordem**; nÃ£o precisa de ler o resto do manual â€œde uma vezâ€ â€” volte a cada secÃ§Ã£o quando chegar Ã quela etapa.
 
-1. **Secção 0** — Instalar **Git**, **Node.js** (20 LTS ou 22), **VS Code** e **PostgreSQL** *ou* **Docker Desktop** + Postgres em contentor (**0.7**). Active **`corepack enable`** quando o Node já estiver no `PATH` (**0.4**). Depois de instalar Git ou Node, **feche e reabra o VS Code** (ou o terminal).
-2. **Secção 1** — `git clone` do repositório e **Ficheiro → Abrir pasta…** na **raiz** do clone (pasta que contém `fluxtrace_web/`).
-3. **Secção 2** — No terminal do VS Code: `cd fluxtrace_web`, confirme `node -v`; `corepack enable` se ainda não correu nesta sessão.
-4. **Secção 4** — Criar **`fluxtrace_web/.env`** a partir de `backend/.env.example` (sobretudo `DATABASE_URL` e `JWT_SECRET`).
-5. **Secção 5** — `pnpm install` (dentro de `fluxtrace_web/`). Se o PowerShell bloquear `pnpm.ps1`, **0.4.1**; mensagens do Corepack / `approve-builds`, **5.1**.
-6. **Secção 6** — `pnpm db:push` (PowerShell real se o drizzle pedir confirmações — **6.2**).
-7. **Secção 7** — `pnpm dev` e abrir o URL que o terminal mostrar (em geral `http://localhost:3000/`).
-8. **Secção 9** (opcional mas útil) — `pnpm check` e `pnpm test` para validar o ambiente.
+1. **SecÃ§Ã£o 0** â€” Instalar **Git**, **Node.js** (20 LTS ou 22), **VS Code** e **PostgreSQL** *ou* **Docker Desktop** + Postgres em contentor (**0.7**). Active **`corepack enable`** quando o Node jÃ¡ estiver no `PATH` (**0.4**). Depois de instalar Git ou Node, **feche e reabra o VS Code** (ou o terminal).
+2. **SecÃ§Ã£o 1** â€” `git clone` do repositÃ³rio e **Ficheiro â†’ Abrir pastaâ€¦** na **raiz** do clone (pasta que contÃ©m `fluxtrace_web/`).
+3. **SecÃ§Ã£o 2** â€” No terminal do VS Code: `cd fluxtrace_web`, confirme `node -v`; `corepack enable` se ainda nÃ£o correu nesta sessÃ£o.
+4. **SecÃ§Ã£o 4** â€” Criar **`fluxtrace_web/.env`** a partir de `backend/.env.example` (sobretudo `DATABASE_URL` e `JWT_SECRET`).
+5. **SecÃ§Ã£o 5** â€” `pnpm install` (dentro de `fluxtrace_web/`). Se o PowerShell bloquear `pnpm.ps1`, **0.4.1**; mensagens do Corepack / `approve-builds`, **5.1**.
+6. **SecÃ§Ã£o 6** â€” `pnpm db:push` (PowerShell real se o drizzle pedir confirmaÃ§Ãµes â€” **6.2**).
+7. **SecÃ§Ã£o 7** â€” `pnpm dev` e abrir o URL que o terminal mostrar (em geral `http://localhost:3000/`).
+8. **SecÃ§Ã£o 9** (opcional mas Ãºtil) â€” `pnpm check` e `pnpm test` para validar o ambiente.
 
-Se algo falhar, **Secção 11** (problemas frequentes) e as mensagens no terminal costumam indicar o que falta (Postgres parado, `pnpm` não encontrado, **PowerShell a bloquear `pnpm.ps1`**, porta ocupada, etc.).
+Se algo falhar, **SecÃ§Ã£o 11** (problemas frequentes) e as mensagens no terminal costumam indicar o que falta (Postgres parado, `pnpm` nÃ£o encontrado, **PowerShell a bloquear `pnpm.ps1`**, porta ocupada, etc.).
 
 ---
 
-## 0. O que vai precisar — checklist e como instalar
+## 0. O que vai precisar â€” checklist e como instalar
 
-As figuras deste capítulo estão em **`docs/_screenshots/dev-local/`** e são referenciadas em Markdown a partir deste ficheiro (`docs/MANUAL-DEV-LOCAL.md`), por exemplo:
-
-```markdown
-![Legenda](_screenshots/dev-local/00-git-version.png)
-```
-
-**Nota:** em capturas que mostrem palavras-passe, chaves API ou dados sensíveis, borre ou redija antes de partilhar o manual.
+Este manual Ã© **texto passo a passo** (sem pasta de figuras em `docs/`). Se exportar capturas para uso interno, nÃ£o as inclua no repositÃ³rio com palavras-passe, chaves API ou dados sensÃ­veis visÃ­veis.
 
 ### 0.1 Resumo (o que instalar)
 
-| Ferramenta | Para quê | Obrigatório para FluxTrace local? |
+| Ferramenta | Para quÃª | ObrigatÃ³rio para FluxTrace local? |
 |------------|----------|-----------------------------------|
-| **Git** | Clonar e actualizar o repositório | Sim |
+| **Git** | Clonar e actualizar o repositÃ³rio | Sim |
 | **Node.js** (20 LTS ou 22) | Executar o servidor e o build | Sim |
 | **Corepack** + **pnpm** | Instalar pacotes do projecto (`pnpm install`) | Sim |
 | **PostgreSQL** (ou Docker + imagem Postgres) | Base de dados (`DATABASE_URL`) | Sim |
-| **Visual Studio Code** | Editar código e terminal integrado | Recomendado (pode usar outro editor) |
+| **Visual Studio Code** | Editar cÃ³digo e terminal integrado | Recomendado (pode usar outro editor) |
 
-No **Windows**, o `pnpm install` trata do binário **7-Zip** via npm (`7zip-bin`). Se falhar, veja o terminal e `backend/scripts/setup/ensure-7zip-executable.mjs`.
+No **Windows**, o `pnpm install` trata do binÃ¡rio **7-Zip** via npm (`7zip-bin`). Se falhar, veja o terminal e `backend/scripts/setup/ensure-7zip-executable.mjs`.
 
 **Dica:** depois de instalar **Git** ou **Node**, **feche e volte a abrir** o VS Code (ou pelo menos o terminal) para o Windows actualizar o `PATH` e os comandos serem reconhecidos.
 
-**Opcional** — versão do Windows (útil em suporte / diagnóstico):
+**Opcional** â€” versÃ£o do Windows (Ãºtil em suporte / diagnÃ³stico):
 
-![Definições — sobre o Windows](_screenshots/dev-local/00-versao-windows.png)
 
 ---
 
 ### 0.2 Git (Windows)
 
 1. Abra o site oficial de downloads para Windows: [https://git-scm.com/download/win](https://git-scm.com/download/win)
-2. Descarregue o instalador (**64-bit Git for Windows** é o mais comum).
-3. Execute o instalador. Pode aceitar as opções por omissão na maior parte dos ecrãs; o importante é que a opção **“Git from the command line and also from 3rd-party software”** fique activa (para usar `git` no terminal).
+2. Descarregue o instalador (**64-bit Git for Windows** Ã© o mais comum).
+3. Execute o instalador. Pode aceitar as opÃ§Ãµes por omissÃ£o na maior parte dos ecrÃ£s; o importante Ã© que a opÃ§Ã£o **â€œGit from the command line and also from 3rd-party softwareâ€** fique activa (para usar `git` no terminal).
 4. Conclua o assistente.
 5. Abra **PowerShell** ou **Prompt de Comandos** e confirme:
 
@@ -63,18 +56,16 @@ No **Windows**, o `pnpm install` trata do binário **7-Zip** via npm (`7zip-bin`
 git --version
 ```
 
-![Página de download do Git for Windows](_screenshots/dev-local/00-git-download.png)
 
-![Terminal com `git --version`](_screenshots/dev-local/00-git-version.png)
 
 ---
 
 ### 0.3 Node.js (20 LTS ou 22)
 
 1. Abra [https://nodejs.org/](https://nodejs.org/).
-2. Descarregue a versão **LTS** (Long Term Support). Se a LTS for **20.x** ou **22.x**, use essa. Evite versões muito antigas (anteriores à 20) para ficar alinhado com o projecto.
-3. Execute o instalador **Windows (.msi)**. Aceite a instalação de ferramentas nativas se o assistente perguntar (ajuda em módulos opcionais).
-4. **Reinicie o terminal** (ou o VS Code) após a instalação.
+2. Descarregue a versÃ£o **LTS** (Long Term Support). Se a LTS for **20.x** ou **22.x**, use essa. Evite versÃµes muito antigas (anteriores Ã  20) para ficar alinhado com o projecto.
+3. Execute o instalador **Windows (.msi)**. Aceite a instalaÃ§Ã£o de ferramentas nativas se o assistente perguntar (ajuda em mÃ³dulos opcionais).
+4. **Reinicie o terminal** (ou o VS Code) apÃ³s a instalaÃ§Ã£o.
 5. Confirme:
 
 ```bash
@@ -83,19 +74,17 @@ node -v
 
 Deve aparecer algo como `v22.x.y` (ou outra LTS suportada pelo projecto).
 
-![Site do Node.js — descarga LTS](_screenshots/dev-local/00-node-download.png)
 
-![Terminal com `node -v`](_screenshots/dev-local/00-node-version.png)
 
 ---
 
 ### 0.4 Corepack e pnpm
 
-O **pnpm** é o gestor de pacotes deste repositório (não use `npm install` na pasta `fluxtrace_web`).
+O **pnpm** Ã© o gestor de pacotes deste repositÃ³rio (nÃ£o use `npm install` na pasta `fluxtrace_web`).
 
-O **Corepack** já vem com instalações recentes do Node e permite usar a versão de pnpm indicada no `package.json` do projecto.
+O **Corepack** jÃ¡ vem com instalaÃ§Ãµes recentes do Node e permite usar a versÃ£o de pnpm indicada no `package.json` do projecto.
 
-1. No terminal (já com Node instalado), execute **uma vez** (pode pedir execução como administrador no Windows):
+1. No terminal (jÃ¡ com Node instalado), execute **uma vez** (pode pedir execuÃ§Ã£o como administrador no Windows):
 
 ```bash
 corepack enable
@@ -107,37 +96,36 @@ corepack enable
 corepack --version
 ```
 
-3. Entre na pasta do projecto **depois** de o clonar (ver secção 1). Exemplo:
+3. Entre na pasta do projecto **depois** de o clonar (ver secÃ§Ã£o 1). Exemplo:
 
 ```bash
 cd caminho\para\fluxtrace\fluxtrace_web
 ```
 
-4. Ao correr o primeiro comando `pnpm` (por exemplo `pnpm install` na secção 5), o Corepack pode **descarregar automaticamente** a versão de pnpm correcta. Para apenas ver a versão **depois** de estar preparado:
+4. Ao correr o primeiro comando `pnpm` (por exemplo `pnpm install` na secÃ§Ã£o 5), o Corepack pode **descarregar automaticamente** a versÃ£o de pnpm correcta. Para apenas ver a versÃ£o **depois** de estar preparado:
 
 ```bash
 pnpm -v
 ```
 
-![Terminal — `corepack --version` e preparação do pnpm](_screenshots/dev-local/00-corepack-version.png)
 
-**Se `corepack` não for reconhecido:** reinstale Node a partir do site oficial (installer recente) ou veja a documentação do Node para o seu ambiente. **Se `pnpm` falhar após `corepack enable`:** feche o VS Code, abra de novo e repita.
+**Se `corepack` nÃ£o for reconhecido:** reinstale Node a partir do site oficial (installer recente) ou veja a documentaÃ§Ã£o do Node para o seu ambiente. **Se `pnpm` falhar apÃ³s `corepack enable`:** feche o VS Code, abra de novo e repita.
 
 ---
 
-### 0.4.1 Windows — PowerShell bloqueia `pnpm` (`ExecutionPolicy` / `pnpm.ps1`)
+### 0.4.1 Windows â€” PowerShell bloqueia `pnpm` (`ExecutionPolicy` / `pnpm.ps1`)
 
-No **Windows**, o terminal do VS Code usa muitas vezes **PowerShell**. O Node disponibiliza `pnpm` como **`pnpm.ps1`** em `C:\Program Files\nodejs\` (além do `pnpm.cmd`). Se a **política de execução** do PowerShell estiver restrita, o `pnpm install` pode falhar com uma mensagem como:
+No **Windows**, o terminal do VS Code usa muitas vezes **PowerShell**. O Node disponibiliza `pnpm` como **`pnpm.ps1`** em `C:\Program Files\nodejs\` (alÃ©m do `pnpm.cmd`). Se a **polÃ­tica de execuÃ§Ã£o** do PowerShell estiver restrita, o `pnpm install` pode falhar com uma mensagem como:
 
 ```text
-pnpm : O arquivo C:\Program Files\nodejs\pnpm.ps1 não pode ser carregado porque a execução de scripts foi
-desabilitada neste sistema. Para obter mais informações, consulte about_Execution_Policies em
+pnpm : O arquivo C:\Program Files\nodejs\pnpm.ps1 nÃ£o pode ser carregado porque a execuÃ§Ã£o de scripts foi
+desabilitada neste sistema. Para obter mais informaÃ§Ãµes, consulte about_Execution_Policies em
 https://go.microsoft.com/fwlink/?LinkID=135170.
-    + CategoryInfo          : ErrodeSegurança: (:) [], PSSecurityException
+    + CategoryInfo          : ErrodeSeguranÃ§a: (:) [], PSSecurityException
     + FullyQualifiedErrorId : UnauthorizedAccess
 ```
 
-**Correcção recomendada (uma vez por utilizador Windows):**
+**CorrecÃ§Ã£o recomendada (uma vez por utilizador Windows):**
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -149,13 +137,13 @@ Confirme com `S`/`Y` se o PowerShell perguntar. Em seguida, na pasta **`fluxtrac
 pnpm install
 ```
 
-`RemoteSigned` é um equilíbrio habitual em máquinas de desenvolvimento (scripts **locais** correm; scripts descarregados da Internet costumam precisar de assinatura). Documentação Microsoft: [about_Execution_Policies](https://learn.microsoft.com/pt-br/powershell/module/microsoft.powershell.core/about/about_execution_policies).
+`RemoteSigned` Ã© um equilÃ­brio habitual em mÃ¡quinas de desenvolvimento (scripts **locais** correm; scripts descarregados da Internet costumam precisar de assinatura). DocumentaÃ§Ã£o Microsoft: [about_Execution_Policies](https://learn.microsoft.com/pt-br/powershell/module/microsoft.powershell.core/about/about_execution_policies).
 
-**Alternativas imediatas** (sem alterar a política):
+**Alternativas imediatas** (sem alterar a polÃ­tica):
 
 - Chamar explicitamente o launcher **`.cmd`** no PowerShell:  
   `pnpm.cmd install` , `pnpm.cmd dev`, etc.
-- Abrir no VS Code um terminal **Command Prompt** (**Terminal → Novo terminal** → painel `+` ▼ → **Command Prompt**) em vez de PowerShell.
+- Abrir no VS Code um terminal **Command Prompt** (**Terminal â†’ Novo terminal** â†’ painel `+` â–¼ â†’ **Command Prompt**) em vez de PowerShell.
 - Usar **Git Bash** se tiver Git for Windows instalado.
 
 ---
@@ -164,42 +152,38 @@ pnpm install
 
 1. Abra [https://code.visualstudio.com/](https://code.visualstudio.com/).
 2. Descarregue o instalador **User** ou **System** para Windows e execute-o.
-3. No assistente, é útil marcar **“Add 'Open with Code' action to Windows Explorer file context menu”** (abrir pastas com botão direito).
+3. No assistente, Ã© Ãºtil marcar **â€œAdd 'Open with Code' action to Windows Explorer file context menuâ€** (abrir pastas com botÃ£o direito).
 4. Instale e abra o VS Code.
-5. *Opcional:* na vista de **Extensões** (`Ctrl+Shift+X`), procure **Portuguese Language Pack** se quiser a UI em português.
+5. *Opcional:* na vista de **ExtensÃµes** (`Ctrl+Shift+X`), procure **Portuguese Language Pack** se quiser a UI em portuguÃªs.
 
-*(Não há figuras separadas do site do VS Code neste pacote; o ecrã típico com o repositório aberto aparece na **secção 1.2**.)*
+*(NÃ£o hÃ¡ figuras separadas do site do VS Code neste pacote; o ecrÃ£ tÃ­pico com o repositÃ³rio aberto aparece na **secÃ§Ã£o 1.2**.)*
 
 ---
 
-### 0.6 PostgreSQL (Windows — instalador)
+### 0.6 PostgreSQL (Windows â€” instalador)
 
-![PostgreSQL — página de download para Windows](_screenshots/dev-local/00-postgresql-download.png)
 
-![PostgreSQL — seguimento do download / instalador EDB](_screenshots/dev-local/00-postgresql-download2.png)
 
 1. Abra [https://www.postgresql.org/download/windows/](https://www.postgresql.org/download/windows/) e use o instalador recomendado (**EDB** ou similar).
 2. Durante o assistente, defina uma **palavra-passe** para o superutilizador `postgres` (anote-a em local seguro para desenvolvimento).
-3. Mantenha a **porta** **5432** se não tiver conflito com outro serviço.
-4. Conclua a instalação (pode incluir **pgAdmin** — útil para criar bases e utilizadores).
+3. Mantenha a **porta** **5432** se nÃ£o tiver conflito com outro serviÃ§o.
+4. Conclua a instalaÃ§Ã£o (pode incluir **pgAdmin** â€” Ãºtil para criar bases e utilizadores).
 5. Crie uma base para o FluxTrace, por exemplo `fluxtrace_dev`:
-   - Via **pgAdmin**: Servers → PostgreSQL → Databases → Create → Database.
-   - Ou crie também um utilizador dedicado (recomendado em vez de usar sempre `postgres` em URLs de desenvolvimento).
+   - Via **pgAdmin**: Servers â†’ PostgreSQL â†’ Databases â†’ Create â†’ Database.
+   - Ou crie tambÃ©m um utilizador dedicado (recomendado em vez de usar sempre `postgres` em URLs de desenvolvimento).
 
-Guarde **utilizador**, **palavra-passe**, **nome da base** e **porta** — entram na `DATABASE_URL` (secção 4).
+Guarde **utilizador**, **palavra-passe**, **nome da base** e **porta** â€” entram na `DATABASE_URL` (secÃ§Ã£o 4).
 
-![Assistente PostgreSQL — porta (borre a palavra-passe se aparecer)](_screenshots/dev-local/00-postgres-assistente-porta.png)
 
-![pgAdmin — nova base `fluxtrace_dev` (exemplo)](_screenshots/dev-local/00-pgadmin-nova-bd.png)
 
 ---
 
 ### 0.7 PostgreSQL com Docker (alternativa)
 
-Se preferir **não** instalar PostgreSQL no Windows:
+Se preferir **nÃ£o** instalar PostgreSQL no Windows:
 
-1. Instale [Docker Desktop para Windows](https://www.docker.com/products/docker-desktop/) (requer reinício e, em muitos PCs, WSL2).
-2. Quando o Docker estiver **a correr** (ícone na barra de tarefas), abra um terminal e execute:
+1. Instale [Docker Desktop para Windows](https://www.docker.com/products/docker-desktop/) (requer reinÃ­cio e, em muitos PCs, WSL2).
+2. Quando o Docker estiver **a correr** (Ã­cone na barra de tarefas), abra um terminal e execute:
 
 ```bash
 docker run --name fluxtrace-pg -e POSTGRES_PASSWORD=devpass -e POSTGRES_USER=flux -e POSTGRES_DB=fluxtrace_dev -p 5432:5432 -d postgres:16
@@ -207,19 +191,19 @@ docker run --name fluxtrace-pg -e POSTGRES_PASSWORD=devpass -e POSTGRES_USER=flu
 
 3. Use `DATABASE_URL` como `postgresql://flux:devpass@127.0.0.1:5432/fluxtrace_dev` (ajuste se mudar utilizador ou palavra-passe).
 
-*(Figuras do Docker Desktop e da lista de contentores podem ser acrescentadas a `docs/_screenshots/dev-local/` se quiser documentar este fluxo com prints.)*
+*(Opcional: documentar o fluxo Docker Desktop com capturas fora do repositÃ³rio.)*
 
 ---
 
-## 1. Clonar o repositório e abrir no VS Code
+## 1. Clonar o repositÃ³rio e abrir no VS Code
 
 ### 1.1 Clonar com Git
 
 1. Escolha uma pasta no disco onde guardar o projecto (ex.: `D:\projetos\`).
-2. Abra o **terminal** (PowerShell ou Git Bash) **nessa pasta** ou navegue até lá com `cd`.
-3. Clone o repositório. **Substitua** o URL pelo que a sua organização lhe indicou (HTTPS ou SSH):
+2. Abra o **terminal** (PowerShell ou Git Bash) **nessa pasta** ou navegue atÃ© lÃ¡ com `cd`.
+3. Clone o repositÃ³rio. **Substitua** o URL pelo que a sua organizaÃ§Ã£o lhe indicou (HTTPS ou SSH):
 
-**HTTPS (exemplo genérico):**
+**HTTPS (exemplo genÃ©rico):**
 
 ```bash
 git clone https://github.com/SEU_ORG/fluxtrace.git
@@ -231,100 +215,96 @@ git clone https://github.com/SEU_ORG/fluxtrace.git
 git clone git@github.com:SEU_ORG/fluxtrace.git
 ```
 
-4. Quando terminar, deve existir uma pasta **`fluxtrace`** (ou o nome do repo) com `fluxtrace_web/` lá dentro.
+4. Quando terminar, deve existir uma pasta **`fluxtrace`** (ou o nome do repo) com `fluxtrace_web/` lÃ¡ dentro.
 
-![Terminal — `git clone` e conclusão](_screenshots/dev-local/01-git-clone-terminal.png)
 
 ---
 
-### 1.2 Abrir a pasta do repositório no VS Code
+### 1.2 Abrir a pasta do repositÃ³rio no VS Code
 
 1. Abra o **Visual Studio Code**.
-2. Menu **Ficheiro → Abrir pasta…** (ou **File → Open Folder…** se a UI estiver em inglês).
-3. Seleccione a pasta **raiz** do repositório clonado — a que contém **`fluxtrace_web`** (e, em muitos clones, **`test-samples`**). **Não** abra apenas `fluxtrace_web` se quiser ver o repo completo na árvore; abrir a raiz (`fluxtrace`) é o recomendado neste manual.
+2. Menu **Ficheiro â†’ Abrir pastaâ€¦** (ou **File â†’ Open Folderâ€¦** se a UI estiver em inglÃªs).
+3. Seleccione a pasta **raiz** do repositÃ³rio clonado â€” a que contÃ©m **`fluxtrace_web`** (e, em muitos clones, **`test-samples`**). **NÃ£o** abra apenas `fluxtrace_web` se quiser ver o repo completo na Ã¡rvore; abrir a raiz (`fluxtrace`) Ã© o recomendado neste manual.
 
-![VS Code — Abrir pasta (raiz do repositório)](_screenshots/dev-local/01-vscode-abrir-pasta.png)
 
-![VS Code — Explorador com `fluxtrace_web` e pastas vizinhas](_screenshots/dev-local/01-vscode-explorador-raiz.png)
 
 ---
 
 ### 1.3 Porque abrir a raiz do repo
 
-Trabalhar a partir da **raiz** (`fluxtrace`) permite ver documentação, `test-samples` e configs partilhadas; os comandos `pnpm` que vêm a seguir correrão **dentro de** `fluxtrace_web/` (secção 2).
+Trabalhar a partir da **raiz** (`fluxtrace`) permite ver documentaÃ§Ã£o, `test-samples` e configs partilhadas; os comandos `pnpm` que vÃªm a seguir correrÃ£o **dentro de** `fluxtrace_web/` (secÃ§Ã£o 2).
 
 ---
 
 ## 2. Verificar ferramentas e entrar na pasta `fluxtrace_web`
 
-Se seguiu a **secção 0**, Git, Node, Corepack e (opcionalmente) VS Code e PostgreSQL já estão tratados. Aqui só **confirma** que tudo responde no terminal e posiciona a pasta de trabalho.
+Se seguiu a **secÃ§Ã£o 0**, Git, Node, Corepack e (opcionalmente) VS Code e PostgreSQL jÃ¡ estÃ£o tratados. Aqui sÃ³ **confirma** que tudo responde no terminal e posiciona a pasta de trabalho.
 
-1. Abra um **terminal** no VS Code na pasta do repositório (**Terminal → Novo terminal**, `` Ctrl+Shift+` ``).
+1. Abra um **terminal** no VS Code na pasta do repositÃ³rio (**Terminal â†’ Novo terminal**, `` Ctrl+Shift+` ``).
 2. Confira o Node:
 
 ```bash
 node -v
 ```
 
-3. Active o Corepack (se ainda não o fez nesta máquina):
+3. Active o Corepack (se ainda nÃ£o o fez nesta mÃ¡quina):
 
 ```bash
 corepack enable
 ```
 
-4. Entre na pasta da aplicação web (ajuste o caminho ao seu clone):
+4. Entre na pasta da aplicaÃ§Ã£o web (ajuste o caminho ao seu clone):
 
 ```bash
 cd fluxtrace_web
 ```
 
-5. Quando fizer `pnpm install` (secção 5), o pnpm ficará disponível; opcionalmente, **após** `pnpm install`, pode testar `pnpm -v` na mesma pasta.
+5. Quando fizer `pnpm install` (secÃ§Ã£o 5), o pnpm ficarÃ¡ disponÃ­vel; opcionalmente, **apÃ³s** `pnpm install`, pode testar `pnpm -v` na mesma pasta.
 
-Daqui em diante, assume-se que o terminal **cwd** é **`fluxtrace_web/`** (onde está o `package.json` com os scripts `dev`, `db:push`, etc.).
+Daqui em diante, assume-se que o terminal **cwd** Ã© **`fluxtrace_web/`** (onde estÃ¡ o `package.json` com os scripts `dev`, `db:push`, etc.).
 
 ---
 
-## 3. PostgreSQL (recordatório)
+## 3. PostgreSQL (recordatÃ³rio)
 
-Se **já** criou a base na **secção 0.6** ou **0.7**, não precisa de repetir. Confirme apenas que o serviço PostgreSQL (ou o contentor Docker) **está a correr** antes de `pnpm db:push` e `pnpm dev`.
+Se **jÃ¡** criou a base na **secÃ§Ã£o 0.6** ou **0.7**, nÃ£o precisa de repetir. Confirme apenas que o serviÃ§o PostgreSQL (ou o contentor Docker) **estÃ¡ a correr** antes de `pnpm db:push` e `pnpm dev`.
 
-**Lembrete — Docker (reutilizar o exemplo da secção 0.7):**
+**Lembrete â€” Docker (reutilizar o exemplo da secÃ§Ã£o 0.7):**
 
 ```bash
 docker run --name fluxtrace-pg -e POSTGRES_PASSWORD=devpass -e POSTGRES_USER=flux -e POSTGRES_DB=fluxtrace_dev -p 5432:5432 -d postgres:16
 ```
 
-Ajuste utilizador, palavra-passe e nome da base ao valor em **`DATABASE_URL`** (secção 4).
+Ajuste utilizador, palavra-passe e nome da base ao valor em **`DATABASE_URL`** (secÃ§Ã£o 4).
 
 ---
 
-## 4. Ficheiro `.env` (obrigatório)
+## 4. Ficheiro `.env` (obrigatÃ³rio)
 
 1. Na pasta **`fluxtrace_web/`**, copie o modelo:
 
    - Origem: `backend/.env.example`
-   - Destino: **`fluxtrace_web/.env`** (ao lado de `package.json`, **não** commite este ficheiro).
+   - Destino: **`fluxtrace_web/.env`** (ao lado de `package.json`, **nÃ£o** commite este ficheiro).
 
 2. Edite pelo menos:
 
-   - **`DATABASE_URL`** — string de ligação PostgreSQL, por exemplo:  
+   - **`DATABASE_URL`** â€” string de ligaÃ§Ã£o PostgreSQL, por exemplo:  
      `postgresql://flux:devpass@127.0.0.1:5432/fluxtrace_dev`
-   - **`JWT_SECRET`** — uma cadeia longa e aleatória (qualquer gerador seguro serve para desenvolvimento local).
+   - **`JWT_SECRET`** â€” uma cadeia longa e aleatÃ³ria (qualquer gerador seguro serve para desenvolvimento local).
 
-3. Para **primeiros testes sem ecrã de login**, deixe como no exemplo (já comentado no `.env.example`):
+3. Para **primeiros testes sem ecrÃ£ de login**, deixe como no exemplo (jÃ¡ comentado no `.env.example`):
 
    - `AUTH_MODE=none`
    - `VITE_AUTH_MODE=none`
 
-   A UI pode mostrar utilizador em modo bypass de administrador; para **login / registo** locais, siga os comentários no `.env.example` (`AUTH_MODE=local`, `VITE_AUTH_MODE=local`, `pnpm db:push`, etc.).
+   A UI pode mostrar utilizador em modo bypass de administrador; para **login / registo** locais, siga os comentÃ¡rios no `.env.example` (`AUTH_MODE=local`, `VITE_AUTH_MODE=local`, `pnpm db:push`, etc.).
 
-4. **Opcional:** `VIRUSTOTAL_API_KEY` — só necessário para enriquecimento VirusTotal na Interpretação consolidada (chave só no servidor, **sem** prefixo `VITE_`).
+4. **Opcional:** `VIRUSTOTAL_API_KEY` â€” sÃ³ necessÃ¡rio para enriquecimento VirusTotal na InterpretaÃ§Ã£o consolidada (chave sÃ³ no servidor, **sem** prefixo `VITE_`).
 
-Referência de todas as variáveis: comentários em **`backend/.env.example`** e código em **`backend/_core/config/env.ts`**.
+ReferÃªncia de todas as variÃ¡veis: comentÃ¡rios em **`backend/.env.example`** e cÃ³digo em **`backend/_core/config/env.ts`**.
 
-![Exemplo de `.env` no VS Code — **não** commite segredos; borre em capturas públicas](_screenshots/dev-local/04-env.png)
 
-## 5. Instalar dependências
+## 5. Instalar dependÃªncias
 
 No terminal, com `cwd` = **`fluxtrace_web/`**:
 
@@ -332,31 +312,31 @@ No terminal, com `cwd` = **`fluxtrace_web/`**:
 pnpm install
 ```
 
-No **Windows**, se o terminal for **PowerShell** e aparecer erro sobre **`pnpm.ps1`** e **execução de scripts**, veja a **secção 0.4.1** (ou use `pnpm.cmd install`).
+No **Windows**, se o terminal for **PowerShell** e aparecer erro sobre **`pnpm.ps1`** e **execuÃ§Ã£o de scripts**, veja a **secÃ§Ã£o 0.4.1** (ou use `pnpm.cmd install`).
 
-Aguarde o fim do `postinstall` (7-Zip, etc.). Se aparecer erro de rede ou de permissões, corrija antes de continuar.
+Aguarde o fim do `postinstall` (7-Zip, etc.). Se aparecer erro de rede ou de permissÃµes, corrija antes de continuar.
 
 ### 5.1 Mensagens comuns no primeiro `pnpm install` (Windows)
 
-**1 — Corepack a descarregar o `pnpm`**
+**1 â€” Corepack a descarregar o `pnpm`**
 
-Se aparecer algo como `Corepack is about to download ... pnpm-10.x.x.tgz` e `Do you want to continue? [Y/n]`, responda **`Y`** (Enter). Isto só costuma acontecer **na primeira vez** que o Corepack prepara a versão de `pnpm` pedida pelo `package.json`.
+Se aparecer algo como `Corepack is about to download ... pnpm-10.x.x.tgz` e `Do you want to continue? [Y/n]`, responda **`Y`** (Enter). Isto sÃ³ costuma acontecer **na primeira vez** que o Corepack prepara a versÃ£o de `pnpm` pedida pelo `package.json`.
 
-**2 — Aviso Node `DEP0169` / `url.parse()`**
+**2 â€” Aviso Node `DEP0169` / `url.parse()`**
 
-Um `DeprecationWarning` referindo `url.parse()` pode surgir durante o download; vem em geral de **dependências** (Corepack/registo), não do vosso código. **Pode ignorar** para desenvolvimento local, salvo se estiverem a depurar com `node --trace-deprecation`.
+Um `DeprecationWarning` referindo `url.parse()` pode surgir durante o download; vem em geral de **dependÃªncias** (Corepack/registo), nÃ£o do vosso cÃ³digo. **Pode ignorar** para desenvolvimento local, salvo se estiverem a depurar com `node --trace-deprecation`.
 
-**3 — `Ignored build scripts: @tailwindcss/oxide, esbuild`**
+**3 â€” `Ignored build scripts: @tailwindcss/oxide, esbuild`**
 
-Versões recentes do **pnpm** podem **adiar** a execução de *build scripts* de certos pacotes até os aprovar (política de segurança). Muitas vezes o `pnpm install` **termina na mesma** (`Done in …`) e o projecto **compila**, porque há **binários pré-compilados**.
+VersÃµes recentes do **pnpm** podem **adiar** a execuÃ§Ã£o de *build scripts* de certos pacotes atÃ© os aprovar (polÃ­tica de seguranÃ§a). Muitas vezes o `pnpm install` **termina na mesma** (`Done in â€¦`) e o projecto **compila**, porque hÃ¡ **binÃ¡rios prÃ©-compilados**.
 
-- Se **`pnpm dev`** ou **`pnpm build`** falharem por falta de binário nativo (`esbuild`, Tailwind `oxide`, etc.), execute:
+- Se **`pnpm dev`** ou **`pnpm build`** falharem por falta de binÃ¡rio nativo (`esbuild`, Tailwind `oxide`, etc.), execute:
 
 ```bash
 pnpm approve-builds
 ```
 
-Siga as instruções no ecrã para **aprovar** os pacotes que o projecto precisa (por exemplo `esbuild`, `@tailwindcss/oxide`), e volte a correr `pnpm install` se o assistente o indicar.
+Siga as instruÃ§Ãµes no ecrÃ£ para **aprovar** os pacotes que o projecto precisa (por exemplo `esbuild`, `@tailwindcss/oxide`), e volte a correr `pnpm install` se o assistente o indicar.
 
 ---
 
@@ -368,24 +348,24 @@ Ainda em **`fluxtrace_web/`**:
 pnpm db:push
 ```
 
-Isto aplica o schema esperado pelo Drizzle à base apontada por `DATABASE_URL`. Execute de novo quando o projecto exigir migrações (ver comunicados no repositório ou `MANUAL-TECNICO.md`).
+Isto aplica o schema esperado pelo Drizzle Ã  base apontada por `DATABASE_URL`. Execute de novo quando o projecto exigir migraÃ§Ãµes (ver comunicados no repositÃ³rio ou `MANUAL-TECNICO.md`).
 
-### 6.1 Erro «No schema files found» (`drizzle/schema/index.ts`)
+### 6.1 Erro Â«No schema files foundÂ» (`drizzle/schema/index.ts`)
 
 Se aparecer algo como **`No schema files found for path config ['./drizzle/schema/index.ts']`**:
 
-- O comando corre a partir de **`fluxtrace_web/`**, mas o `drizzle.config.ts` vive em **`backend/`**; caminhos relativos só `drizzle/...` apontavam para uma pasta **inexistente** na raiz da app.
-- No **Windows**, caminhos com **`\`** também podem confundir o `drizzle-kit`.
+- O comando corre a partir de **`fluxtrace_web/`**, mas o `drizzle.config.ts` vive em **`backend/`**; caminhos relativos sÃ³ `drizzle/...` apontavam para uma pasta **inexistente** na raiz da app.
+- No **Windows**, caminhos com **`\`** tambÃ©m podem confundir o `drizzle-kit`.
 
-O repositório usa caminhos **absolutos normalizados com `/`** em `backend/drizzle.config.ts`. Garanta que está com o **último código**; em último caso, volte a fazer `git pull`.
+O repositÃ³rio usa caminhos **absolutos normalizados com `/`** em `backend/drizzle.config.ts`. Garanta que estÃ¡ com o **Ãºltimo cÃ³digo**; em Ãºltimo caso, volte a fazer `git pull`.
 
-### 6.2 `drizzle-kit` pede confirmação interativa (truncate / alterações perigosas)
+### 6.2 `drizzle-kit` pede confirmaÃ§Ã£o interativa (truncate / alteraÃ§Ãµes perigosas)
 
-Se o `push` perguntar se quer **esvaziar** uma tabela ou alterar constraints e o terminal **não** for interactivo (ex.: output colado, algumas extensões), pode aparecer erro de **TTY**. Use um **PowerShell** ou **cmd** normal no VS Code e rode `pnpm db:push` de novo para poder responder **`Yes`/`No`** com segurança **após ler** o aviso (dados podem ser afectados).
+Se o `push` perguntar se quer **esvaziar** uma tabela ou alterar constraints e o terminal **nÃ£o** for interactivo (ex.: output colado, algumas extensÃµes), pode aparecer erro de **TTY**. Use um **PowerShell** ou **cmd** normal no VS Code e rode `pnpm db:push` de novo para poder responder **`Yes`/`No`** com seguranÃ§a **apÃ³s ler** o aviso (dados podem ser afectados).
 
 ---
 
-## 7. Arrancar a aplicação em modo desenvolvimento
+## 7. Arrancar a aplicaÃ§Ã£o em modo desenvolvimento
 
 ```bash
 pnpm dev
@@ -397,47 +377,45 @@ O servidor inicia **`tsx watch`** sobre `backend/_core/server/index.ts`, integra
 Server running on http://localhost:3000/
 ```
 
-- Se a porta **3000** estiver ocupada, o processo tenta **3001, 3002, …** e indica qual usou.
-- Em caso de falha de ligação à base, veja as mensagens `[Database]` no terminal e confirme `DATABASE_URL`, firewall e TLS (`DATABASE_SSL` ou `sslmode` na URL, se aplicável).
+- Se a porta **3000** estiver ocupada, o processo tenta **3001, 3002, â€¦** e indica qual usou.
+- Em caso de falha de ligaÃ§Ã£o Ã  base, veja as mensagens `[Database]` no terminal e confirme `DATABASE_URL`, firewall e TLS (`DATABASE_SSL` ou `sslmode` na URL, se aplicÃ¡vel).
 
 Abra o browser em **`http://localhost:3000/`** (ou na porta mostrada).
 
-![Terminal — `pnpm dev` com servidor a escutar (exemplo)](_screenshots/dev-local/07-start-local.png)
 
 ## 8. Validar no browser (fumo manual)
 
-Sugestão mínima:
+SugestÃ£o mÃ­nima:
 
-1. A página inicial / dashboard carrega sem erro visível grave.
-2. Navegue para rotas principais (ex.: **Reduzir logs**, **Interpretação consolidada**), conforme `readme-web.md` (tabela de rotas).
-3. Se usar `AUTH_MODE=local`, teste **Entrar** / **Registo**; se usar `none`, confirme que as áreas necessárias respondem (sem login).
+1. A pÃ¡gina inicial / dashboard carrega sem erro visÃ­vel grave.
+2. Navegue para rotas principais (ex.: **Reduzir logs**, **InterpretaÃ§Ã£o consolidada**), conforme `readme-web.md` (tabela de rotas).
+3. Se usar `AUTH_MODE=local`, teste **Entrar** / **Registo**; se usar `none`, confirme que as Ã¡reas necessÃ¡rias respondem (sem login).
 
-![Ecrã de login local (exemplo com `AUTH_MODE=local`)](_screenshots/dev-local/07-login-local.png)
 
-Fluxos pesados (upload de lotes grandes) dependem de disco temporário e configuração; veja `.env.example` (`CONTRADEF_*`, etc.).
+Fluxos pesados (upload de lotes grandes) dependem de disco temporÃ¡rio e configuraÃ§Ã£o; veja `.env.example` (`CONTRADEF_*`, etc.).
 
 ---
 
-## 9. Testes e verificação de tipos (linha de comandos)
+## 9. Testes e verificaÃ§Ã£o de tipos (linha de comandos)
 
 Com `cwd` = **`fluxtrace_web/`**:
 
-| Comando | Função |
+| Comando | FunÃ§Ã£o |
 |---------|--------|
 | `pnpm check` | `tsc` no frontend e no backend sem emitir ficheiros. |
-| `pnpm test` | **Vitest** — testes do `frontend` e do `backend`. |
-| `pnpm build` | Build de produção (Vite + bundle do servidor); útil para validar que compila. |
+| `pnpm test` | **Vitest** â€” testes do `frontend` e do `backend`. |
+| `pnpm build` | Build de produÃ§Ã£o (Vite + bundle do servidor); Ãºtil para validar que compila. |
 
-Execute `pnpm check` e `pnpm test` antes de considerar o ambiente “validado” para desenvolvimento.
+Execute `pnpm check` e `pnpm test` antes de considerar o ambiente â€œvalidadoâ€ para desenvolvimento.
 
 ---
 
-## 10. Atalhos úteis no VS Code
+## 10. Atalhos Ãºteis no VS Code
 
-- **Terminal integrado:** pasta activa `fluxtrace_web` para não repetir `cd`.
+- **Terminal integrado:** pasta activa `fluxtrace_web` para nÃ£o repetir `cd`.
 - **Parar o servidor:** no terminal onde corre `pnpm dev`, `Ctrl+C`.
-- **Reiniciar após mudar `.env`:** pare e volte a correr `pnpm dev` (variáveis `VITE_*` exigem rebuild se alterar só no build estático; em `pnpm dev` o Vite reage a muitas mudanças, mas `.env` completo costuma precisar de reinício).
-- Abrir o **Output** / **Terminal** se o `db:push` ou o arranque falharem — copiar a mensagem de erro ajuda ao diagnóstico.
+- **Reiniciar apÃ³s mudar `.env`:** pare e volte a correr `pnpm dev` (variÃ¡veis `VITE_*` exigem rebuild se alterar sÃ³ no build estÃ¡tico; em `pnpm dev` o Vite reage a muitas mudanÃ§as, mas `.env` completo costuma precisar de reinÃ­cio).
+- Abrir o **Output** / **Terminal** se o `db:push` ou o arranque falharem â€” copiar a mensagem de erro ajuda ao diagnÃ³stico.
 
 ---
 
@@ -445,26 +423,26 @@ Execute `pnpm check` e `pnpm test` antes de considerar o ambiente “validado”
 
 | Sintoma | O que verificar |
 |---------|------------------|
-| `db:push`: «No schema files found» para `drizzle/...` | **Secção 6.1** — caminhos do `drizzle.config.ts` / Windows; actualize o repositório. |
-| `db:push`: TTY / prompts interactivos | **Secção 6.2** — correr num terminal real e responder ao drizzle-kit. |
-| PowerShell: `pnpm.ps1` / «execução de scripts desabilitada» | **Secção 0.4.1:** `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`, ou `pnpm.cmd …`, ou terminal **cmd** / Git Bash. |
-| `pnpm` não encontrado | `corepack enable`; fechar e reabrir o terminal. |
-| Erro ao ligar ao PostgreSQL | `DATABASE_URL`, serviço PostgreSQL a correr, porta 5432 (ou a que usar), palavra-passe. |
+| `db:push`: Â«No schema files foundÂ» para `drizzle/...` | **SecÃ§Ã£o 6.1** â€” caminhos do `drizzle.config.ts` / Windows; actualize o repositÃ³rio. |
+| `db:push`: TTY / prompts interactivos | **SecÃ§Ã£o 6.2** â€” correr num terminal real e responder ao drizzle-kit. |
+| PowerShell: `pnpm.ps1` / Â«execuÃ§Ã£o de scripts desabilitadaÂ» | **SecÃ§Ã£o 0.4.1:** `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`, ou `pnpm.cmd â€¦`, ou terminal **cmd** / Git Bash. |
+| `pnpm` nÃ£o encontrado | `corepack enable`; fechar e reabrir o terminal. |
+| Erro ao ligar ao PostgreSQL | `DATABASE_URL`, serviÃ§o PostgreSQL a correr, porta 5432 (ou a que usar), palavra-passe. |
 | Porta em uso | Fechar outro processo na 3000 ou aceitar a porta alternativa indicada no log. |
-| Página em branco / erros de API | Consola do browser (F12) e terminal do `pnpm dev`; confirme que abriu o URL `localhost` com a **mesma porta** do log. |
-| Login não aparece com `AUTH_MODE=local` | `VITE_AUTH_MODE=local` **no mesmo** `.env` e **reiniciar** `pnpm dev` (o modo auth da UI vem das vars `VITE_*`). |
+| PÃ¡gina em branco / erros de API | Consola do browser (F12) e terminal do `pnpm dev`; confirme que abriu o URL `localhost` com a **mesma porta** do log. |
+| Login nÃ£o aparece com `AUTH_MODE=local` | `VITE_AUTH_MODE=local` **no mesmo** `.env` e **reiniciar** `pnpm dev` (o modo auth da UI vem das vars `VITE_*`). |
 
 ---
 
-## 12. Documentação relacionada
+## 12. DocumentaÃ§Ã£o relacionada
 
-| Ficheiro | Conteúdo |
+| Ficheiro | ConteÃºdo |
 |----------|----------|
 | [`readme-web.md`](../readme-web.md) | Arranque, estrutura, rotas, deploy (resumo). |
-| [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md) | Arquitectura, API, operação. |
+| [`MANUAL-TECNICO.md`](./MANUAL-TECNICO.md) | Arquitectura, API, operaÃ§Ã£o. |
 | [`MANUAL-USUARIO.md`](./MANUAL-USUARIO.md) | Funcionalidades para utilizadores. |
-| [`test-samples/README.md`](../../test-samples/README.md) | Amostras de teste e tempos de referência (raiz do repo). |
+| [`test-samples/README.md`](../../test-samples/README.md) | InventÃ¡rio de 16 amostras `.zip`, tamanhos e tempos de referÃªncia (raiz do repo). |
 
 ---
 
-*Este manual descreve um fluxo típico em Windows / VS Code; em Linux ou macOS os passos são os mesmos, mudando apenas a instalação do PostgreSQL e caminhos.*
+*Este manual descreve um fluxo tÃ­pico em Windows / VS Code; em Linux ou macOS os passos sÃ£o os mesmos, mudando apenas a instalaÃ§Ã£o do PostgreSQL e caminhos.*

@@ -56,6 +56,7 @@ import {
   Cpu,
   ExternalLink,
   FileDown,
+  FileText,
   FileSpreadsheet,
   Filter,
   Hash,
@@ -64,7 +65,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Streamdown } from "streamdown";
-import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "wouter";
 import { toast } from "sonner";
@@ -110,6 +111,11 @@ function consolidatedBatchSelectTitle(batchRow: {
     parts.push(`SHA-256: ${sha}`);
   }
   return parts.filter(Boolean).join("\n");
+}
+
+/** Download do log reduzido em texto (mesmo endpoint que em Reduzir logs). */
+function buildReducedLogTxtDownloadUrl(batchId: string, fileName: string) {
+  return `/api/analysis-artifacts/reduced-log-by-file?${new URLSearchParams({ batchId, fileName }).toString()}`;
 }
 
 /** Preferir `event:` quando existir no grafo; caso contrário `phase:` (evita foco em ID órfão). */
@@ -1035,21 +1041,65 @@ function InterpretacaoConsolidadaContent() {
                         {t("interpretacao.artifactsIntro")}
                       </p>
                       <div className="space-y-2">
-                        {selectedDetail.artifacts.length ? selectedDetail.artifacts.map((artifact) => (
-                          <a
-                            key={`${artifact.artifactType}-${artifact.relativePath}`}
-                            href={artifact.downloadUrl ?? artifact.storageUrl ?? "#"}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`flex items-center justify-between rounded-2xl border border-border bg-muted/80 p-4 transition dark:border-white/10 dark:bg-slate-950/70 ${artifact.downloadUrl || artifact.storageUrl ? "hover:border-cyan-400/30 hover:bg-cyan-500/10" : "pointer-events-none opacity-60"}`}
-                          >
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{artifact.label}</p>
-                              <p className="text-xs text-muted-foreground">{artifact.artifactType} · {formatBytes(artifact.sizeBytes ?? undefined)}</p>
-                            </div>
-                            <FileDown className="h-4 w-4 text-muted-foreground" />
-                          </a>
-                        )) : (
+                        {selectedDetail.artifacts.length ? (
+                          selectedDetail.artifacts.flatMap((artifact) => {
+                            const baseKey = `${artifact.artifactType}-${artifact.relativePath}`;
+                            const canDownload = Boolean(artifact.downloadUrl || artifact.storageUrl);
+                            const isReducedLog = artifact.artifactType === "reduced-log";
+                            const linkClass = `flex items-center justify-between rounded-2xl border border-border bg-muted/80 p-4 transition dark:border-white/10 dark:bg-slate-950/70 ${canDownload ? "hover:border-cyan-400/30 hover:bg-cyan-500/10" : "pointer-events-none opacity-60"}`;
+
+                            const rows: ReactNode[] = [
+                              <a
+                                key={baseKey}
+                                href={artifact.downloadUrl ?? artifact.storageUrl ?? "#"}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={linkClass}
+                              >
+                                <div>
+                                  <p className="text-sm font-medium text-foreground">
+                                    {isReducedLog ? t("interpretacao.artifactReducedLogJson") : artifact.label}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {artifact.artifactType}
+                                    {isReducedLog ? " · JSON" : ""} · {formatBytes(artifact.sizeBytes ?? undefined)}
+                                  </p>
+                                </div>
+                                <FileDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              </a>,
+                            ];
+
+                            if (isReducedLog && selectedBatchId) {
+                              const completedFiles = selectedDetail.fileMetrics.filter(
+                                (m) => m.status === "completed" && m.fileName.trim().length > 0,
+                              );
+                              for (const fm of completedFiles) {
+                                rows.push(
+                                  <a
+                                    key={`${baseKey}-txt-${fm.fileName}`}
+                                    href={buildReducedLogTxtDownloadUrl(selectedBatchId, fm.fileName)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-between rounded-2xl border border-border border-l-4 border-l-emerald-500/50 bg-muted/60 p-4 pl-3 transition hover:border-cyan-400/30 hover:bg-cyan-500/10 dark:border-white/10 dark:bg-slate-950/50"
+                                  >
+                                    <div className="min-w-0 pr-2">
+                                      <p className="break-words text-sm font-medium text-foreground">
+                                        {t("interpretacao.artifactReducedLogTxt", { file: fm.fileName })}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {t("interpretacao.artifactReducedLogTxtFormat")} ·{" "}
+                                        {t("interpretacao.metricReductionHelper", { n: fm.reducedLineCount })}
+                                      </p>
+                                    </div>
+                                    <FileText className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                  </a>,
+                                );
+                              }
+                            }
+
+                            return rows;
+                          })
+                        ) : (
                           <p className="text-sm text-muted-foreground">{t("interpretacao.noArtifacts")}</p>
                         )}
                       </div>

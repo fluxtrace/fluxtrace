@@ -151,6 +151,8 @@ function VtJsonCompareContent() {
     },
   });
 
+  const mitreXlsxMut = trpc.analysis.mitreFluxtraceVsVtTableXlsxExport.useMutation();
+
   const unifiedCompareMut = trpc.analysis.compareUnifiedVtMitreExport.useMutation({
     onSuccess: (data) => {
       if (!data.ok) {
@@ -263,6 +265,39 @@ function VtJsonCompareContent() {
       includeLlmInterpretation: includeLlm,
       maxBatches: unifiedMaxBatches,
     });
+  }
+
+  async function downloadMitreFluxVsVtXlsx() {
+    try {
+      const data = await mitreXlsxMut.mutateAsync({
+        maxBatches: unifiedMaxBatches,
+      });
+      const bytes = Uint8Array.from(atob(data.xlsxBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fluxtrace-mitre-flux-vs-vt-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      if (data.meta.rowsWritten === 0) {
+        toast.warning(t("vtJsonCompare.xlsxMitreFluxVsVtEmpty"));
+      } else {
+        toast.success(
+          t("vtJsonCompare.xlsxMitreFluxVsVtOk", {
+            rows: data.meta.rowsWritten,
+            vtOk: data.meta.vtOkRows,
+            vtFail: data.meta.vtFailedRows,
+          }),
+        );
+      }
+    } catch {
+      toast.error(t("vtJsonCompare.xlsxMitreFluxVsVtFail"));
+    }
   }
 
   async function downloadUnifiedJson() {
@@ -610,9 +645,28 @@ function VtJsonCompareContent() {
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={
+                mitreXlsxMut.isPending ||
+                unifiedCompareMut.isPending ||
+                compareMut.isPending
+              }
+              onClick={() => void downloadMitreFluxVsVtXlsx()}
+            >
+              {mitreXlsxMut.isPending
+                ? t("vtJsonCompare.xlsxMitreFluxVsVtDownloading")
+                : t("vtJsonCompare.xlsxMitreFluxVsVtDownload")}
+            </Button>
+            <Button
+              type="button"
               variant="secondary"
               className="gap-2"
-              disabled={unifiedCompareMut.isPending || compareMut.isPending}
+              disabled={
+                unifiedCompareMut.isPending ||
+                compareMut.isPending ||
+                mitreXlsxMut.isPending
+              }
               onClick={downloadUnifiedJson}
             >
               {t("vtJsonCompare.unifiedDownload")}

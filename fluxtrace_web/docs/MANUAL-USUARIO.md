@@ -245,21 +245,9 @@ Para **erros técnicos** (logs, variáveis, base de dados), veja `MANUAL-TECNICO
 
 ---
 
-## 14. Pasta sugerida para capturas de ecrã
+## 14. Capturas de ecrã (opcional)
 
-Ao exportar imagens para **este** manual, pode guardá-las em:
-
-`fluxtrace_web/docs/_screenshots/`
-
-com os nomes sugeridos nos comentários HTML deste documento (ou equivalente), e substituir os blocos **\[Inserir captura\]** por imagens Markdown, por exemplo:
-
-```markdown
-![Dashboard principal](_screenshots/05-dashboard.png)
-```
-
-*(Os comentários `<!-- ... -->` podem ser removidos após inserir as figuras.)*
-
-Para o manual de **desenvolvimento local** (`MANUAL-DEV-LOCAL.md`), as figuras ficam na subpasta **`dev-local/`** (por exemplo `docs/_screenshots/dev-local/`), com nomes e referências indicados naquele documento.
+A pasta **`docs/`** no repositório contém apenas os três manuais em Markdown. Os comentários HTML `<!-- docs/_screenshots/... -->` neste ficheiro são **sugestões de nomes** para figuras que pode manter localmente; substitua os blocos **\[Inserir captura\]** por imagens Markdown só se as guardar fora do Git ou noutro meio de publicação.
 
 ---
 

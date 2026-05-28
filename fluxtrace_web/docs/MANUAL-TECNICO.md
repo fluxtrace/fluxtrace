@@ -55,7 +55,7 @@ flowchart LR
 | `frontend/` | Código cliente: React, Vite, Tailwind, shadcn, wouter. Ver [`readme-web.md`](../readme-web.md) (secção Frontend). |
 | `backend/` | API Express, tRPC, Drizzle, modelos, serviços. Ver [`readme-web.md`](../readme-web.md) (secção Backend). |
 | `dist/` | Saída de `pnpm build` (bundle do servidor + assets públicos). |
-| `docs/_screenshots/` | Figuras do manual do utilizador (`MANUAL-USUARIO.md`); subpasta **`dev-local/`** para o manual de arranque local. |
+| `docs/` | Manuais versionados: `MANUAL-DEV-LOCAL.md`, `MANUAL-TECNICO.md`, `MANUAL-USUARIO.md`. |
 
 ---
 

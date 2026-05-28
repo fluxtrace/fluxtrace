@@ -166,6 +166,8 @@ type ParseProgressState = {
   lastFlushedBytes: number;
   /** Limita `addAnalysisEvent` durante leitura; `updateAnalysisBatch` mantém-se frequente para stdoutTail. */
   lastPersistedStageEventMs: number;
+  /** Marca‑tempo do primeiro relatório útil — ritmo médio e ETA só após aquecimento. */
+  parseWallStartedMs: number;
 };
 
 function formatBytesPt(n: number): string {
@@ -219,6 +221,44 @@ const PARSE_YIELD_EVERY_LINES = (() => {
 /** Uma linha de vários MB pode rebentar memória ou atrasar muito o regex; truncar para processamento. */
 const MAX_LOG_LINE_CODE_UNITS = 512_000;
 
+function formatEtaMinutesPortuguese(etaSeconds: number): string {
+  const mTotal = Math.max(1, Math.round(etaSeconds / 60));
+  if (mTotal < 60) {
+    return `${mTotal} min`;
+  }
+  const h = Math.floor(mTotal / 60);
+  const rm = mTotal % 60;
+  if (rm <= 1) return `${h} h`;
+  return `${h} h ${rm} min`;
+}
+
+/** Ritmo médio desde o início da leitura + ETA por bytes quando o ficheiro tem tamanho conhecido. */
+function formatParseThroughputHint(elapsedMs: number, lineCount: number, byteWeight: number, sizeBytes: number | undefined): string {
+  const elapsedSec = elapsedMs / 1000;
+  if (elapsedSec < 3) return "";
+  const linesPerSec = lineCount / elapsedSec;
+  if (!Number.isFinite(linesPerSec) || linesPerSec < 0.25) return "";
+  const linesLabel = Math.round(linesPerSec).toLocaleString("pt-PT");
+  const parts = [`≈ ${linesLabel} lin/s`];
+  if (
+    typeof sizeBytes === "number"
+    && sizeBytes > 0
+    && byteWeight > 0
+    && elapsedSec >= 5
+  ) {
+    const remaining = Math.max(0, sizeBytes - byteWeight);
+    const bytePerSec = byteWeight / elapsedSec;
+    /** Só ETA quando há volume restante perceptível e taxa parece credível (evita “ETA 0”). */
+    if (remaining >= 8 * 1024 * 1024 && bytePerSec >= 4 * 1024) {
+      const etaSec = remaining / bytePerSec;
+      if (Number.isFinite(etaSec) && etaSec >= 90 && etaSec < 86400 * 14) {
+        parts.push(`ETA ~${formatEtaMinutesPortuguese(etaSec)}`);
+      }
+    }
+  }
+  return ` · ${parts.join(" · ")}`;
+}
+
 /** Marca 45% = início da heurística no fluxo; ~88% = fim da leitura; consolidação 82–100% vem dos eventos finais. Uma casa decimal evita “preso” no mesmo inteiro durante GB lidos. */
 function computeProgressPercentWhileParsing(
   byteWeight: number,
@@ -267,8 +307,14 @@ async function maybeFlushParseProgress(
   if (!shouldReportParseProgress(state, options, stride)) {
     return;
   }
+  if (state.parseWallStartedMs <= 0) state.parseWallStartedMs = Date.now();
+  const parseElapsedMs = Date.now() - state.parseWallStartedMs;
+
+  const fileProgress = computeProgressPercentWhileParsing(byteWeight, lineCount, progress.sizeBytes);
+  const throughputHint = formatParseThroughputHint(parseElapsedMs, lineCount, byteWeight, progress.sizeBytes);
   const ts = new Date().toISOString().slice(11, 19);
-  const line = `[${ts}] ${lineCount.toLocaleString("pt-PT")} linhas · ${formatBytesPt(byteWeight)} lidos (UTF-8 aprox.)`;
+  const line =
+    `[${ts}] ${lineCount.toLocaleString("pt-PT")} linhas · ${formatBytesPt(byteWeight)} (≈${fileProgress}% UTF-8 aprox.)${throughputHint}`;
   state.logLines.push(line);
   if (state.logLines.length > PARSE_LOG_MAX_LINES) {
     state.logLines.shift();
@@ -276,9 +322,8 @@ async function maybeFlushParseProgress(
   state.lastFlushMs = Date.now();
   state.lastFlushedBytes = state.byteWeight;
 
-  const fileProgress = computeProgressPercentWhileParsing(byteWeight, lineCount, progress.sizeBytes);
   const msg = `A processar ${progress.fileLabel}: ${lineCount.toLocaleString("pt-PT")} linhas…`;
-  const liveStep = `Leitura: ${lineCount.toLocaleString("pt-PT")} linhas · ${formatBytesPt(byteWeight)} (≈${fileProgress}%)`;
+  const liveStep = `Leitura: ${lineCount.toLocaleString("pt-PT")} linhas · ${formatBytesPt(byteWeight)} (≈${fileProgress}%)${throughputHint}`;
   const stdoutTail = [`Leitura em curso: ${progress.fileLabel}`, ...state.logLines].join("\n");
   const jobEventProgress = Math.min(90, Math.round(38 + fileProgress * 0.55));
 
@@ -1461,6 +1506,7 @@ async function analyzeSingleLogFile(
     lastFlushMs: 0,
     lastFlushedBytes: 0,
     lastPersistedStageEventMs: 0,
+    parseWallStartedMs: 0,
   };
 
   const bump = async (rawLine: string) => {

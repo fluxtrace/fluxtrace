@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { flattenVtBehaviourMitreSandboxData } from "../../shared/virusTotal/vtBehaviourMitreExport";
 import { extractBehaviourSnippet } from "../../shared/virusTotal/virusTotalBehaviourSnippet";
 import type {
   VirusTotalBehaviourPack,
@@ -118,6 +119,86 @@ async function vtBehaviourPack(apiKey: string, sha256: string): Promise<VirusTot
   } catch (e) {
     const msg = vtAxiosErrorMessage(e);
     return { state: "error", code: "upstream_error", message: `Pedido behaviour_summary falhou: ${msg}` };
+  }
+}
+
+/**
+ * Árvores MITRE agregadas por sandbox (`behaviour_mitre_trees`), alinhadas à vista **Behaviour** na GUI VirusTotal.
+ * [Docs VirusTotal](https://docs.virustotal.com/reference/get-a-summary-of-all-mitre-attck-techniques-observed-in-a-file).
+ */
+export type VirusTotalBehaviourMitreTreesPack =
+  | {
+      ok: true;
+      techniqueIds: string[];
+      ta0005TechniqueIds: string[];
+      /** Primeiro nome VT por técnica (chave maiúscula). */
+      vtTechniqueNameByUpper: Map<string, string>;
+    }
+  | { ok: false; code: "not_found" | "rate_limit" | "unauthorized" | "upstream_error"; message: string };
+
+export async function virusTotalFetchBehaviourMitreTrees(
+  apiKey: string,
+  sha256Lowercase: string,
+): Promise<VirusTotalBehaviourMitreTreesPack> {
+  const sha256 = sha256Lowercase.trim().toLowerCase();
+  const url = `${VT_FILES_URL}/${encodeURIComponent(sha256)}/behaviour_mitre_trees`;
+
+  try {
+    const chunk = await vtGetJson(apiKey, url);
+    const status = chunk.status;
+    const body = chunk.body as UnknownRecordBody & { error?: { message?: string } };
+
+    if (status === 404) {
+      return {
+        ok: false,
+        code: "not_found",
+        message:
+          "Sem resumo MITRE de comportamento para este hash (404) — comum quando a VT ainda não publicou árvores de sandbox.",
+      };
+    }
+
+    if (status === 429) {
+      return {
+        ok: false,
+        code: "rate_limit",
+        message: extractVtHttpError(body, "") || "Too Many Requests",
+      };
+    }
+
+    if (status === 401 || status === 403) {
+      return {
+        ok: false,
+        code: "unauthorized",
+        message: extractVtHttpError(body, ""),
+      };
+    }
+
+    if (status === 200) {
+      const data = body.data;
+      if (data !== null && typeof data === "object" && !Array.isArray(data)) {
+        const flat = flattenVtBehaviourMitreSandboxData(data);
+        return {
+          ok: true,
+          techniqueIds: flat.techniqueIdsSorted,
+          ta0005TechniqueIds: flat.ta0005TechniqueIdsSorted,
+          vtTechniqueNameByUpper: flat.techniqueNameByUpper,
+        };
+      }
+      /** Resposta bem-sucedida sem mapa esperado — tratar como vazio em vez de falha dura. */
+      return { ok: true, techniqueIds: [], ta0005TechniqueIds: [], vtTechniqueNameByUpper: new Map() };
+    }
+
+    const msg =
+      typeof body === "object" && body !== null && "error" in body
+        ? extractVtHttpError(body, "")
+        : `Pedido behaviour_mitre_trees falhou (HTTP ${status}).`;
+    return { ok: false, code: "upstream_error", message: msg };
+  } catch (e) {
+    return {
+      ok: false,
+      code: "upstream_error",
+      message: `Pedido behaviour_mitre_trees falhou: ${vtAxiosErrorMessage(e)}`,
+    };
   }
 }
 

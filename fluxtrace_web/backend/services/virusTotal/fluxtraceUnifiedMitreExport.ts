@@ -106,6 +106,11 @@ export async function resolveBatchIdsForUnifiedExport(params: {
   isGlobalScope: boolean;
   batchIdsFilter?: string[];
   maxBatches: number;
+  /**
+   * Quando não há `batchIdsFilter`, restringe a listagem automática a estes estados.
+   * (Útil para exportações que só fazem sentido com lotes concluídos.)
+   */
+  listStatus?: Array<"queued" | "running" | "completed" | "failed" | "cancelled">;
 }): Promise<string[]> {
   if (params.batchIdsFilter?.length) {
     const uniq = [...new Set(params.batchIdsFilter)];
@@ -124,6 +129,7 @@ export async function resolveBatchIdsForUnifiedExport(params: {
   const rows = await listAnalysisBatches({
     limit: params.maxBatches,
     ...(params.isGlobalScope ? {} : { createdByUserId: params.userId }),
+    ...(params.listStatus?.length ? { status: params.listStatus } : {}),
   });
   return rows.map((r) => r.batchId);
 }

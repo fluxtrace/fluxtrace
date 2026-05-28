@@ -35,6 +35,7 @@ import {
   buildFluxtraceUnifiedMitreVtExport,
   resolveBatchIdsForUnifiedExport,
 } from "../../../services/virusTotal/fluxtraceUnifiedMitreExport";
+import { buildMitreFluxtraceVsVtTableXlsxForUserScope } from "../../../services/virusTotal/mitreFluxtraceVtTableXlsxExport";
 import { VT_COMPARE_EXTERNAL_JSON_MAX_CHARS } from "../../../shared/virusTotal/vtJsonCompareLimits";
 import { protectedProcedure, router } from "../../../_core/trpc";
 
@@ -201,6 +202,27 @@ export const analysisRouter = router({
     const apiKey = process.env.VIRUSTOTAL_API_KEY?.trim() ?? "";
     return buildFluxtraceUnifiedMitreVtExport({ apiKey, batchIds });
   }),
+
+  /**
+   * Planilhas `.xlsx` (**`Comparativo`** + **`Grafico`**): **A–D** com técnica em **`ID (nome)`**
+   * (**B** e **Match (E)**: nome Flux primeiro, fallback VT; **C**, **D** e **Apenas VT (G)**: nome VT primeiro;
+   * **Apenas FluxTrace (F)**: nome Flux primeiro). **E–G**: primeira linha **%**, segunda **`ID (nome)`** na fatia
+   * (comparação **só B vs C**, partição sobre |B∪C|). **`Grafico`**: % para barras empilhadas 100&nbsp;% no Excel.
+   * Binário Base64 (`xlsxBase64`).
+   */
+  mitreFluxtraceVsVtTableXlsxExport: protectedProcedure
+    .input(unifiedVtMitreExportInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const user = ctx.user!;
+      const apiKey = process.env.VIRUSTOTAL_API_KEY?.trim() ?? null;
+      return buildMitreFluxtraceVsVtTableXlsxForUserScope({
+        userId: user.id,
+        isGlobalScope: isGlobalAnalysisScope(user),
+        batchIdsFilter: input.batchIds,
+        maxBatches: input.maxBatches,
+        apiKey: apiKey?.length ? apiKey : null,
+      });
+    }),
 
   /**
    * Compara um JSON agregado por hash (`behaviour_mitre_trees`) com um agregado construído no servidor a partir dos últimos N lotes (ou `batchIds`).

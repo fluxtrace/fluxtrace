@@ -8,7 +8,7 @@
 | [Documentação e manuais](#documentação-e-manuais) | PDF-style em `docs/` |
 | [Frontend](#frontend) | Stack, pastas, rotas, tRPC, REST |
 | [Backend](#backend-api) | Pastas, ambiente, Drizzle, deploy Render, testes |
-| [Amostras](../test-samples/README.md) | `.zip` na raiz do repo; LFS e Drive (documentação nessa pasta) |
+| [Amostras](../test-samples/README.md) | 16 `.zip` na raiz (`test-samples/`); inventário, LFS e Drive |
 
 ---
 
@@ -39,7 +39,7 @@ Ficheiros em **`docs/`** (além deste README):
 | [`docs/MANUAL-USUARIO.md`](docs/MANUAL-USUARIO.md) | Utilizadores — funcionalidades e uso |
 | [`docs/MANUAL-TECNICO.md`](docs/MANUAL-TECNICO.md) | Desenvolvedores / DevOps — arquitectura, API, operação |
 
-**Capturas de ecrã:** manual do utilizador — pasta **`docs/_screenshots/`** (nomes sugeridos no `MANUAL-USUARIO.md`). Manual de desenvolvimento local — **`docs/_screenshots/dev-local/`** (referências em `MANUAL-DEV-LOCAL.md`).
+**Documentação em `docs/`:** apenas **`MANUAL-DEV-LOCAL.md`**, **`MANUAL-TECNICO.md`** e **`MANUAL-USUARIO.md`** (sem subpastas de figuras versionadas).
 
 ---
 
@@ -115,7 +115,7 @@ Fonte: **`src/app/App.tsx`**.
 | `/404` | `NotFound` | `src/pages/errors/NotFound.tsx` |
 | *outros* | `NotFound` | última rota do `Switch` |
 
-**Analisar JSON VT (`/analisar-json-vt`; redirecionamento de `/funcoes-mapeadas/analisar-json-vt`):** o lote escolhido não vai na query string — fica em `sessionStorage` (`fluxtrace.vtJsonCompare.batchId`). As mutations tRPC enviam `batchId` no corpo (POST). Inclui mutation `analysis.compareVtJsonExport` — compara o ficheiro importado com o lote seleccionado. Dois formatos: relatório de ficheiro VT v3 com `last_analysis_stats`, ou mapa de hashes (ex. `respostas_virustotal.json`) com respostas **behaviour_mitre_trees**; neste caso cruza técnicas **MITRE TA0005** com `mitreDefenseEvasion` do lote e ainda mostra contexto da API VT (`VIRUSTOTAL_API_KEY`). Para o mesmo formato *multi-hash*, a página oferece **modo unificado:** query `analysis.unifiedVtMitreFluxtraceExport` descarrega um JSON agregado (chaves = SHA-256, valor = objeto com `_fluxtrace` + mitre + relatório VT); mutation `analysis.compareUnifiedVtMitreExport` compara o ficheiro importado com esse agregado gerado no servidor (últimos *N* lotes acessíveis). O tamanho máximo do JSON enviado nas duas mutations é `VT_COMPARE_EXTERNAL_JSON_MAX_CHARS` (~15 MB de texto, ver `backend/shared/virusTotal/vtJsonCompareLimits.ts`), coerente com `express.json({ limit: "50mb" })`. Resumo interpretativo opcional via LLM (`CONTRADEF_LLM_API_KEY` / `CONTRADEF_SKIP_LLM` / mesma lógica do insight).
+**Analisar JSON VT (`/analisar-json-vt`; redirecionamento de `/funcoes-mapeadas/analisar-json-vt`):** o lote escolhido não vai na query string — fica em `sessionStorage` (`fluxtrace.vtJsonCompare.batchId`). As mutations tRPC enviam `batchId` no corpo (POST). Inclui mutation `analysis.compareVtJsonExport` — compara o ficheiro importado com o lote seleccionado. Dois formatos: relatório de ficheiro VT v3 com `last_analysis_stats`, ou mapa de hashes (ex. `respostas_virustotal.json`) com respostas **behaviour_mitre_trees**; neste caso cruza técnicas **MITRE TA0005** com `mitreDefenseEvasion` do lote e ainda mostra contexto da API VT (`VIRUSTOTAL_API_KEY`). Para o mesmo formato *multi-hash*, a página oferece **modo unificado:** query `analysis.unifiedVtMitreFluxtraceExport` descarrega um JSON agregado (chaves = SHA-256, valor = objeto com `_fluxtrace` + mitre + relatório VT); mutation `analysis.compareUnifiedVtMitreExport` compara o ficheiro importado com esse agregado gerado no servidor (últimos *N* lotes acessíveis). A página também expõe a mutation **`analysis.mitreFluxtraceVsVtTableXlsxExport`**: workbook com folha **`Comparativo`** (SHA-256; TA0005 FluxTrace; só TA0005 no comportamento VT; todas as técnicas VT; nas colunas E–G, **percentual + lista das técnicas** na linha seguinte por célula, comparando apenas B×C sobre |B∪C|) e folha **`Grafico`** com os mesmos três percentuais em número — no Excel pode seleccionar a tabela dessa folha e usar **Inserir → Gráfico → barras empilhadas 100 %**. O formato OOXML não inclui o desenho do gráfico embutido (limitação típica de `xlsx`/SheetJS OSS). Serve os últimos lotes **concluídos** segundo o limite/`batchIds`. O tamanho máximo do JSON enviado nas duas primeiras mutations é `VT_COMPARE_EXTERNAL_JSON_MAX_CHARS` (~15 MB de texto, ver `backend/shared/virusTotal/vtJsonCompareLimits.ts`), coerente com `express.json({ limit: "50mb" })`. Resumo interpretativo opcional via LLM (`CONTRADEF_LLM_API_KEY` / `CONTRADEF_SKIP_LLM` / mesma lógica do insight).
 
 **Interpretação consolidada (`/interpretacao-consolidada`):** o cartão «Veredito técnico» inclui etiqueta sobre o modo de interpretação textual (`insight.modelName`). MITRE ATT&CK (TA0005) e VirusTotal continuam apenas nos separadores sob «Indicadores da análise».
 
@@ -283,7 +283,7 @@ Obter ou actualizar materiais de referência **a partir de `fluxtrace`**: trabal
 
 ## Amostras de testes
 
-Toda a informação (Google Drive, Git LFS, como contribuir) está em **[`test-samples/README.md`](../test-samples/README.md)** na raiz do repositório Git.
+**16 pacotes** `.zip` em **`test-samples/`** (série de referência `amostra_100k` … `amostra_50M` e pacotes adicionais de grande escala). Inventário completo, tamanhos de `TraceInstructions.cdf`, tempos de referência e instruções LFS/Drive: **[`test-samples/README.md`](../test-samples/README.md)** na raiz do repositório Git.
 
 ---
 

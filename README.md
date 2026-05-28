@@ -50,7 +50,7 @@ FluxTrace targets analysts and researchers who work with **high-volume Contradef
 ## 1.2 Contents of this repository
 
 * **`fluxtrace_web/`** — single **pnpm** package: **React (Vite)** SPA + **Express** API (**tRPC**, **Drizzle**, PostgreSQL).
-* **`test-samples/`** — optional **`.zip`** sample bundles for testing (may use **Git LFS**); see `test-samples/README.md`.
+* **`test-samples/`** — **16** optional **`.zip`** Contradef sample bundles for testing (reference series `amostra_100k` … `amostra_50M` plus additional large-scale packages; may use **Git LFS**); see `test-samples/README.md`.
 * **Root metadata** — `render.yaml` (optional PaaS blueprint), `.gitattributes` (LFS patterns), this `README.md`.
 
 Operational detail for developers (routes, env vars, deploy checklist) lives in **`fluxtrace_web/readme-web.md`**. Step-by-step setup on a **clean machine** (including VS Code) is in **`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`** (Portuguese).
@@ -62,11 +62,11 @@ fluxtrace/                         ← repository root (name may differ when ext
 ├── fluxtrace_web/                  ← main web application (pnpm project root)
 │   ├── frontend/                   ← React, Vite, Tailwind, SPA entry
 │   ├── backend/                    ← Express, tRPC, Drizzle, services
-│   ├── docs/                       ← MANUAL-TECNICO, MANUAL-USUARIO, MANUAL-DEV-LOCAL, …
+│   ├── docs/                       ← MANUAL-DEV-LOCAL, MANUAL-TECNICO, MANUAL-USUARIO
 │   ├── package.json                ← scripts: dev, build, test, db:push, …
 │   ├── readme-web.md               ← single package README (operations + structure)
 │   └── .env                        ← not version-controlled (copy from backend/.env.example)
-├── test-samples/                ← optional test zips (+ README); may be Git LFS
+├── test-samples/                ← 16 optional test zips (+ README); Git LFS for large archives
 ├── render.yaml                     ← optional Render blueprint
 ├── .gitattributes                  ← e.g. LFS for large zips under test-samples/
 └── README.md                       ← this file
@@ -239,8 +239,9 @@ If both succeed, the toolchain is consistent. Optionally run **`pnpm build`** to
 
 # 8. Samples and heavy artefacts
 
-* **`test-samples/README.md`** — download mirrors, **Git LFS** usage, optional performance reference table (package names = SHA-256 of bundles).
-* Large binaries may **not** be present in shallow clones; follow the README for **Drive** or **LFS** fetch instructions.
+* **`test-samples/README.md`** — full inventory (**16** `.zip` bundles), **Git LFS** / Google Drive mirrors, and a reference table (SHA-256 = filename; `TraceInstructions.cdf` size; approximate processing times where measured).
+* Scale ranges from **~0,35 GiB** to **~24 GiB** uncompressed `TraceInstructions.cdf` per bundle (largest `.zip` archives **~1,7 GiB** on disk).
+* Large binaries may **not** be present in shallow clones; follow the README for **Drive**, **`git lfs pull`**, or manual copy of missing archives.
 
 Heavy paths and legacy trees may have been trimmed from some clones; recover from your organization’s **canonical** Git remote if files are missing.
 
@@ -264,7 +265,7 @@ This README stays in **English** so it mirrors the style of the [**Contradef**](
 | [`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md) | Step-by-step **local setup** (clean machine, VS Code, PostgreSQL, `.env`, `pnpm dev`). |
 | [`fluxtrace_web/docs/MANUAL-TECNICO.md`](fluxtrace_web/docs/MANUAL-TECNICO.md) | Technical architecture and operations. |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | End-user manual for the web UI. |
-| [`test-samples/README.md`](test-samples/README.md) | Test sample bundles (LFS / mirrors, reference timings). |
+| [`test-samples/README.md`](test-samples/README.md) | Test sample bundles (16 packages, LFS / mirrors, sizes and reference timings). |
 
 Duplicating the entire English README here in Portuguese would be **long** and **hard to keep in sync**; prefer updating the files above when details change.
 

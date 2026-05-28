@@ -359,7 +359,7 @@ function getDetailQueryErrorPresentation(message: string | undefined, t: TFuncti
 
 const REDUCE_LOGS_POLL_MS_KEY = "contradef.reduceLogsPollMs";
 const DEFAULT_REDUCE_LOGS_POLL_MS = 5000;
-const POLL_MS_OPTIONS = [2000, 5000, 10000, 30000, 60000] as const;
+const POLL_MS_OPTIONS = [1000, 2000, 5000, 10000, 30000, 60000] as const;
 
 const LOG_FILE_ACCEPT = ".cdf,.csv,.json,.log,.txt,.7z,.zip,.rar";
 const LOG_FILE_EXT = new Set(["cdf", "csv", "json", "log", "txt", "7z", "zip", "rar"]);
@@ -871,9 +871,20 @@ export default function ReduceLogs() {
     if (summaryBatch?.status === "running" && summaryBatch.updatedAt) {
       const pulse = new Date(summaryBatch.updatedAt);
       if (Number.isFinite(pulse.getTime())) {
+        const metrics = uploadedDetail?.fileMetrics ?? [];
+        /** Um único ficheiro `running`: o `stdoutTail` atualiza sempre com esse `fileLabel`; evita falsos «sem act.» por mismatches finos entre caminhos. */
+        const loneRunningName =
+          metrics.filter((entry) => entry.status === "running").length === 1
+            ? metrics.find((entry) => entry.status === "running")?.fileName
+            : null;
         const hay = `${summaryBatch.message ?? ""}\n${summaryBatch.stdoutTail ?? ""}`;
-        (uploadedDetail?.fileMetrics ?? []).forEach((file) => {
+        metrics.forEach((file) => {
           if (file.status !== "running" && file.status !== "queued") return;
+          if (loneRunningName && file.fileName === loneRunningName) {
+            const prev = map.get(file.fileName);
+            if (!prev || pulse > prev) map.set(file.fileName, pulse);
+            return;
+          }
           const base = fileNameBase(file.fileName);
           if (!hay.includes(file.fileName) && !hay.includes(base)) return;
           const prev = map.get(file.fileName);
@@ -2225,7 +2236,7 @@ export default function ReduceLogs() {
                   ) : null}
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                    <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                       <span>{t("reduceLogs.pollIntervalLabel")}</span>
                       <select
                         className="rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground dark:bg-slate-950"
@@ -2247,6 +2258,9 @@ export default function ReduceLogs() {
                           </option>
                         ))}
                       </select>
+                      <span className="max-w-md text-[10px] leading-snug text-muted-foreground/90">
+                        {t("reduceLogs.pollIntervalLargeHint")}
+                      </span>
                     </label>
                   </div>
 

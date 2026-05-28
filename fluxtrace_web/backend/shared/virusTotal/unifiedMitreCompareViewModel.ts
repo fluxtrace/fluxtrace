@@ -1,4 +1,5 @@
 import {
+  collectFluxtraceDefenseEvasionTechniqueIds,
   collectTa0005TechniqueIdsFromMitreEntry,
   isBehaviourMitreTreesByHashExport,
   listExportRootShaKeys,
@@ -28,20 +29,6 @@ function setDiff(a: string[], b: string[]): { onlyA: string[]; onlyB: string[]; 
   const onlyA = [...sa].filter((x) => !sb.has(x)).sort((x, y) => x.localeCompare(y));
   const onlyB = [...sb].filter((x) => !sa.has(x)).sort((x, y) => x.localeCompare(y));
   return { onlyA, onlyB, both };
-}
-
-function fluxtraceDefenseEvasionTechniqueIds(mitre: unknown): string[] {
-  if (mitre === null || typeof mitre !== "object") return [];
-  const techniques = (mitre as { techniques?: unknown }).techniques;
-  if (!Array.isArray(techniques)) return [];
-  const ids = new Set<string>();
-  for (const t of techniques) {
-    if (t && typeof t === "object" && typeof (t as { id?: string }).id === "string") {
-      const id = (t as { id: string }).id.trim();
-      if (id) ids.add(id);
-    }
-  }
-  return [...ids].sort((a, b) => a.localeCompare(b));
 }
 
 export type UnifiedMitreHashCard = {
@@ -105,7 +92,7 @@ export function buildUnifiedMitreCompareViewModel(params: {
     return {
       sha,
       sampleName: entry?._fluxtrace.sampleName ?? "—",
-      fluxTa0005: fluxtraceDefenseEvasionTechniqueIds(entry?._fluxtrace.mitreDefenseEvasion),
+      fluxTa0005: collectFluxtraceDefenseEvasionTechniqueIds(entry?._fluxtrace.mitreDefenseEvasion),
     };
   });
 
@@ -114,7 +101,7 @@ export function buildUnifiedMitreCompareViewModel(params: {
     const pick = pickMitreTreeEntryForBatch(externalRoot, sha);
     const exportVtTa0005 = collectTa0005TechniqueIdsFromMitreEntry(pick.entry);
     const entry = internalBySha[sha]!;
-    const fluxTa0005 = fluxtraceDefenseEvasionTechniqueIds(entry._fluxtrace.mitreDefenseEvasion);
+    const fluxTa0005 = collectFluxtraceDefenseEvasionTechniqueIds(entry._fluxtrace.mitreDefenseEvasion);
     const { onlyA: onlyFluxtrace, onlyB: onlyExportVt, both: inBoth } = setDiff(fluxTa0005, exportVtTa0005);
     perHash.push({
       sha,
