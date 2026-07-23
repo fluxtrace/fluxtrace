@@ -83,3 +83,20 @@ git push
 ```
 
 Ao acrescentar pacotes, actualize **esta tabela** (SHA-256, tamanho de `TraceInstructions.cdf`, tamanho do `.zip` e, quando existir, tempo de referência).
+
+---
+
+## Resultados após redução (`reduce-logs/`)
+
+Pacotes de **saída / evidência** gerados após upload e processamento na ferramenta (logs reduzidos, exports ou arquivos do lote concluído). Organizados por **SHA-256** da amostra de entrada.
+
+Ver inventário: [`reduce-logs/README.md`](reduce-logs/README.md).
+
+```text
+test-samples/
+├── *.zip              ← amostras Contradef de entrada (entrada)
+└── reduce-logs/
+    └── <SHA-256>/     ← resultados / evidências pós-processamento
+```
+
+Também versionados com **Git LFS**. Após clone: `git lfs pull`.

@@ -55,6 +55,7 @@ fluxtrace/
 │   ├── readme-web.md               ← referência operacional do pacote
 │   └── .env                        ← não versionado (copiar de backend/.env.example)
 ├── test-samples/                   ← 16 pacotes .zip Contradef (+ README, Git LFS)
+│   └── reduce-logs/                ← resultados pós-upload/redução (evidências, LFS)
 ├── funcoes-mapeadas/               ← catálogo M1 (47 funções, fluxos, xlsx)
 ├── resultados/
 │   └── capturas-tela/              ← evidências visuais dos experimentos (Sec. 5)
@@ -66,7 +67,7 @@ fluxtrace/
 | Pasta / ficheiro | Papel |
 |------------------|--------|
 | `fluxtrace_web/` | Código principal da ferramenta |
-| `test-samples/` | Dados de entrada para testes e experimentos |
+| `test-samples/` | Dados de entrada e resultados (`reduce-logs/`) para testes e experimentos |
 | `funcoes-mapeadas/` | Documentação correlacionada ao escopo M1 da Contradef |
 | `resultados/capturas-tela/` | Capturas referenciadas no artigo e neste README |
 | `fluxtrace_web/docs/` | Manuais detalhados (PT) para instalador, técnico e utilizador |
@@ -475,6 +476,7 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 | [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama funcional (ingestão → redução → visualização) |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | Manual do utilizador |
 | [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
+| [`test-samples/reduce-logs/README.md`](test-samples/reduce-logs/README.md) | Pacotes de saída / evidências pós-redução |
 | [`resultados/capturas-tela/`](resultados/capturas-tela/) | Capturas dos experimentos |
 
 ---

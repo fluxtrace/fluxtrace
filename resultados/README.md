@@ -30,3 +30,5 @@ Pasta alinhada ao padrão de artefatos SBSEG (ex.: [TOMWare-DBI/TOMWare](https:/
 ## Referência
 
 Instruções de reprodução: secção **Experimentos** em [`README.md`](../README.md) na raiz do repositório.
+
+Pacotes de saída (logs reduzidos / resultados de lote): [`../test-samples/reduce-logs/`](../test-samples/reduce-logs/).
