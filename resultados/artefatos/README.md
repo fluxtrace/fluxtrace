@@ -70,11 +70,12 @@ Na **Interpretação consolidada**, o analista pode descarregar (não ficam auto
 
 Para evidência no artigo, exporte pela UI ou copie de `artifacts/reports/`.
 
-## Lote de referência (artigo)
+## Lotes de referência (artigo)
 
 | batchId | SHA-256 | Notas |
 |---------|---------|-------|
-| `ctr-JD-QvLcmsO` | `49aa7438…` | Redução ~99,7%, Trojan/critical (captura `fluxtrace_07`) |
+| `ctr-JD-QvLcmsO` | `49aa7438…` | Redução **99,7%**, **329 603** linhas, **Trojan**/critical (`fluxtrace_07`) |
+| `ctr-ZbPqaQOXo0` | `db32e48a…` | Grafo **32→5** nós, veredito **Backdoor** (`fluxtrace_10`) |
 
 ## Git LFS
 

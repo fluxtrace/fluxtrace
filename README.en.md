@@ -51,9 +51,22 @@ fluxtrace/
 ├── fluxtrace_web/            ← main web application
 ├── test-samples/             ← 16 Contradef sample zips
 ├── funcoes-mapeadas/         ← M1 function catalog (47 APIs)
-├── resultados/capturas-tela/ ← experiment screenshots
+├── resultados/
+│   ├── capturas-tela/        ← experiment screenshots (paper Sec. 4)
+│   └── artefatos/            ← exported batch outputs (JSON, MD, Mermaid)
 └── render.yaml
 ```
+
+---
+
+## Key experiment samples (paper Sec. 4)
+
+| Claim | SHA-256 (prefix) | batchId | Reference |
+|-------|------------------|---------|-----------|
+| Reduction 99.7% / Trojan | `49aa7438…` | `ctr-JD-QvLcmsO` | `fluxtrace_07.png`, `resultados/artefatos/49aa7438…/` |
+| Compact graph / Backdoor | `db32e48a…` | `ctr-ZbPqaQOXo0` | `fluxtrace_10.png`, `resultados/artefatos/db32e48a…/` |
+
+Full reproduction steps: [README.md](README.md) (Portuguese, CTA template).
 
 ---
 
@@ -62,6 +75,8 @@ fluxtrace/
 | Document | Purpose |
 |----------|---------|
 | [README.md](README.md) | Full CTA template (PT): seals, install, minimal test, experiments |
+| [resultados/README.md](resultados/README.md) | Screenshot index and sample → figure mapping |
+| [resultados/artefatos/README.md](resultados/artefatos/README.md) | Exported tool outputs per batch |
 | [fluxtrace_web/readme-web.md](fluxtrace_web/readme-web.md) | Package operations |
 | [fluxtrace_web/docs/MANUAL-DEV-LOCAL.md](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md) | Local setup (PT) |
 | [fluxtrace_web/docs/MANUAL-TECNICO.md](fluxtrace_web/docs/MANUAL-TECNICO.md) | Technical manual (PT) |

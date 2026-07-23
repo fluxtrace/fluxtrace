@@ -18,8 +18,8 @@ Documento de referência para **desenvolvimento**, **operação** e **integraç�
 | Fase | Componentes | Rotas / código |
 |------|-------------|----------------|
 | **Ingestão** | Analista → logs Contradef (`.cdf` / `.zip`) → módulo de ingestão → logs filtrados | UI `/reduce-logs`; handlers `reduceLogsUpload` |
-| **Processamento e redução** | Redutor heurístico (≈ 99,7%); banco M1 (47 APIs); agregador de `TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`; engine de correlação | `backend/services/analysis/analysisService.ts` e serviços relacionados |
-| **Visualização e saída** | Diagrama escopo M1; grafo compacto de fluxo; painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito técnico | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
+| **Processamento e redução** | Redutor heurístico (ex.: **99,7%** no lote `49aa7438…`); banco M1 (47 APIs); agregador de `TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`; engine de correlação | `backend/services/analysis/analysisService.ts` e serviços relacionados |
+| **Visualização e saída** | Diagrama escopo M1; grafo compacto de fluxo (**32→5** nós, lote `db32e48a…`); painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito técnico | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
 
 **Critérios do redutor heurístico:** chamadas de API sensíveis, padrões de memória (ex.: RW→RX), termos/gatilhos do analista e contexto mínimo (janelas e cabeçalhos).
 

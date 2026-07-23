@@ -57,7 +57,7 @@ fluxtrace/
 ├── test-samples/                   ← 16 pacotes .zip Contradef (+ README, Git LFS)
 ├── funcoes-mapeadas/               ← catálogo M1 (47 funções, fluxos, xlsx)
 ├── resultados/
-│   ├── capturas-tela/              ← evidências visuais (Sec. 5)
+│   ├── capturas-tela/              ← evidências visuais (Sec. 4 do artigo)
 │   └── artefatos/                  ← saídas da ferramenta (reports/, LFS)
 ├── render.yaml                     ← blueprint opcional (Render.com)
 ├── package.json                    ← atalhos pnpm na raiz
@@ -119,8 +119,8 @@ O FluxTrace organiza-se em **três fases** (ver diagrama acima):
 | Fase | Módulos / saídas | Implementação na app web |
 |------|-------------------|---------------------------|
 | **1. Ingestão** | Analista submete logs Contradef (`.cdf` / `.zip`, multi‑GB); módulo de ingestão; logs filtrados | `/reduce-logs` — upload multipart, fila, estados do lote |
-| **2. Processamento e redução** | Redutor heurístico (≈ **99,7%**); banco M1 (**47** APIs); agregador (`TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`); engine de correlação | `backend/services/analysis/` — redução, heurísticas, correlação |
-| **3. Visualização e saída** | Diagrama M1; grafo compacto (**32→5** nós); painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
+| **2. Processamento e redução** | Redutor heurístico (ex.: **99,7%** no lote `49aa7438…`); banco M1 (**47** APIs); agregador (`TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`); engine de correlação | `backend/services/analysis/` — redução, heurísticas, correlação |
+| **3. Visualização e saída** | Diagrama M1; grafo compacto (**32→5** nós, lote `db32e48a…`); painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
 
 #### Stack técnico (camadas de software)
 
@@ -328,7 +328,9 @@ pnpm build
 
 ## Experimentos
 
-Esta secção reproduz as **quatro métricas** do artigo (Sec. 5.2): **(i)** tempo de processamento; **(ii)** redução de volume; **(iii)** eventos correlacionados; **(iv)** eventos críticos / evasão.
+Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experimentos e Avaliação*): **(i)** tempo de processamento; **(ii)** redução de volume; **(iii)** eventos correlacionados; **(iv)** eventos críticos / evasão.
+
+> **Amostras de referência:** redução **99,7%** / Trojan → `49aa7438…` (`ctr-JD-QvLcmsO`); grafo compacto **32→5** / Backdoor → `db32e48a…` (`ctr-ZbPqaQOXo0`). Artefactos pré-exportados em [`resultados/artefatos/`](resultados/artefatos/README.md).
 
 > **Nota:** tempos são **aproximados** (CPU i7-1165G7, 16 GB RAM, SSD). Lotes multi‑GB podem levar horas — use amostras menores primeiro.
 
@@ -347,21 +349,24 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. 5.2): **(i)** tem
 
 | Campo | Valor |
 |-------|--------|
-| **Amostra** | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd.zip` (`amostra_50M`) |
-| **Recursos** | ≈ 366 MiB upload; ≈ 2–4 GB RAM; ≈ 10 min CPU |
+| **Amostra** | `49aa74387680de248f21af321c6721c305a29a071279b5526627921daa812e42.zip` (lote stress **15 GB** descomprimido) |
+| **batchId ref.** | `ctr-JD-QvLcmsO` |
+| **Recursos** | ≈ 1,52 GiB upload; ≈ 15 GiB `TraceInstructions.cdf`; **horas** de CPU (hardware ref.) |
 | **Captura** | `resultados/capturas-tela/fluxtrace_07.png` |
 
 **Passos:**
 
-1. `/reduce-logs` → SHA `db32e48a…` → enviar o `.zip` → nome `exp-reducao-50M`.
-2. Monitorizar progresso por ficheiro (colunas Antes / Reduz.).
+1. `/reduce-logs` → SHA `49aa7438…` → enviar o `.zip` → nome `exp-reducao-15G`.
+2. Monitorizar progresso por ficheiro (colunas Antes / Reduz.) — ver também `fluxtrace_06.png` (acompanhamento multi‑GB).
 3. Após **concluído**, abrir **Interpretação consolidada** do lote.
 
-**Resultado esperado (referência experimental):**
+**Resultado esperado (referência experimental — lote `49aa7438…`):**
 
 - Redução **≥ 99%** (valor observado: **99,7%**).
-- **≈ 329 603** linhas preservadas (ordem de grandeza; varia ligeiramente por versão).
-- APIs sensíveis e gatilhos visíveis nos cartões.
+- **329 603** linhas preservadas (exportadas em `resultados/artefatos/49aa7438…/reports/`).
+- Classificação **Trojan**, risco **crítico**; APIs sensíveis e gatilhos visíveis nos cartões.
+
+> **Alternativa rápida:** amostra `db32e48a…` (`amostra_50M`, ≈ 9 min) também reduz ≥ 99%, mas com **≈ 230 082** linhas e veredito **Backdoor** — usar para a Reivindicação 3, não para estes números do artigo.
 
 ---
 
@@ -374,13 +379,13 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. 5.2): **(i)** tem
 | **Amostra rápida** | `a0aeb837…` — ≈ 50 s |
 | **Amostra média** | `1db3df87…` — ≈ 25 s |
 | **Amostra stress** | `fcd9f0a39b3e64d352e9e55df8d4b033814e65ee1c9ba299a5ef9d5e31829c29.zip` (575 MiB) ou `49aa7438…` (15 GB) |
-| **Capturas** | `fluxtrace_05.png`, `fluxtrace_06.png` |
+| **Capturas** | `fluxtrace_05.png`, `fluxtrace_06.png`; dashboard agregado: `fluxtrace_03.png` *(regenerável — ver [`resultados/README.md`](resultados/README.md))* |
 
 **Passos:**
 
 1. Submeter `a0aeb837…` e registar tempo total (dashboard ou UI do lote).
-2. Submeter `fcd9f0a3…` (ou pacote 15 GB se houver disco/tempo) e observar **upload multipart** + ETA por ficheiro.
-3. Consultar **dashboard** (`/`) — gráfico «Tempo envio + processamento».
+2. Submeter `fcd9f0a3…` (575 MiB) ou `49aa7438…` (15 GB, se houver disco/tempo) e observar **upload multipart** + ETA por ficheiro.
+3. Consultar **dashboard** (`/`) — gráfico «Tempo envio + processamento» (Fig. 5 do artigo).
 
 **Resultado esperado:**
 
@@ -396,13 +401,14 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. 5.2): **(i)** tem
 
 | Campo | Valor |
 |-------|--------|
-| **Amostra** | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` |
+| **Amostra** | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` (`amostra_50M`, ≈ 9 min) |
+| **batchId ref.** | `ctr-ZbPqaQOXo0` |
 | **Rota** | `/funcoes-mapeadas/fluxo-malware` (seleccionar o lote concluído) |
 | **Capturas** | `fluxtrace_10.png`, `fluxtrace_09.png`, `fluxtrace_11.png` |
 
 **Passos:**
 
-1. Após Reivindicação 1 concluída, abrir **Fluxo malware** para o mesmo lote.
+1. Submeter `db32e48a…` (ou reutilizar artefacto em `resultados/artefatos/db32e48a…/`) e abrir **Fluxo malware** para esse lote.
 2. Verificar contadores de nós/arestas antes e depois da compactação.
 3. Abrir painel de **evidências** no log reduzido (`GetProcAddress`, etc.).
 
@@ -420,7 +426,7 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. 5.2): **(i)** tem
 
 | Campo | Valor |
 |-------|--------|
-| **Amostra** | Mesmo lote da Reivindicação 1 (`db32e48a…`) ou lote com veredito **Trojan** |
+| **Amostra** | Mesmo lote da Reivindicação 1 — `49aa7438…` (`ctr-JD-QvLcmsO`, veredito **Trojan**) |
 | **Rota** | `/interpretacao-consolidada` |
 | **Capturas** | `fluxtrace_07.png`, `fluxtrace_08.png` |
 
@@ -451,10 +457,10 @@ Evidências típicas no veredito: `IsDebuggerPresent`, `CheckRemoteDebuggerPrese
 
 | Reivindicação | Amostra (SHA prefixo) | Tempo ref. | Evidência |
 |---------------|------------------------|------------|-----------|
-| Redução ≥ 99% | `db32e48a…` | ~9 min | `fluxtrace_07.png` |
-| Tempo / escala | `a0aeb837…` / `fcd9f0a3…` | 50 s – horas | `fluxtrace_05–06.png` |
-| Grafo compacto | `db32e48a…` | após lote | `fluxtrace_10.png` |
-| Evasão / MITRE | `db32e48a…` | após lote | `fluxtrace_07–08.png` |
+| Redução ≥ 99% / Trojan | `49aa7438…` | horas (15 GB) | `fluxtrace_07.png` |
+| Tempo / escala | `a0aeb837…` / `fcd9f0a3…` / `49aa7438…` | 50 s – horas | `fluxtrace_05–06.png`, dashboard (`fluxtrace_03.png`) |
+| Grafo compacto / Backdoor | `db32e48a…` | ~9 min | `fluxtrace_10.png` |
+| Evasão / MITRE | `49aa7438…` | após lote | `fluxtrace_07–08.png` |
 
 ---
 
@@ -477,7 +483,7 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 | [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama funcional (ingestão → redução → visualização) |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | Manual do utilizador |
 | [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
-| [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
+| [`resultados/README.md`](resultados/README.md) | Índice de capturas e mapeamento amostra → figura |
 | [`resultados/capturas-tela/`](resultados/capturas-tela/) | Capturas dos experimentos |
 | [`resultados/artefatos/README.md`](resultados/artefatos/README.md) | Logs reduzidos, Mermaid, relatórios por lote (SHA-256) |
 
