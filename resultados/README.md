@@ -23,6 +23,7 @@ Pasta alinhada ao padrão de artefatos SBSEG (ex.: [TOMWare-DBI/TOMWare](https:/
 | `fluxtrace_09.png` | Diagrama M1 anti-debug |
 | `fluxtrace_10.png` | Grafo compacto 32→5 nós |
 | `fluxtrace_11.png` | Evidência em log reduzido |
+| `fluxtrace-arquitetura.png` | Diagrama funcional do pipeline (ingestão → redução → visualização) |
 
 > **Nota:** `fluxtrace_03.png` (dashboard agregado) pode ser regenerado após correr vários lotes no dashboard (`/`).
 

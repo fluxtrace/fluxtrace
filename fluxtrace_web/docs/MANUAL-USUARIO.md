@@ -16,6 +16,8 @@ O FluxTrace permite, entre outras funções:
 - Consultar **funções mapeadas** e materiais de apoio à análise.
 - Gerir **perfil** e, para perfis administrativos, **utilizadores**.
 
+**Visão geral do pipeline:** diagrama em [`fluxtrace-arquitetura.png`](./fluxtrace-arquitetura.png) (ingestão → processamento/redução → visualização).
+
 > **Nota:** Algumas funções dependem de **permissões** da sua conta e da **configuração do servidor** (por exemplo API VirusTotal, OAuth institucional). Se algo não aparecer, confirme com o administrador.
 
 ---

@@ -32,6 +32,16 @@ Open `http://localhost:3000/`.
 
 ---
 
+## Architecture
+
+![FluxTrace functional pipeline](fluxtrace_web/docs/fluxtrace-arquitetura.png)
+
+Three phases: **ingestion** (Contradef logs upload) → **processing & heuristic reduction** (M1 knowledge base, correlation engine) → **visualization** (M1 diagrams, compact malware flow graph, evidence panel, MITRE, consolidated interpretation).
+
+Technical stack details: [`fluxtrace_web/docs/MANUAL-TECNICO.md`](fluxtrace_web/docs/MANUAL-TECNICO.md).
+
+---
+
 ## Repository layout
 
 ```

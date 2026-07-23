@@ -51,9 +51,6 @@ __pycache__/
 # Material local do artigo (não versionar)
 paper/
 
-# Diagrama de arquitetura gerado localmente (docs/)
-fluxtrace_web/docs/fluxtrace-arquitetura.png
-
 # Uploads temporários de testes locais (não versionar)
 test-samples/reduce-logs/
 

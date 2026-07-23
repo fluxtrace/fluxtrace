@@ -11,7 +11,19 @@ Documento de referência para **desenvolvimento**, **operação** e **integraç�
 
 ## 1. Visão geral da arquitectura
 
-### 1.1. Monólito “Node + SPA”
+### 1.1. Pipeline funcional (visão do artigo)
+
+![FluxTrace — ingestão, processamento/redução e visualização](fluxtrace-arquitetura.png)
+
+| Fase | Componentes | Rotas / código |
+|------|-------------|----------------|
+| **Ingestão** | Analista → logs Contradef (`.cdf` / `.zip`) → módulo de ingestão → logs filtrados | UI `/reduce-logs`; handlers `reduceLogsUpload` |
+| **Processamento e redução** | Redutor heurístico (≈ 99,7%); banco M1 (47 APIs); agregador de `TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`; engine de correlação | `backend/services/analysis/analysisService.ts` e serviços relacionados |
+| **Visualização e saída** | Diagrama escopo M1; grafo compacto de fluxo; painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito técnico | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
+
+**Critérios do redutor heurístico:** chamadas de API sensíveis, padrões de memória (ex.: RW→RX), termos/gatilhos do analista e contexto mínimo (janelas e cabeçalhos).
+
+### 1.2. Monólito “Node + SPA”
 
 Um único processo **Express** (`backend/_core/server/index.ts`) serve:
 
@@ -20,7 +32,7 @@ Um único processo **Express** (`backend/_core/server/index.ts`) serve:
 
 O **browser** executa uma **SPA** React (entrada `frontend/index.html` → `src/app/main.tsx`). O cliente fala com o mesmo host sob caminhos relativos **`/api/...`** (sem CORS dedicado para API noutro domínio, por defeito).
 
-### 1.2. Diagrama lógico
+### 1.3. Diagrama lógico (stack técnico)
 
 ```mermaid
 flowchart LR
@@ -46,7 +58,7 @@ flowchart LR
   Services --> Ext
 ```
 
-### 1.3. Organização do código (`fluxtrace_web/`)
+### 1.4. Organização do código (`fluxtrace_web/`)
 
 | Pasta / ficheiro | Papel |
 |------------------|--------|
@@ -55,7 +67,7 @@ flowchart LR
 | `frontend/` | Código cliente: React, Vite, Tailwind, shadcn, wouter. Ver [`readme-web.md`](../readme-web.md) (secção Frontend). |
 | `backend/` | API Express, tRPC, Drizzle, modelos, serviços. Ver [`readme-web.md`](../readme-web.md) (secção Backend). |
 | `dist/` | Saída de `pnpm build` (bundle do servidor + assets públicos). |
-| `docs/` | Manuais versionados: `MANUAL-DEV-LOCAL.md`, `MANUAL-TECNICO.md`, `MANUAL-USUARIO.md`. |
+| `docs/` | Manuais versionados: `MANUAL-DEV-LOCAL.md`, `MANUAL-TECNICO.md`, `MANUAL-USUARIO.md`, `fluxtrace-arquitetura.png`. |
 
 ---
 

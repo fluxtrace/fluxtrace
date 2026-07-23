@@ -50,7 +50,7 @@ fluxtrace/
 ├── fluxtrace_web/                  ← aplicação web (pnpm: frontend + backend)
 │   ├── frontend/                   ← React 19, Vite 7, SPA
 │   ├── backend/                    ← Express, tRPC, Drizzle, serviços
-│   ├── docs/                       ← MANUAL-DEV-LOCAL, MANUAL-TECNICO, MANUAL-USUARIO
+│   ├── docs/                       ← MANUAL-DEV-LOCAL, MANUAL-TECNICO, MANUAL-USUARIO, fluxtrace-arquitetura.png
 │   ├── package.json
 │   ├── readme-web.md               ← referência operacional do pacote
 │   └── .env                        ← não versionado (copiar de backend/.env.example)
@@ -110,25 +110,28 @@ Os autores solicitam a avaliação do artefato para **todos os selos disponívei
 
 ### Arquitetura
 
-```mermaid
-flowchart LR
-  subgraph browser[Navegador React SPA]
-    UI[FluxTrace UI]
-  end
-  subgraph node[Node.js Express + Vite]
-    API[tRPC + REST]
-  end
-  DB[(PostgreSQL)]
-  UI --> API
-  API --> DB
-```
+![FluxTrace — pipeline funcional: ingestão, processamento/redução e visualização](fluxtrace_web/docs/fluxtrace-arquitetura.png)
+
+O FluxTrace organiza-se em **três fases** (ver diagrama acima):
+
+| Fase | Módulos / saídas | Implementação na app web |
+|------|-------------------|---------------------------|
+| **1. Ingestão** | Analista submete logs Contradef (`.cdf` / `.zip`, multi‑GB); módulo de ingestão; logs filtrados | `/reduce-logs` — upload multipart, fila, estados do lote |
+| **2. Processamento e redução** | Redutor heurístico (≈ **99,7%**); banco M1 (**47** APIs); agregador (`TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`); engine de correlação | `backend/services/analysis/` — redução, heurísticas, correlação |
+| **3. Visualização e saída** | Diagrama M1; grafo compacto (**32→5** nós); painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
+
+#### Stack técnico (camadas de software)
 
 | Camada | Tecnologia |
 |--------|------------|
-| Frontend | React 19, Vite 7, TanStack Query, tRPC, Tailwind |
-| Backend | Node.js, Express, tRPC, Drizzle ORM |
-| Persistência | PostgreSQL 14+ |
-| Empacotamento | pnpm (Corepack), TypeScript |
+| **Cliente** | React 19, Vite 7, TanStack Query, tRPC, wouter, Tailwind 4, @xyflow/react |
+| **Servidor** | Node.js 20/22, Express, tRPC (`/api/trpc`), REST (`/api/reduce-logs/*`), OAuth |
+| **Persistência** | PostgreSQL 14+, Drizzle ORM |
+| **Dados auxiliares** | `funcoes-mapeadas/` (M1), `test-samples/` |
+| **Integrações opcionais** | VirusTotal v3, LLM, S3/Forge |
+| **Empacotamento** | pnpm (Corepack), TypeScript |
+
+Diagrama técnico detalhado (protocolos e pastas): [`fluxtrace_web/docs/MANUAL-TECNICO.md`](fluxtrace_web/docs/MANUAL-TECNICO.md).
 
 ### Ambiente de execução recomendado
 
@@ -469,6 +472,7 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 | [`fluxtrace_web/readme-web.md`](fluxtrace_web/readme-web.md) | Rotas, env, deploy |
 | [`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md) | Instalação passo a passo (PT) |
 | [`fluxtrace_web/docs/MANUAL-TECNICO.md`](fluxtrace_web/docs/MANUAL-TECNICO.md) | Arquitetura e operação |
+| [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama funcional (ingestão → redução → visualização) |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | Manual do utilizador |
 | [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
 | [`resultados/capturas-tela/`](resultados/capturas-tela/) | Capturas dos experimentos |
