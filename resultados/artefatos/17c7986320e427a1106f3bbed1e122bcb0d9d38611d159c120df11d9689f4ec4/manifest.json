@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-0RVSaTCT5A",
+  "sampleSha256": "17c7986320e427a1106f3bbed1e122bcb0d9d38611d159c120df11d9689f4ec4",
+  "sampleName": "17c7986320e427a1106f3bbed1e122bcb0d9d38611d159c120df11d9689f4ec4",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:27.794Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-0RVSaTCT5A\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

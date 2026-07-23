@@ -55,10 +55,10 @@ fluxtrace/
 │   ├── readme-web.md               ← referência operacional do pacote
 │   └── .env                        ← não versionado (copiar de backend/.env.example)
 ├── test-samples/                   ← 16 pacotes .zip Contradef (+ README, Git LFS)
-│   └── reduce-logs/                ← resultados pós-upload/redução (evidências, LFS)
 ├── funcoes-mapeadas/               ← catálogo M1 (47 funções, fluxos, xlsx)
 ├── resultados/
-│   └── capturas-tela/              ← evidências visuais dos experimentos (Sec. 5)
+│   ├── capturas-tela/              ← evidências visuais (Sec. 5)
+│   └── artefatos/                  ← saídas da ferramenta (reports/, LFS)
 ├── render.yaml                     ← blueprint opcional (Render.com)
 ├── package.json                    ← atalhos pnpm na raiz
 └── .gitattributes                  ← Git LFS para .zip grandes
@@ -67,9 +67,10 @@ fluxtrace/
 | Pasta / ficheiro | Papel |
 |------------------|--------|
 | `fluxtrace_web/` | Código principal da ferramenta |
-| `test-samples/` | Dados de entrada e resultados (`reduce-logs/`) para testes e experimentos |
+| `test-samples/` | Amostras Contradef de entrada (`.zip` na raiz) |
 | `funcoes-mapeadas/` | Documentação correlacionada ao escopo M1 da Contradef |
 | `resultados/capturas-tela/` | Capturas referenciadas no artigo e neste README |
+| `resultados/artefatos/` | Relatórios, `reduced-logs.json`, grafo e Mermaid exportados da ferramenta |
 | `fluxtrace_web/docs/` | Manuais detalhados (PT) para instalador, técnico e utilizador |
 
 ---
@@ -476,8 +477,9 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 | [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama funcional (ingestão → redução → visualização) |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | Manual do utilizador |
 | [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
-| [`test-samples/reduce-logs/README.md`](test-samples/reduce-logs/README.md) | Pacotes de saída / evidências pós-redução |
+| [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
 | [`resultados/capturas-tela/`](resultados/capturas-tela/) | Capturas dos experimentos |
+| [`resultados/artefatos/README.md`](resultados/artefatos/README.md) | Logs reduzidos, Mermaid, relatórios por lote (SHA-256) |
 
 ---
 

@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-JD-QvLcmsO",
+  "sampleSha256": "49aa74387680de248f21af321c6721c305a29a071279b5526627921daa812e42",
+  "sampleName": "Reprocessando - 49aa74387680de248f21af321c6721c305a29a071279b5526627921daa812e42",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:34.662Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-JD-QvLcmsO\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-8NlxV4fsaL",
+  "sampleSha256": "1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69",
+  "sampleName": "Redução Logs FluxTrace - 1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:28.388Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-8NlxV4fsaL\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

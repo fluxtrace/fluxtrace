@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-_YDCAWiM3u",
+  "sampleSha256": "7de3df7d279686adf7a3f9a3160dbbd35be0024cd3de2a22cae911efb61fef8c",
+  "sampleName": "Redução Logs FluxTrace - 7de3df7d279686adf7a3f9a3160dbbd35be0024cd3de2a22cae911efb61fef8c",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:37.530Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-_YDCAWiM3u\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

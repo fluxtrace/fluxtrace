@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-NdBUkcIZ4P",
+  "sampleSha256": "66ebbc7d5f4e3c2b392af7f624ad328c8b4dc2e198f7bf585506b132607e9fbd",
+  "sampleName": "66ebbc7d5f4e3c2b392af7f624ad328c8b4dc2e198f7bf585506b132607e9fbd",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:35.730Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-NdBUkcIZ4P\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

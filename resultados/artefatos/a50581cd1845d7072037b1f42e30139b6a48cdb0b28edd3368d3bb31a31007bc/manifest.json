@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-V8mMvnmwC8",
+  "sampleSha256": "a50581cd1845d7072037b1f42e30139b6a48cdb0b28edd3368d3bb31a31007bc",
+  "sampleName": "a50581cd1845d7072037b1f42e30139b6a48cdb0b28edd3368d3bb31a31007bc",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:36.410Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-V8mMvnmwC8\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

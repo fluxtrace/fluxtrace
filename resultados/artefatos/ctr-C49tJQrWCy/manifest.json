@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-C49tJQrWCy",
+  "sampleSha256": null,
+  "sampleName": null,
+  "status": null,
+  "exportedAt": "2026-07-23T21:56:32.713Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-C49tJQrWCy\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

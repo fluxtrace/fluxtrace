@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-WpfyZKMsRY",
+  "sampleSha256": "a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe",
+  "sampleName": "Redução Logs FluxTrace - a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:36.473Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-WpfyZKMsRY\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

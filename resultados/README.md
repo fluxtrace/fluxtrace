@@ -7,6 +7,7 @@ Pasta alinhada ao padrão de artefatos SBSEG (ex.: [TOMWare-DBI/TOMWare](https:/
 | Subpasta | Descrição |
 |----------|-----------|
 | [`capturas-tela/`](capturas-tela/) | Capturas de ecrã dos experimentos (Sec. 5 do artigo) |
+| [`artefatos/`](artefatos/) | Saídas exportadas da ferramenta (JSON, MD, Mermaid) por SHA-256 |
 
 ## Mapeamento captura → reivindicação
 
@@ -29,6 +30,5 @@ Pasta alinhada ao padrão de artefatos SBSEG (ex.: [TOMWare-DBI/TOMWare](https:/
 
 ## Referência
 
-Instruções de reprodução: secção **Experimentos** em [`README.md`](../README.md) na raiz do repositório.
-
-Pacotes de saída (logs reduzidos / resultados de lote): [`../test-samples/reduce-logs/`](../test-samples/reduce-logs/).
+Instruções de reprodução: secção **Experimentos** em [`README.md`](../README.md).  
+Artefactos exportados: [`artefatos/README.md`](artefatos/README.md).

@@ -1,0 +1,1086 @@
+{
+  "nodes": [
+    {
+      "id": "phase:Evasão",
+      "label": "Evasão",
+      "kind": "phase",
+      "severity": "medium",
+      "metadata": {
+        "current": false,
+        "stage": "Evasão",
+        "identification": "Fase «Evasão» sem evidências suspeitas ligadas na jornada reduzida: nenhuma API ou gatilho heurístico foi associado a esta coluna (atividade não classificada como suspeita, lacuna nos logs ou fase só de transição).",
+        "evidence": "Não há mensagens de eventos suspeitos agregadas a esta fase. Use as outras colunas do diagrama ou o painel operacional por ficheiro para mais detalhe.",
+        "identifiedBy": "Agregação automática da jornada no FluxTrace"
+      }
+    },
+    {
+      "id": "phase:Execução maliciosa",
+      "label": "Execução maliciosa",
+      "kind": "phase",
+      "severity": "medium",
+      "metadata": {
+        "current": false,
+        "stage": "Execução maliciosa",
+        "identification": "Fase «Execução maliciosa» agrega 28 evidência(s) suspeita(s) na jornada (0 gatilho(s) heurístico(s)): sequência de APIs e comportamentos correlacionados sob esta etapa antes do veredito.",
+        "evidence": "[+] GetProcAddress...\n\n---\n\n[-] In�cio da chamada GetProcAddress\n\n---\n\nRetorno GetProcAddress: 0x7ffa52df67e0\n\n---\n\n[-] Chamada GetProcAddress conclu�da\n\n---\n\n[+] GetProcAddress...\n\n---\n\n[-] In�cio da chamada GetProcAddress\n\n---\n\nRetorno GetProcAddress: 0x7ffa55346bb0\n\n---\n\n[-] Chamada GetProcAddress conclu�da\n\n---\n\n[+] GetProcAddress...\n\n---\n\n[-] In�cio da chamada GetProcAddress\n\n---\n\nRetorno GetProcAddress: 0x7ffa55372b30\n\n---\n\n[-] Chamada GetProcAddress conclu�da\n\n---\n\n[+] CreateFileW...\n\n---\n\n[+] CreateFileW...\n\n---\n\n[+] CreateFileW...\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress\n\n---\n\n7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress",
+        "identifiedBy": "Correlação por fase: GetProcAddress, CreateFile",
+        "suspiciousApis": [
+          "GetProcAddress",
+          "CreateFile"
+        ],
+        "techniques": []
+      }
+    },
+    {
+      "id": "phase:Persistência",
+      "label": "Persistência",
+      "kind": "phase",
+      "severity": "high",
+      "metadata": {
+        "current": true,
+        "stage": "Persistência",
+        "identification": "Fase «Persistência» sem evidências suspeitas ligadas na jornada reduzida: nenhuma API ou gatilho heurístico foi associado a esta coluna (atividade não classificada como suspeita, lacuna nos logs ou fase só de transição).",
+        "evidence": "Não há mensagens de eventos suspeitos agregadas a esta fase. Use as outras colunas do diagrama ou o painel operacional por ficheiro para mais detalhe.",
+        "identifiedBy": "Agregação automática da jornada no FluxTrace"
+      }
+    },
+    {
+      "id": "event:0:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 39,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[+] GetProcAddress..."
+      }
+    },
+    {
+      "id": "event:1:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 47,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] In�cio da chamada GetProcAddress"
+      }
+    },
+    {
+      "id": "event:2:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 48,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "Retorno GetProcAddress: 0x7ffa52df67e0"
+      }
+    },
+    {
+      "id": "event:3:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 50,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] Chamada GetProcAddress conclu�da"
+      }
+    },
+    {
+      "id": "event:4:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 54,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[+] GetProcAddress..."
+      }
+    },
+    {
+      "id": "event:5:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 62,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] In�cio da chamada GetProcAddress"
+      }
+    },
+    {
+      "id": "event:6:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 63,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "Retorno GetProcAddress: 0x7ffa55346bb0"
+      }
+    },
+    {
+      "id": "event:7:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 65,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] Chamada GetProcAddress conclu�da"
+      }
+    },
+    {
+      "id": "event:8:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 69,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[+] GetProcAddress..."
+      }
+    },
+    {
+      "id": "event:9:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 77,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] In�cio da chamada GetProcAddress"
+      }
+    },
+    {
+      "id": "event:10:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 78,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "Retorno GetProcAddress: 0x7ffa55372b30"
+      }
+    },
+    {
+      "id": "event:11:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 80,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] Chamada GetProcAddress conclu�da"
+      }
+    },
+    {
+      "id": "event:12:CreateFile",
+      "label": "CreateFile",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 3945,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (CreateFile)",
+        "identification": "API sensível detectada (CreateFile); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "CreateFile"
+        ],
+        "techniques": [],
+        "evidence": "[+] CreateFileW..."
+      }
+    },
+    {
+      "id": "event:13:CreateFile",
+      "label": "CreateFile",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 37872,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (CreateFile)",
+        "identification": "API sensível detectada (CreateFile); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "CreateFile"
+        ],
+        "techniques": [],
+        "evidence": "[+] CreateFileW..."
+      }
+    },
+    {
+      "id": "event:14:CreateFile",
+      "label": "CreateFile",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 56775,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (CreateFile)",
+        "identification": "API sensível detectada (CreateFile); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "CreateFile"
+        ],
+        "techniques": [],
+        "evidence": "[+] CreateFileW..."
+      }
+    },
+    {
+      "id": "event:15:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 2,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:16:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 5,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:17:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 7,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:18:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 10,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:19:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 127,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:20:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 233,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:21:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 235,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:22:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 236,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:23:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 238,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:24:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 239,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:25:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 240,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:26:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 241,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "event:27:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall",
+        "sourceLineNumber": 242,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+      }
+    },
+    {
+      "id": "verdict:discovery",
+      "label": "Descoberta: Trojan",
+      "kind": "verdict",
+      "severity": "critical",
+      "metadata": {
+        "classification": "Trojan",
+        "riskLevel": "critical",
+        "currentPhase": "Persistência",
+        "identifiedBy": "Correlação completa do caminho observado",
+        "identification": "Veredito final produzido após encadear os nós e validar as evidências preservadas.",
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "phase:Evasão",
+      "target": "phase:Execução maliciosa",
+      "relation": "evolui para"
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "phase:Persistência",
+      "relation": "evolui para"
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:0:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[+] GetProcAddress..."
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:1:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada GetProcAddress"
+    },
+    {
+      "source": "event:0:GetProcAddress",
+      "target": "event:1:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:2:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "Retorno GetProcAddress: 0x7ffa52df67e0"
+    },
+    {
+      "source": "event:1:GetProcAddress",
+      "target": "event:2:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:3:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] Chamada GetProcAddress conclu�da"
+    },
+    {
+      "source": "event:2:GetProcAddress",
+      "target": "event:3:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:4:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[+] GetProcAddress..."
+    },
+    {
+      "source": "event:3:GetProcAddress",
+      "target": "event:4:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:5:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada GetProcAddress"
+    },
+    {
+      "source": "event:4:GetProcAddress",
+      "target": "event:5:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:6:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "Retorno GetProcAddress: 0x7ffa55346bb0"
+    },
+    {
+      "source": "event:5:GetProcAddress",
+      "target": "event:6:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:7:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] Chamada GetProcAddress conclu�da"
+    },
+    {
+      "source": "event:6:GetProcAddress",
+      "target": "event:7:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:8:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[+] GetProcAddress..."
+    },
+    {
+      "source": "event:7:GetProcAddress",
+      "target": "event:8:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:9:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada GetProcAddress"
+    },
+    {
+      "source": "event:8:GetProcAddress",
+      "target": "event:9:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:10:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "Retorno GetProcAddress: 0x7ffa55372b30"
+    },
+    {
+      "source": "event:9:GetProcAddress",
+      "target": "event:10:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:11:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] Chamada GetProcAddress conclu�da"
+    },
+    {
+      "source": "event:10:GetProcAddress",
+      "target": "event:11:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:12:CreateFile",
+      "relation": "evidência",
+      "evidence": "[+] CreateFileW..."
+    },
+    {
+      "source": "event:11:GetProcAddress",
+      "target": "event:12:CreateFile",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:13:CreateFile",
+      "relation": "evidência",
+      "evidence": "[+] CreateFileW..."
+    },
+    {
+      "source": "event:12:CreateFile",
+      "target": "event:13:CreateFile",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:14:CreateFile",
+      "relation": "evidência",
+      "evidence": "[+] CreateFileW..."
+    },
+    {
+      "source": "event:13:CreateFile",
+      "target": "event:14:CreateFile",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:15:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:14:CreateFile",
+      "target": "event:15:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.FunctionInterceptor.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:16:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:15:GetProcAddress",
+      "target": "event:16:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:17:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:16:GetProcAddress",
+      "target": "event:17:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:18:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:17:GetProcAddress",
+      "target": "event:18:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:19:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:18:GetProcAddress",
+      "target": "event:19:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:20:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:19:GetProcAddress",
+      "target": "event:20:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:21:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:20:GetProcAddress",
+      "target": "event:21:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:22:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:21:GetProcAddress",
+      "target": "event:22:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:23:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:22:GetProcAddress",
+      "target": "event:23:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:24:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:23:GetProcAddress",
+      "target": "event:24:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:25:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:24:GetProcAddress",
+      "target": "event:25:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:26:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:25:GetProcAddress",
+      "target": "event:26:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:27:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "7ffa5443aec0 T[0] C:\\Windows\\System32\\KERNEL32.DLL:GetProcAddress"
+    },
+    {
+      "source": "event:26:GetProcAddress",
+      "target": "event:27:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf -> 0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+      "metadata": {
+        "sourceFile": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343/contradef.2516.TraceFcnCall.M1.cdf",
+        "sourceLogType": "TraceFcnCall"
+      }
+    },
+    {
+      "source": "event:27:GetProcAddress",
+      "target": "verdict:discovery",
+      "relation": "leva ao veredito"
+    }
+  ],
+  "summary": {
+    "phases": [
+      "Evasão",
+      "Execução maliciosa",
+      "Persistência"
+    ],
+    "totalSuspiciousEvents": 177,
+    "pathLength": 29
+  }
+}

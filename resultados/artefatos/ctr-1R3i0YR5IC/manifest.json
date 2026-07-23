@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-1R3i0YR5IC",
+  "sampleSha256": null,
+  "sampleName": "Redução Logs Contradef",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:27.843Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-1R3i0YR5IC\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

@@ -58,7 +58,28 @@ flowchart LR
   Services --> Ext
 ```
 
-### 1.4. Organização do código (`fluxtrace_web/`)
+### 1.4. Onde ficam os artefactos gerados
+
+| Caminho (local) | Conteúdo |
+|-----------------|----------|
+| `CONTRADEF_REDUCE_LOGS_TMP/<SHA>/` | Upload multipart (**entrada**, temporário) |
+| `CONTRADEF_WORK_TMP/<SHA>/` | Extração intermédia durante processamento |
+| **`CONTRADEF_WORK_TMP/<batchId>/artifacts/reports/`** | **Saídas:** `reduced-logs.json`, `final-report.md`, `flow-graph.json`, `malware-flow-map.md` |
+
+Por defeito no Windows (sem `.env`): `F:\contradef-tmp\…`. Com `.env` do projecto: `CONTRADEF_WORK_TMP=F:/contradef-tmp/analysis`.
+
+Exportar para o repositório (evidências CTA):
+
+```bash
+cd fluxtrace_web
+npx tsx backend/scripts/export-batch-artifacts.mts
+```
+
+Destino: `resultados/artefatos/<SHA-256>/reports/` (ver [`resultados/artefatos/README.md`](../../../resultados/artefatos/README.md)).
+
+Com `CONTRADEF_DISCARD_ORIGINAL_LOGS_AFTER_SUCCESS=1`, os ficheiros em `artifacts/source/` (log bruto) são removidos após sucesso.
+
+### 1.5. Organização do código (`fluxtrace_web/`)
 
 | Pasta / ficheiro | Papel |
 |------------------|--------|

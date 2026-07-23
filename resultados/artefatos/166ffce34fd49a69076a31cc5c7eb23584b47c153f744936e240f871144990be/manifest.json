@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-MfaD4t9G-Z",
+  "sampleSha256": "166ffce34fd49a69076a31cc5c7eb23584b47c153f744936e240f871144990be",
+  "sampleName": "166ffce34fd49a69076a31cc5c7eb23584b47c153f744936e240f871144990be",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:35.061Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-MfaD4t9G-Z\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

@@ -1,0 +1,1186 @@
+{
+  "nodes": [
+    {
+      "id": "phase:Inicialização",
+      "label": "Inicialização",
+      "kind": "phase",
+      "severity": "medium",
+      "metadata": {
+        "current": false,
+        "stage": "Inicialização",
+        "identification": "Fase «Inicialização» sem evidências suspeitas ligadas na jornada reduzida: nenhuma API ou gatilho heurístico foi associado a esta coluna (atividade não classificada como suspeita, lacuna nos logs ou fase só de transição).",
+        "evidence": "Não há mensagens de eventos suspeitos agregadas a esta fase. Use as outras colunas do diagrama ou o painel operacional por ficheiro para mais detalhe.",
+        "identifiedBy": "Agregação automática da jornada (Contradef)"
+      }
+    },
+    {
+      "id": "phase:Evasão",
+      "label": "Evasão",
+      "kind": "phase",
+      "severity": "medium",
+      "metadata": {
+        "current": false,
+        "stage": "Evasão",
+        "identification": "Fase «Evasão» agrega 12 evidência(s) suspeita(s) na jornada (0 gatilho(s) heurístico(s)): sequência de APIs e comportamentos correlacionados sob esta etapa antes do veredito.",
+        "evidence": "[+] IsDebuggerPresent...\n\n---\n\n[+] CheckRemoteDebuggerPresent...\n\n---\n\npbDebuggerPresent: FALSE\n\n---\n\n[+] NtQueryInformationProcess...\n\n---\n\n[-] Início da chamada NtQueryInformationProcess\n\n---\n\nRetorno NtQueryInformationProcess (NTSTATUS): 0xc0000353\n\n---\n\n[-] Chamada NtQueryInformationProcess concluída\n\n---\n\n[+] GetTickCount...\n\n---\n\n[+] RtlQueryPerformanceCounter...\n\n---\n\n[-] In�cio da chamada RtlQueryPerformanceCounter\n\n---\n\n[-] Chamada RtlQueryPerformanceCounter conclu�da\n\n---\n\n[+] IsDebuggerPresent...",
+        "identifiedBy": "Correlação por fase: IsDebuggerPresent, CheckRemoteDebuggerPresent, Anti-debug, NtQueryInformationProcess, GetTickCount, RtlQueryPerformanceCounter",
+        "suspiciousApis": [
+          "IsDebuggerPresent",
+          "CheckRemoteDebuggerPresent",
+          "Anti-debug",
+          "NtQueryInformationProcess",
+          "GetTickCount",
+          "RtlQueryPerformanceCounter"
+        ],
+        "techniques": [
+          "Anti-debug",
+          "Verificação de overhead"
+        ]
+      }
+    },
+    {
+      "id": "phase:Desempacotamento",
+      "label": "Desempacotamento",
+      "kind": "phase",
+      "severity": "medium",
+      "metadata": {
+        "current": false,
+        "stage": "Desempacotamento",
+        "identification": "Fase «Desempacotamento» agrega 9 evidência(s) suspeita(s) na jornada (0 gatilho(s) heurístico(s)): sequência de APIs e comportamentos correlacionados sob esta etapa antes do veredito.",
+        "evidence": "[+] VirtualProtect...\n\n---\n\n[+] VirtualProtect...\n\n---\n\n[+] VirtualProtect...\n\n---\n\n[+] VirtualProtect...\n\n---\n\n[+] VirtualProtect...\n\n---\n\n[+] VirtualAlloc...\n\n---\n\n[-] In�cio da chamada VirtualAlloc\n\n---\n\nRetorno VirtualAlloc: 0x15040000\n\n---\n\n[-] Chamada VirtualAlloc conclu�da",
+        "identifiedBy": "Correlação por fase: VirtualProtect, VirtualAlloc",
+        "suspiciousApis": [
+          "VirtualProtect",
+          "VirtualAlloc"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ]
+      }
+    },
+    {
+      "id": "phase:Execução maliciosa",
+      "label": "Execução maliciosa",
+      "kind": "phase",
+      "severity": "medium",
+      "metadata": {
+        "current": false,
+        "stage": "Execução maliciosa",
+        "identification": "Fase «Execução maliciosa» agrega 6 evidência(s) suspeita(s) na jornada (0 gatilho(s) heurístico(s)): sequência de APIs e comportamentos correlacionados sob esta etapa antes do veredito.",
+        "evidence": "[+] GetProcAddress...\n\n---\n\n[-] In�cio da chamada GetProcAddress\n\n---\n\n[-] Chamada GetProcAddress conclu�da\n\n---\n\n[+] GetProcAddress...\n\n---\n\n[-] In�cio da chamada GetProcAddress\n\n---\n\nRetorno GetProcAddress: 0x7ffb48c356b0",
+        "identifiedBy": "Correlação por fase: GetProcAddress",
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": []
+      }
+    },
+    {
+      "id": "phase:Exfiltração",
+      "label": "Exfiltração",
+      "kind": "phase",
+      "severity": "high",
+      "metadata": {
+        "current": true,
+        "stage": "Exfiltração",
+        "identification": "Fase «Exfiltração» agrega 1 evidência(s) suspeita(s) na jornada (0 gatilho(s) heurístico(s)): sequência de APIs e comportamentos correlacionados sob esta etapa antes do veredito.",
+        "evidence": "Retorno GetProcAddress: 0x7ffb48c27a30",
+        "identifiedBy": "Correlação por fase: GetProcAddress",
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": []
+      }
+    },
+    {
+      "id": "event:0:IsDebuggerPresent",
+      "label": "IsDebuggerPresent",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 83,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (IsDebuggerPresent)",
+        "identification": "API sensível detectada (IsDebuggerPresent); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "IsDebuggerPresent"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "[+] IsDebuggerPresent..."
+      }
+    },
+    {
+      "id": "event:1:CheckRemoteDebuggerPresent",
+      "label": "CheckRemoteDebuggerPresent",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 92,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (CheckRemoteDebuggerPresent)",
+        "identification": "API sensível detectada (CheckRemoteDebuggerPresent); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "CheckRemoteDebuggerPresent"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "[+] CheckRemoteDebuggerPresent..."
+      }
+    },
+    {
+      "id": "event:2:Anti-debug",
+      "label": "Anti-debug",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 99,
+        "stage": "Evasão",
+        "identifiedBy": "Evidência Anti-debug",
+        "identification": "Evidência Anti-debug; linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "pbDebuggerPresent: FALSE"
+      }
+    },
+    {
+      "id": "event:3:NtQueryInformationProcess",
+      "label": "NtQueryInformationProcess",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 104,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (NtQueryInformationProcess)",
+        "identification": "API sensível detectada (NtQueryInformationProcess); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "NtQueryInformationProcess"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "[+] NtQueryInformationProcess..."
+      }
+    },
+    {
+      "id": "event:4:NtQueryInformationProcess",
+      "label": "NtQueryInformationProcess",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 115,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (NtQueryInformationProcess)",
+        "identification": "API sensível detectada (NtQueryInformationProcess); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "NtQueryInformationProcess"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "[-] Início da chamada NtQueryInformationProcess"
+      }
+    },
+    {
+      "id": "event:5:NtQueryInformationProcess",
+      "label": "NtQueryInformationProcess",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 116,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (NtQueryInformationProcess)",
+        "identification": "API sensível detectada (NtQueryInformationProcess); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "NtQueryInformationProcess"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "Retorno NtQueryInformationProcess (NTSTATUS): 0xc0000353"
+      }
+    },
+    {
+      "id": "event:6:NtQueryInformationProcess",
+      "label": "NtQueryInformationProcess",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 118,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (NtQueryInformationProcess)",
+        "identification": "API sensível detectada (NtQueryInformationProcess); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "NtQueryInformationProcess"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "[-] Chamada NtQueryInformationProcess concluída"
+      }
+    },
+    {
+      "id": "event:7:VirtualProtect",
+      "label": "VirtualProtect",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 122,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualProtect)",
+        "identification": "API sensível detectada (VirtualProtect); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualProtect"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[+] VirtualProtect..."
+      }
+    },
+    {
+      "id": "event:8:VirtualProtect",
+      "label": "VirtualProtect",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 139,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualProtect)",
+        "identification": "API sensível detectada (VirtualProtect); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualProtect"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[+] VirtualProtect..."
+      }
+    },
+    {
+      "id": "event:9:VirtualProtect",
+      "label": "VirtualProtect",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 156,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualProtect)",
+        "identification": "API sensível detectada (VirtualProtect); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualProtect"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[+] VirtualProtect..."
+      }
+    },
+    {
+      "id": "event:10:VirtualProtect",
+      "label": "VirtualProtect",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 173,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualProtect)",
+        "identification": "API sensível detectada (VirtualProtect); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualProtect"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[+] VirtualProtect..."
+      }
+    },
+    {
+      "id": "event:11:GetTickCount",
+      "label": "GetTickCount",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 190,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (GetTickCount)",
+        "identification": "API sensível detectada (GetTickCount); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetTickCount"
+        ],
+        "techniques": [
+          "Verificação de overhead"
+        ],
+        "evidence": "[+] GetTickCount..."
+      }
+    },
+    {
+      "id": "event:12:RtlQueryPerformanceCounter",
+      "label": "RtlQueryPerformanceCounter",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 199,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (RtlQueryPerformanceCounter)",
+        "identification": "API sensível detectada (RtlQueryPerformanceCounter); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "RtlQueryPerformanceCounter"
+        ],
+        "techniques": [
+          "Verificação de overhead"
+        ],
+        "evidence": "[+] RtlQueryPerformanceCounter..."
+      }
+    },
+    {
+      "id": "event:13:RtlQueryPerformanceCounter",
+      "label": "RtlQueryPerformanceCounter",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 207,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (RtlQueryPerformanceCounter)",
+        "identification": "API sensível detectada (RtlQueryPerformanceCounter); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "RtlQueryPerformanceCounter"
+        ],
+        "techniques": [
+          "Verificação de overhead"
+        ],
+        "evidence": "[-] In�cio da chamada RtlQueryPerformanceCounter"
+      }
+    },
+    {
+      "id": "event:14:RtlQueryPerformanceCounter",
+      "label": "RtlQueryPerformanceCounter",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 211,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (RtlQueryPerformanceCounter)",
+        "identification": "API sensível detectada (RtlQueryPerformanceCounter); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "RtlQueryPerformanceCounter"
+        ],
+        "techniques": [
+          "Verificação de overhead"
+        ],
+        "evidence": "[-] Chamada RtlQueryPerformanceCounter conclu�da"
+      }
+    },
+    {
+      "id": "event:15:VirtualProtect",
+      "label": "VirtualProtect",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 981,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualProtect)",
+        "identification": "API sensível detectada (VirtualProtect); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualProtect"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[+] VirtualProtect..."
+      }
+    },
+    {
+      "id": "event:16:IsDebuggerPresent",
+      "label": "IsDebuggerPresent",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1039,
+        "stage": "Evasão",
+        "identifiedBy": "API sensível detectada (IsDebuggerPresent)",
+        "identification": "API sensível detectada (IsDebuggerPresent); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "IsDebuggerPresent"
+        ],
+        "techniques": [
+          "Anti-debug"
+        ],
+        "evidence": "[+] IsDebuggerPresent..."
+      }
+    },
+    {
+      "id": "event:17:VirtualAlloc",
+      "label": "VirtualAlloc",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1059,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualAlloc)",
+        "identification": "API sensível detectada (VirtualAlloc); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualAlloc"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[+] VirtualAlloc..."
+      }
+    },
+    {
+      "id": "event:18:VirtualAlloc",
+      "label": "VirtualAlloc",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1069,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualAlloc)",
+        "identification": "API sensível detectada (VirtualAlloc); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualAlloc"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[-] In�cio da chamada VirtualAlloc"
+      }
+    },
+    {
+      "id": "event:19:VirtualAlloc",
+      "label": "VirtualAlloc",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1070,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualAlloc)",
+        "identification": "API sensível detectada (VirtualAlloc); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualAlloc"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "Retorno VirtualAlloc: 0x15040000"
+      }
+    },
+    {
+      "id": "event:20:VirtualAlloc",
+      "label": "VirtualAlloc",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1072,
+        "stage": "Desempacotamento",
+        "identifiedBy": "API sensível detectada (VirtualAlloc)",
+        "identification": "API sensível detectada (VirtualAlloc); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "VirtualAlloc"
+        ],
+        "techniques": [
+          "Transição RW→RX"
+        ],
+        "evidence": "[-] Chamada VirtualAlloc conclu�da"
+      }
+    },
+    {
+      "id": "event:21:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1087,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[+] GetProcAddress..."
+      }
+    },
+    {
+      "id": "event:22:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1095,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] In�cio da chamada GetProcAddress"
+      }
+    },
+    {
+      "id": "event:23:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1096,
+        "stage": "Exfiltração",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "Retorno GetProcAddress: 0x7ffb48c27a30"
+      }
+    },
+    {
+      "id": "event:24:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1098,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] Chamada GetProcAddress conclu�da"
+      }
+    },
+    {
+      "id": "event:25:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1102,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[+] GetProcAddress..."
+      }
+    },
+    {
+      "id": "event:26:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1110,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "[-] In�cio da chamada GetProcAddress"
+      }
+    },
+    {
+      "id": "event:27:GetProcAddress",
+      "label": "GetProcAddress",
+      "kind": "api",
+      "severity": "high",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor",
+        "sourceLineNumber": 1111,
+        "stage": "Execução maliciosa",
+        "identifiedBy": "API sensível detectada (GetProcAddress)",
+        "identification": "API sensível detectada (GetProcAddress); linha marcada como evidência suspeita.",
+        "trigger": false,
+        "suspiciousApis": [
+          "GetProcAddress"
+        ],
+        "techniques": [],
+        "evidence": "Retorno GetProcAddress: 0x7ffb48c356b0"
+      }
+    },
+    {
+      "id": "verdict:discovery",
+      "label": "Descoberta: Trojan",
+      "kind": "verdict",
+      "severity": "critical",
+      "metadata": {
+        "classification": "Trojan",
+        "riskLevel": "critical",
+        "currentPhase": "Exfiltração",
+        "identifiedBy": "Correlação completa do caminho observado",
+        "identification": "Veredito final produzido após encadear os nós e validar as evidências preservadas.",
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "phase:Inicialização",
+      "target": "phase:Evasão",
+      "relation": "evolui para"
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "phase:Desempacotamento",
+      "relation": "evolui para"
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "phase:Execução maliciosa",
+      "relation": "evolui para"
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "phase:Exfiltração",
+      "relation": "evolui para"
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:0:IsDebuggerPresent",
+      "relation": "evidência",
+      "evidence": "[+] IsDebuggerPresent..."
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:1:CheckRemoteDebuggerPresent",
+      "relation": "evidência",
+      "evidence": "[+] CheckRemoteDebuggerPresent..."
+    },
+    {
+      "source": "event:0:IsDebuggerPresent",
+      "target": "event:1:CheckRemoteDebuggerPresent",
+      "relation": "checagem anti-debug",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:2:Anti-debug",
+      "relation": "evidência",
+      "evidence": "pbDebuggerPresent: FALSE"
+    },
+    {
+      "source": "event:1:CheckRemoteDebuggerPresent",
+      "target": "event:2:Anti-debug",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:3:NtQueryInformationProcess",
+      "relation": "evidência",
+      "evidence": "[+] NtQueryInformationProcess..."
+    },
+    {
+      "source": "event:2:Anti-debug",
+      "target": "event:3:NtQueryInformationProcess",
+      "relation": "checagem anti-debug",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:4:NtQueryInformationProcess",
+      "relation": "evidência",
+      "evidence": "[-] Início da chamada NtQueryInformationProcess"
+    },
+    {
+      "source": "event:3:NtQueryInformationProcess",
+      "target": "event:4:NtQueryInformationProcess",
+      "relation": "checagem anti-debug",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:5:NtQueryInformationProcess",
+      "relation": "evidência",
+      "evidence": "Retorno NtQueryInformationProcess (NTSTATUS): 0xc0000353"
+    },
+    {
+      "source": "event:4:NtQueryInformationProcess",
+      "target": "event:5:NtQueryInformationProcess",
+      "relation": "checagem anti-debug",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:6:NtQueryInformationProcess",
+      "relation": "evidência",
+      "evidence": "[-] Chamada NtQueryInformationProcess concluída"
+    },
+    {
+      "source": "event:5:NtQueryInformationProcess",
+      "target": "event:6:NtQueryInformationProcess",
+      "relation": "checagem anti-debug",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:7:VirtualProtect",
+      "relation": "evidência",
+      "evidence": "[+] VirtualProtect..."
+    },
+    {
+      "source": "event:6:NtQueryInformationProcess",
+      "target": "event:7:VirtualProtect",
+      "relation": "transição RW->RX (unpacking)",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:8:VirtualProtect",
+      "relation": "evidência",
+      "evidence": "[+] VirtualProtect..."
+    },
+    {
+      "source": "event:7:VirtualProtect",
+      "target": "event:8:VirtualProtect",
+      "relation": "transição RW->RX (unpacking)",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:9:VirtualProtect",
+      "relation": "evidência",
+      "evidence": "[+] VirtualProtect..."
+    },
+    {
+      "source": "event:8:VirtualProtect",
+      "target": "event:9:VirtualProtect",
+      "relation": "transição RW->RX (unpacking)",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:10:VirtualProtect",
+      "relation": "evidência",
+      "evidence": "[+] VirtualProtect..."
+    },
+    {
+      "source": "event:9:VirtualProtect",
+      "target": "event:10:VirtualProtect",
+      "relation": "transição RW->RX (unpacking)",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:11:GetTickCount",
+      "relation": "evidência",
+      "evidence": "[+] GetTickCount..."
+    },
+    {
+      "source": "event:10:VirtualProtect",
+      "target": "event:11:GetTickCount",
+      "relation": "checagem anti-overhead",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:12:RtlQueryPerformanceCounter",
+      "relation": "evidência",
+      "evidence": "[+] RtlQueryPerformanceCounter..."
+    },
+    {
+      "source": "event:11:GetTickCount",
+      "target": "event:12:RtlQueryPerformanceCounter",
+      "relation": "checagem anti-overhead",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:13:RtlQueryPerformanceCounter",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada RtlQueryPerformanceCounter"
+    },
+    {
+      "source": "event:12:RtlQueryPerformanceCounter",
+      "target": "event:13:RtlQueryPerformanceCounter",
+      "relation": "checagem anti-overhead",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:14:RtlQueryPerformanceCounter",
+      "relation": "evidência",
+      "evidence": "[-] Chamada RtlQueryPerformanceCounter conclu�da"
+    },
+    {
+      "source": "event:13:RtlQueryPerformanceCounter",
+      "target": "event:14:RtlQueryPerformanceCounter",
+      "relation": "checagem anti-overhead",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:15:VirtualProtect",
+      "relation": "evidência",
+      "evidence": "[+] VirtualProtect..."
+    },
+    {
+      "source": "event:14:RtlQueryPerformanceCounter",
+      "target": "event:15:VirtualProtect",
+      "relation": "transição RW->RX (unpacking)",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Evasão",
+      "target": "event:16:IsDebuggerPresent",
+      "relation": "evidência",
+      "evidence": "[+] IsDebuggerPresent..."
+    },
+    {
+      "source": "event:15:VirtualProtect",
+      "target": "event:16:IsDebuggerPresent",
+      "relation": "checagem anti-debug",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:17:VirtualAlloc",
+      "relation": "evidência",
+      "evidence": "[+] VirtualAlloc..."
+    },
+    {
+      "source": "event:16:IsDebuggerPresent",
+      "target": "event:17:VirtualAlloc",
+      "relation": "preparação de memória",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:18:VirtualAlloc",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada VirtualAlloc"
+    },
+    {
+      "source": "event:17:VirtualAlloc",
+      "target": "event:18:VirtualAlloc",
+      "relation": "preparação de memória",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:19:VirtualAlloc",
+      "relation": "evidência",
+      "evidence": "Retorno VirtualAlloc: 0x15040000"
+    },
+    {
+      "source": "event:18:VirtualAlloc",
+      "target": "event:19:VirtualAlloc",
+      "relation": "preparação de memória",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Desempacotamento",
+      "target": "event:20:VirtualAlloc",
+      "relation": "evidência",
+      "evidence": "[-] Chamada VirtualAlloc conclu�da"
+    },
+    {
+      "source": "event:19:VirtualAlloc",
+      "target": "event:20:VirtualAlloc",
+      "relation": "preparação de memória",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:21:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[+] GetProcAddress..."
+    },
+    {
+      "source": "event:20:VirtualAlloc",
+      "target": "event:21:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:22:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada GetProcAddress"
+    },
+    {
+      "source": "event:21:GetProcAddress",
+      "target": "event:22:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Exfiltração",
+      "target": "event:23:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "Retorno GetProcAddress: 0x7ffb48c27a30"
+    },
+    {
+      "source": "event:22:GetProcAddress",
+      "target": "event:23:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:24:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] Chamada GetProcAddress conclu�da"
+    },
+    {
+      "source": "event:23:GetProcAddress",
+      "target": "event:24:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:25:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[+] GetProcAddress..."
+    },
+    {
+      "source": "event:24:GetProcAddress",
+      "target": "event:25:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:26:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "[-] In�cio da chamada GetProcAddress"
+    },
+    {
+      "source": "event:25:GetProcAddress",
+      "target": "event:26:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "phase:Execução maliciosa",
+      "target": "event:27:GetProcAddress",
+      "relation": "evidência",
+      "evidence": "Retorno GetProcAddress: 0x7ffb48c356b0"
+    },
+    {
+      "source": "event:26:GetProcAddress",
+      "target": "event:27:GetProcAddress",
+      "relation": "progressão da execução",
+      "evidence": "contradef.2956.FunctionInterceptor.cdf -> contradef.2956.FunctionInterceptor.cdf",
+      "metadata": {
+        "sourceFile": "contradef.2956.FunctionInterceptor.cdf",
+        "sourceLogType": "FunctionInterceptor"
+      }
+    },
+    {
+      "source": "event:27:GetProcAddress",
+      "target": "verdict:discovery",
+      "relation": "leva ao veredito"
+    }
+  ],
+  "summary": {
+    "phases": [
+      "Inicialização",
+      "Evasão",
+      "Desempacotamento",
+      "Execução maliciosa",
+      "Exfiltração"
+    ],
+    "totalSuspiciousEvents": 256,
+    "pathLength": 29
+  }
+}

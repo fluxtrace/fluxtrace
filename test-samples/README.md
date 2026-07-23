@@ -86,17 +86,28 @@ Ao acrescentar pacotes, actualize **esta tabela** (SHA-256, tamanho de `TraceIns
 
 ---
 
-## Resultados após redução (`reduce-logs/`)
+## Resultados após redução
 
-Pacotes de **saída / evidência** gerados após upload e processamento na ferramenta (logs reduzidos, exports ou arquivos do lote concluído). Organizados por **SHA-256** da amostra de entrada.
+### Artefactos gerados (`resultados/artefatos/`)
 
-Ver inventário: [`reduce-logs/README.md`](reduce-logs/README.md).
+Saídas **reais** da ferramenta por lote concluído:
+
+- `reports/reduced-logs.json` — logs reduzidos
+- `reports/final-report.md` — veredito / relatório
+- `reports/flow-graph.json` — grafo consolidado
+- `reports/malware-flow-map.md` — diagrama **Mermaid**
+
+Exportação a partir do disco local: `cd fluxtrace_web && npx tsx backend/scripts/export-batch-artifacts.mts`
+
+Ver [`resultados/artefatos/README.md`](resultados/artefatos/README.md).
+
+### Upload multipart (`reduce-logs/` — staging)
+
+A pasta `test-samples/reduce-logs/` (se existir localmente) espelha **uploads temporários**, não os logs reduzidos. Ver [`reduce-logs/README.md`](reduce-logs/README.md).
 
 ```text
 test-samples/
-├── *.zip              ← amostras Contradef de entrada (entrada)
-└── reduce-logs/
-    └── <SHA-256>/     ← resultados / evidências pós-processamento
+├── *.zip              ← amostras Contradef de entrada
+└── reduce-logs/       ← opcional: cópias de upload (staging), não substituem artefatos/
+resultados/artefatos/  ← evidências pós-processamento (versionar)
 ```
-
-Também versionados com **Git LFS**. Após clone: `git lfs pull`.

@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-Bw3hfEqJMg",
+  "sampleSha256": "1693df9d970e011cf1c827fceaf49a3724f4478bc0ed7dc50f2d90ea417b6d38",
+  "sampleName": "1693df9d970e011cf1c827fceaf49a3724f4478bc0ed7dc50f2d90ea417b6d38",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:30.429Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-Bw3hfEqJMg\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

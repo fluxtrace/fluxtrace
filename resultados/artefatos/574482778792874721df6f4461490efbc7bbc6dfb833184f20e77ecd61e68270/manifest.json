@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-052TP49FHN",
+  "sampleSha256": "574482778792874721df6f4461490efbc7bbc6dfb833184f20e77ecd61e68270",
+  "sampleName": "574482778792874721df6f4461490efbc7bbc6dfb833184f20e77ecd61e68270",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:23.360Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-052TP49FHN\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}

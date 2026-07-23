@@ -1,0 +1,14 @@
+{
+  "batchId": "ctr-k0pAbPHzHY",
+  "sampleSha256": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343",
+  "sampleName": "0e3e95ee6649238171fb409c143c8a944bc54332f0ce85b94c651b5d0bf95343",
+  "status": "completed",
+  "exportedAt": "2026-07-23T21:56:34.897Z",
+  "sourcePath": "F:\\contradef-tmp\\analysis\\ctr-k0pAbPHzHY\\artifacts\\reports",
+  "files": [
+    "final-report.md",
+    "flow-graph.json",
+    "malware-flow-map.md",
+    "reduced-logs.json"
+  ]
+}
