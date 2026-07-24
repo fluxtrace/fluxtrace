@@ -45,9 +45,9 @@ O rótulo **ficheiro** (`amostra_100k.csv`, etc.) é convencional nos relatório
 
 ## Opção 1 — Google Drive
 
-[Abrir / descarregar no Google Drive](https://drive.google.com/drive/u/3/home)
+[Abrir / descarregar no Google Drive](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link)
 
-URL: `https://drive.google.com/drive/u/3/home`
+URL: `https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link`
 
 ---
 

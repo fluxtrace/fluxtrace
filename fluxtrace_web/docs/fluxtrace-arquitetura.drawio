@@ -1,0 +1,168 @@
+<mxfile host="app.diagrams.net" agent="FluxTrace" version="24.7.7">
+  <diagram id="fluxtrace-arquitetura" name="Arquitetura FluxTrace">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Título -->
+        <mxCell id="title" value="FluxTrace: Uma Ferramenta Baseada em Logs para Análise de Comportamentos Evasivos" style="text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1340" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Cabeçalhos das colunas -->
+        <mxCell id="hdr1" value="INGESTÃO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B3CFE8;strokeColor=#6C8EBF;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="100" y="60" width="440" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr2" value="PROCESSAMENTO E REDUÇÃO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5D34D;strokeColor=#D6B656;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="540" y="60" width="480" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hdr3" value="VISUALIZAÇÃO E SAÍDA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#A9CF8F;strokeColor=#82B366;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="60" width="360" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Fundos das faixas -->
+        <mxCell id="bg1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8F5;strokeColor=#9CB8D4;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="100" y="100" width="1280" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="bg2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCF3CF;strokeColor=#D6B656;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="100" y="320" width="1280" height="225" as="geometry" />
+        </mxCell>
+        <mxCell id="bg3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#82B366;opacity=60;" vertex="1" parent="1">
+          <mxGeometry x="100" y="555" width="1280" height="235" as="geometry" />
+        </mxCell>
+
+        <!-- Rótulos verticais das faixas -->
+        <mxCell id="lane1" value="INGESTÃO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#B3CFE8;strokeColor=#6C8EBF;fontStyle=1;horizontal=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="50" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="lane2" value="PROCESSAMENTO E REDUÇÃO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F5D34D;strokeColor=#D6B656;fontStyle=1;horizontal=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="320" width="50" height="225" as="geometry" />
+        </mxCell>
+        <mxCell id="lane3" value="VISUALIZAÇÃO E SAÍDA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#A9CF8F;strokeColor=#82B366;fontStyle=1;horizontal=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="555" width="50" height="235" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== FAIXA 1: INGESTÃO ===================== -->
+        <mxCell id="analista" value="Analista de&#10;Segurança" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;verticalLabelPosition=bottom;verticalAlign=top;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="140" y="135" width="60" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="logsdbi" value="&lt;b&gt;Logs DBI Contradef&lt;/b&gt;&lt;br&gt;(.cdf, ficheiros multi-GB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="270" y="150" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="modulo" value="&lt;b&gt;Módulo de Ingestão&lt;br&gt;de FluxTrace&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="500" y="150" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="redutor" value="&lt;b&gt;Redutor Logs Heurístico&lt;/b&gt;&lt;br&gt;(Redução 99,7%)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;" vertex="1" parent="1">
+          <mxGeometry x="730" y="150" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="criterios" value="Reduz grandes volumes&lt;br&gt;&lt;b&gt;Chamadas API Sensíveis&lt;/b&gt;&lt;br&gt;&lt;b&gt;Padrões Memória (ex: RW→RX)&lt;/b&gt;&lt;br&gt;&lt;b&gt;Termos Analista&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="985" y="130" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="interpAssist" value="&lt;b&gt;Interpretação&lt;br&gt;Assistida&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1230" y="140" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== FAIXA 2: PROCESSAMENTO ===================== -->
+        <mxCell id="bancoM1" value="FunctionInterceptor.cdf&lt;br&gt;TraceMemory.cdf&lt;br&gt;TraceInstructions.cdf&lt;br&gt;TraceFcnCall.cdf&lt;br&gt;(variantes M1/M2)&lt;br&gt;&lt;br&gt;&lt;b&gt;Banco de Conhecimento M1&lt;/b&gt;&lt;br&gt;(47 funções Windows API mapeadas)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;align=center;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="150" y="345" width="280" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="logsfiltrados" value="&lt;b&gt;Logs Filtrados&lt;/b&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#FFF2CC;strokeColor=#D6B656;size=15;" vertex="1" parent="1">
+          <mxGeometry x="500" y="390" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="agregador" value="&lt;b&gt;Agregador&lt;/b&gt;&lt;br&gt;TraceFcnCall&lt;br&gt;TraceMemory&lt;br&gt;TraceInstructions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D6B656;" vertex="1" parent="1">
+          <mxGeometry x="700" y="380" width="180" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="engine" value="&lt;b&gt;Engine de Correlação e&lt;br&gt;Análise Comportamental&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="930" y="385" width="210" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="mitre" value="TraceFcnCall&lt;br&gt;TraceMemory&lt;br&gt;TraceInstructions&lt;br&gt;&lt;br&gt;&lt;b&gt;MITRE ATT&amp;amp;CK&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="360" width="180" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== FAIXA 3: VISUALIZAÇÃO ===================== -->
+        <mxCell id="diagM1" value="&lt;b&gt;Diagrama de Escopo M1&lt;/b&gt;&lt;br&gt;(fluxos anti-debug / anti-VM com chamadas de interceptação e instruções correlacionadas)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="150" y="590" width="250" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="grafo" value="&lt;b&gt;Grafo Compacto Fluxo Malware&lt;/b&gt;&lt;br&gt;(redução 32 nós / 58 arestas → 5 nós / 4 arestas, com fases comportamentais, ex.: Backdoor / Trojan)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="460" y="590" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="painel" value="&lt;b&gt;Painel de Evidências e Auditoria&lt;/b&gt;&lt;br&gt;(log filtrado; evidências preservadas, ex.: GetProcAddress)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82B366;verticalAlign=middle;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="780" y="590" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="veredito" value="&lt;b&gt;Interpretação Consolidada&lt;br&gt;e Veredito Técnico&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="605" width="230" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== LIGAÇÕES ===================== -->
+        <mxCell id="e1" value="Submete" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;" edge="1" parent="1" source="analista" target="logsdbi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="logsdbi" target="modulo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="modulo" target="redutor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="criterios" target="redutor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="modulo" target="logsfiltrados">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="Contextos preservados — logs filtrados" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="redutor" target="agregador">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bancoM1" target="logsdbi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="banco de conhecimento (rotulagem)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="bancoM1" target="engine">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="logsfiltrados" target="agregador">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="agregador" target="engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="enriquecimento opcional" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="engine" target="mitre">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="engine" target="painel">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="engine" target="grafo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="engine" target="diagM1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="275" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="painel" target="veredito">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="veredito" target="mitre">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="mitre" target="interpAssist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" value="Interpretação assistida (realimentação)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;fontSize=11;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="diagM1" target="analista">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="665" />
+              <mxPoint x="120" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

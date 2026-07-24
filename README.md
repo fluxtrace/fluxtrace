@@ -145,7 +145,7 @@ Diagrama técnico detalhado (protocolos e pastas): [`fluxtrace_web/docs/MANUAL-T
 | **Node.js** | **20 LTS** ou **22** |
 | **PostgreSQL** | **14+** (local, Docker ou hospedado) |
 | **Browser** | Chrome, Edge ou Firefox recente |
-| **Ambiente dos experimentos do artigo** | Windows 11 x64, Intel Core i7-1165G7, 16 GB RAM |
+| **Ambiente dos experimentos do artigo** | Windows 11 x64 **25H2**, Intel Core **i5-1135G7** @ 2,42 GHz, 16 GB RAM |
 
 ### Modo de execução
 
@@ -332,7 +332,7 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 
 > **Amostras de referência:** redução **99,7%** / Trojan → `49aa7438…` (`ctr-JD-QvLcmsO`); grafo compacto **32→5** / Backdoor → `db32e48a…` (`ctr-ZbPqaQOXo0`). Artefactos pré-exportados em [`resultados/artefatos/`](resultados/artefatos/README.md).
 
-> **Nota:** tempos são **aproximados** (CPU i7-1165G7, 16 GB RAM, SSD). Lotes multi‑GB podem levar horas — use amostras menores primeiro.
+> **Nota:** tempos são **aproximados** (Win 11 25H2, CPU i5-1135G7 @ 2,42 GHz, 16 GB RAM, SSD). Lotes multi‑GB podem levar horas — use amostras menores primeiro.
 
 ### Pré-requisitos comuns
 
@@ -497,7 +497,7 @@ Para o **Salão de Ferramentas 2026** (modalidade Código Aberto), incluir na su
 2. Teste mínimo (Parte B).
 3. Demonstração de redução, interpretação consolidada e grafo compacto.
 
-**URL do vídeo:** *(preencher antes da submissão SF — YouTube não listado ou Google Drive)*
+**URL do vídeo:** [Google Drive — pasta `demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing)
 
 ---
 
