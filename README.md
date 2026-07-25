@@ -462,6 +462,8 @@ Evidências típicas no veredito: `IsDebuggerPresent`, `CheckRemoteDebuggerPrese
 | Grafo compacto / Backdoor | `db32e48a…` | ~9 min | `fluxtrace_10.png` |
 | Evasão / MITRE | `49aa7438…` | após lote | `fluxtrace_07–08.png` |
 
+**Métricas agregadas (15 lotes concluídos):** 150,1 GB brutos (913,1 mi linhas) → 666 MB (3,39 mi linhas), **redução global de 99,56%** (por lote: 98,08%–99,97%), 0 falhas. Tabela completa por lote e por arquivo: [`resultados/README.md`](resultados/README.md#lotes-processados--métricas-reais-sec-4-do-artigo).
+
 ---
 
 ## LICENSE

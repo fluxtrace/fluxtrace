@@ -66,6 +66,8 @@ fluxtrace/
 | Reduction 99.7% / Trojan | `49aa7438…` | `ctr-JD-QvLcmsO` | `fluxtrace_07.png`, `resultados/artefatos/49aa7438…/` |
 | Compact graph / Backdoor | `db32e48a…` | `ctr-ZbPqaQOXo0` | `fluxtrace_10.png`, `resultados/artefatos/db32e48a…/` |
 
+**Aggregate (15 completed batches):** 150.1 GB raw (913.1 M lines) reduced to 666 MB (3.39 M lines) — **99.56% overall reduction** (98.08%–99.97% per batch), 0 failures. Full per-batch and per-file tables: [`resultados/README.md`](resultados/README.md).
+
 Full reproduction steps: [README.md](README.md) (Portuguese, CTA template).
 
 ---
