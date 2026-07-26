@@ -16,7 +16,7 @@ import { batchStatusBadgeClass } from "@/lib/analysis/analysisUi";
 import { formatBytes, formatDateTimeShort, formatDurationMs, formatPercentRounded } from "@/lib/core/format";
 import { trpc } from "@/lib/api/trpc";
 import { Activity, AlertCircle, FileSearch, Link as LinkIcon, ShieldCheck, TrendingUp } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import type { TooltipProps } from "recharts";
@@ -46,7 +46,17 @@ const STATUS_PIE_COLORS: Record<string, string> = {
   cancelled: "#a78bfa",
 };
 
-const CHART_TOOLTIP_STYLE = { backgroundColor: "oklch(0.2 0.02 255 / 0.95)", border: "1px solid oklch(0.35 0.02 255 / 0.5)" };
+/** Segue o tema (claro/escuro); evita fundo escuro fixo com texto `foreground` do light mode. */
+const CHART_TOOLTIP_STYLE: CSSProperties = {
+  backgroundColor: "var(--popover)",
+  border: "1px solid var(--border)",
+  borderRadius: "0.375rem",
+  color: "var(--popover-foreground)",
+  boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+  maxWidth: "min(100vw - 2rem, 22rem)",
+  overflowWrap: "anywhere",
+  wordBreak: "break-word",
+};
 
 function PieStatusTooltipContent({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload?.[0]) return null;
@@ -58,8 +68,8 @@ function PieStatusTooltipContent({ active, payload }: TooltipProps<number, strin
   const display = Number.isFinite(n) ? Math.round(n) : "—";
   return (
     <div style={CHART_TOOLTIP_STYLE} className="min-w-[7rem] rounded-md px-3 py-2 text-left shadow-lg">
-      <p className="text-[11px] font-semibold capitalize leading-tight tracking-wide text-slate-100">{name}</p>
-      <p className="mt-1 text-base font-semibold tabular-nums text-white">{display}</p>
+      <p className="text-[11px] font-semibold capitalize leading-tight tracking-wide text-foreground">{name}</p>
+      <p className="mt-1 text-base font-semibold tabular-nums text-foreground">{display}</p>
     </div>
   );
 }
@@ -80,20 +90,20 @@ function WallTimesTooltipContent({ active, payload }: TooltipProps<number, strin
   const isEstimated = row.wallMsSource && row.wallMsSource !== "measured";
   const totalBytes = typeof row.totalOriginalBytes === "number" && Number.isFinite(row.totalOriginalBytes) ? row.totalOriginalBytes : 0;
   return (
-    <div className="max-w-[min(100vw-2rem,22rem)] space-y-1 rounded-md px-2 py-1.5 text-xs" style={CHART_TOOLTIP_STYLE}>
-      <p className="font-medium leading-snug text-foreground">{row.sampleName}</p>
-      <p className="font-mono text-[11px] text-muted-foreground">{row.batchId}</p>
+    <div className="max-w-[min(100vw-2rem,22rem)] min-w-0 space-y-1 overflow-hidden rounded-md px-2 py-1.5 text-xs" style={CHART_TOOLTIP_STYLE}>
+      <p className="break-all font-medium leading-snug text-foreground">{row.sampleName}</p>
+      <p className="break-all font-mono text-[11px] text-muted-foreground">{row.batchId}</p>
       <p className="text-[11px] text-muted-foreground">{formatDateTimeShort(row.endedAtIso)}</p>
       {isEstimated ? (
-        <p className="text-[10px] text-amber-200/85">{t("dashboardHome.chartWallTooltipEstimatedHint")}</p>
+        <p className="text-[10px] text-amber-700 dark:text-amber-200/85">{t("dashboardHome.chartWallTooltipEstimatedHint")}</p>
       ) : null}
       {totalBytes > 0 ? (
-        <div className="border-t border-white/10 pt-1.5">
+        <div className="border-t border-border pt-1.5">
           <p className="text-[11px] text-muted-foreground">{t("dashboardHome.chartWallTooltipTotalLogsSize")}</p>
           <p className="text-base font-semibold tabular-nums text-foreground">{formatBytes(totalBytes)}</p>
         </div>
       ) : null}
-      <div className="border-t border-white/10 pt-1.5">
+      <div className="border-t border-border pt-1.5">
         <p className="text-[11px] text-muted-foreground">{t("reduceLogs.lotTotalTimeTitle")}</p>
         <p className="text-base font-semibold tabular-nums text-foreground">{formatDurationMs(row.wallMs)}</p>
       </div>
@@ -224,7 +234,8 @@ export default function HomeDashboard() {
                     <YAxis allowDecimals={false} width={32} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                     <Tooltip
                       contentStyle={CHART_TOOLTIP_STYLE}
-                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      labelStyle={{ color: "var(--popover-foreground)" }}
+                      itemStyle={{ color: "var(--popover-foreground)" }}
                       animationDuration={200}
                       cursor={{ stroke: "oklch(0.72 0.14 190 / 0.65)", strokeWidth: 1, strokeDasharray: "4 4" }}
                     />
@@ -330,6 +341,7 @@ export default function HomeDashboard() {
                     />
                     <Tooltip
                       content={<WallTimesTooltipContent />}
+                      wrapperStyle={{ zIndex: 60, outline: "none", maxWidth: "min(100vw - 2rem, 22rem)" }}
                       animationDuration={200}
                       cursor={{ fill: "oklch(0.55 0.12 180 / 0.18)" }}
                     />

@@ -270,11 +270,14 @@ export default function Profile() {
                         <Tooltip
                           formatter={(v: number) => [v, t("profile.pieTooltip")]}
                           contentStyle={{
-                            backgroundColor: "oklch(0.2 0.02 255 / 0.95)",
-                            border: "1px solid oklch(0.35 0.02 255 / 0.5)",
+                            backgroundColor: "var(--popover)",
+                            border: "1px solid var(--border)",
                             borderRadius: "8px",
+                            color: "var(--popover-foreground)",
                             fontSize: "12px",
                           }}
+                          labelStyle={{ color: "var(--popover-foreground)" }}
+                          itemStyle={{ color: "var(--popover-foreground)" }}
                         />
                         <Legend
                           formatter={value => {
