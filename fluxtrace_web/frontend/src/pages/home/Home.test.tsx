@@ -301,7 +301,7 @@ describe("Home dashboard", () => {
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeTruthy();
     const totalCard = screen.getByText("Total de lotes").closest(".rounded-2xl");
     expect(totalCard).toBeTruthy();
-    expect(within(totalCard!).getByText("2")).toBeTruthy();
+    expect(within(totalCard as HTMLElement).getByText("2")).toBeTruthy();
     expect(screen.getAllByText("Full-Execution-Sample-1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Live-Sample-2").length).toBeGreaterThan(0);
   });

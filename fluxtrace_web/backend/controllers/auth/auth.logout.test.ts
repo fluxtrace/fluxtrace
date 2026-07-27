@@ -21,6 +21,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     passwordHash: null,
     loginMethod: "oauth",
     role: "user",
+    mustChangePassword: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),

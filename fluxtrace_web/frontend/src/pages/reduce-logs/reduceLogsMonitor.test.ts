@@ -173,6 +173,7 @@ describe("reduceLogsMonitor", () => {
       suspiciousEventCount: 0,
       triggerCount: 0,
       uploadDurationMs: 0,
+      processingDurationMs: 0,
       uploadReused: false,
     };
     expect(getFileReductionDisplayPercent(f)).toBe(0);
@@ -203,6 +204,7 @@ describe("reduceLogsMonitor", () => {
       suspiciousEventCount: 0,
       triggerCount: 0,
       uploadDurationMs: 0,
+      processingDurationMs: 0,
       uploadReused: false,
     };
     expect(getFileReductionDisplayPercent(f)).toBeCloseTo(60, 5);

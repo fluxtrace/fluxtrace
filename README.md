@@ -22,6 +22,7 @@ Este repositório contém o código-fonte da ferramenta, **16 pacotes de amostra
 - [Experimentos](#experimentos)
 - [LICENSE](#license)
 - [Documentação complementar](#documentação-complementar)
+- [Vídeos de demonstração (playlist)](#vídeos-de-demonstração-playlist)
 
 ---
 
@@ -30,15 +31,16 @@ Este repositório contém o código-fonte da ferramenta, **16 pacotes de amostra
 Este README segue o [modelo obrigatório do CTA SBSeg 2026](https://doc-artefatos.github.io/sbseg2026/subinstrucoes.html) e organiza-se em:
 
 1. **Resumo** — objetivo do artefato e ligação ao artigo.
-2. **Estrutura do readme.md** — mapa deste documento e do repositório.
+2. **Estrutura do readme.md** — mapa deste documento e do repositório; **playlist de vídeos** (secção final, padrão [TOMWare](https://github.com/TOMWare-analises/TOMWare) §1.4).
 3. **Selos considerados** — selos pleiteados na avaliação (D, F, S, R).
 4. **Informações básicas** — componentes, arquitetura e ambiente de execução.
-5. **Dependências** — software, versões e recursos externos.
+5. **Dependências** — software, versões, [pacote de instaladores (Drive)](#pacote-de-instaladores-google-drive) e espelho de amostras.
 6. **Preocupações com segurança** — riscos e mitigação para avaliadores.
-7. **Instalação** — clone, configuração e arranque da aplicação.
-8. **Teste mínimo** — validação rápida (automática + fluxo na interface).
-9. **Experimentos** — reprodução das reivindicações do artigo.
+7. **Instalação** — clone, configuração e arranque da aplicação (vídeos **06–12**).
+8. **Teste mínimo** — validação rápida (automática + fluxo na interface; vídeos **13–14**).
+9. **Experimentos** — reprodução das reivindicações do artigo (vídeo **15** + capturas).
 10. **LICENSE** — termos de uso do código.
+11. **Vídeos de demonstração (playlist)** — download → instalação → configuração → execução → resultados.
 
 ### Estrutura do repositório
 
@@ -81,14 +83,14 @@ Os autores solicitam a avaliação do artefato para **todos os selos disponívei
 
 | Selo | Nome | Justificativa no FluxTrace |
 |------|------|----------------------------|
-| **Selo D** | Artefatos Disponíveis | Código-fonte, amostras (`test-samples/`), documentação M1 e capturas públicas em [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace), com README completo e licença MIT. |
-| **Selo F** | Artefatos Funcionais | Instalação documentada (`pnpm install`, PostgreSQL, `pnpm dev`); **teste mínimo** automatizado (`pnpm check`, `pnpm test`) e **fluxo UI** (upload de amostra → redução → interpretação). |
+| **Selo D** | Artefatos Disponíveis | Código-fonte, amostras (`test-samples/`), documentação M1 e capturas públicas em [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace); pastas Drive [`instaladores`](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing), [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing) e [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link); licença MIT. |
+| **Selo F** | Artefatos Funcionais | Dependências e [pacote de instaladores](#pacote-de-instaladores-google-drive); [Instalação](#instalação); **teste mínimo** (`pnpm check`, `pnpm test`) e **fluxo UI** (upload → redução → interpretação); playlist **01–15**. |
 | **Selo S** | Artefatos Sustentáveis | Código modular (`frontend/`, `backend/services/`, testes Vitest); manuais PT (`MANUAL-TECNICO`, `MANUAL-USUARIO`, `readme-web.md`); catálogo `funcoes-mapeadas/` com hiperligações por função. |
-| **Selo R** | Experimentos Reprodutíveis | Secção [Experimentos](#experimentos) com SHA-256 das amostras, passos na UI, tempos de referência, resultados esperados e capturas em `resultados/capturas-tela/`. |
+| **Selo R** | Experimentos Reprodutíveis | Secção [Experimentos](#experimentos) com SHA-256, passos na UI, tempos de referência e capturas em `resultados/capturas-tela/`; playlist como demonstração do fluxo (não substitui os lotes stress do artigo). |
 
 > **Apêndice LaTeX (HotCRP):** chaves opcionais (`VIRUSTOTAL_API_KEY`, LLM) e credenciais privadas devem ser declaradas no apêndice do CTA, não neste README. Modelo: [Exemplo-Apendice](https://doc-artefatos.github.io/sbseg2026/subinstrucoes.html).
 
-> **Salão de Ferramentas (SF) 2026:** modalidade **Código Aberto** — incluir URL do **vídeo técnico** na submissão SF (instalação + demonstração). Placeholder sugerido no README: secção [Vídeo técnico (SF)](#vídeo-técnico-sf).
+> **Salão de Ferramentas (SF) 2026:** modalidade **Código Aberto** — URL da playlist = pasta Drive [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing) (ver [Vídeos de demonstração (playlist)](#vídeos-de-demonstração-playlist)).
 
 ---
 
@@ -160,11 +162,41 @@ Diagrama técnico detalhado (protocolos e pastas): [`fluxtrace_web/docs/MANUAL-T
 |-------------|----------------|
 | **Git** | Qualquer versão recente |
 | **Git LFS** | Recomendado para `test-samples/*.zip` ([git-lfs.com](https://git-lfs.com/)) |
-| **Node.js** | 20 LTS ou 22 |
+| **Node.js** | **20 LTS ou 22** (playlist usa Node.js **22** LTS) |
 | **Corepack + pnpm** | `corepack enable`; versão fixada em `fluxtrace_web/package.json` |
-| **PostgreSQL** | 14+; variável `DATABASE_URL` |
+| **PostgreSQL** | **14+** (playlist: instalador EDB **18**); variável `DATABASE_URL` |
+| **Visual Studio Code** | Editor opcional (recomendado na playlist) |
 | **7-Zip** | Via npm `7zip-bin` (pós-`pnpm install`) |
 | **Docker** | Opcional — contentor Postgres (ver `MANUAL-DEV-LOCAL.md`) |
+
+### Pacote de instaladores (Google Drive)
+
+Espelho dos sites oficiais (Git, Node.js, Git LFS, EDB PostgreSQL, VS Code), no mesmo espírito da pasta `Instaladores` do [TOMWare](https://github.com/TOMWare-analises/TOMWare). Prefira as páginas oficiais quando possível; use o Drive para montar o ambiente mais rápido.
+
+**Pasta:** [`instaladores`](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing)
+
+| # | Arquivo (Drive) | O que é | Onde usar | Playlist / README |
+|---|-----------------|---------|-----------|-------------------|
+| 1 | `Git-*-64-bit.exe` | Git for Windows | Host | vídeos **01**, **06** · [Instalação](#instalação) |
+| 2 | `git-lfs-windows-*.exe` | Git LFS | Host (após Git) | vídeos **03**, **06** · `test-samples/` |
+| 3 | `node-v22.*-x64.msi` | Node.js 22 LTS | Host | vídeos **02**, **07** · `corepack enable pnpm` |
+| 4 | `postgresql-*-windows-x64.exe` | PostgreSQL (EDB) | Host | vídeos **04**, **08** · `DATABASE_URL` |
+| 5 | `VSCodeUserSetup-*.exe` | Visual Studio Code | Host (opcional) | vídeos **05**, **09** |
+
+#### Sequência correta de instalação
+
+Ordem alinhada à playlist (**06–12**) e a esta secção:
+
+| Passo | Ação | Arquivo(s) / comando |
+|------:|------|----------------------|
+| 1 | Instalar **Git** + **Git LFS** | `Git-*-64-bit.exe`, `git-lfs-windows-*.exe` → `git lfs install` |
+| 2 | Instalar **Node.js 22** + activar pnpm | `node-v22.*-x64.msi` → `corepack enable` / `corepack enable pnpm` |
+| 3 | Instalar **PostgreSQL** e criar BD | instalador EDB → serviço a correr; base p.ex. `fluxtrace_dev` |
+| 4 | (Opcional) Instalar **VS Code** | `VSCodeUserSetup-*.exe` |
+| 5 | Clonar o repositório + LFS | `git clone` + `git lfs pull` (vídeo **10**; espelho [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) se a quota LFS falhar) |
+| 6 | Configurar `.env` + `pnpm install` / `pnpm db:push` / `pnpm dev` | vídeos **11–12** · [Instalação](#instalação) |
+
+> O FluxTrace **não** requer VM, Intel Pin nem Visual Studio C++ — analisa logs **já gerados** pela [Contradef](https://github.com/contradef).
 
 ### Dependências opcionais (experimento completo)
 
@@ -178,13 +210,13 @@ Diagrama técnico detalhado (protocolos e pastas): [`fluxtrace_web/docs/MANUAL-T
 
 Inventário completo: [`test-samples/README.md`](test-samples/README.md) — **16** pacotes `.zip`, SHA-256 = nome do ficheiro.
 
-| Rótulo | SHA-256 (`.zip`) | Tamanho `.zip` (≈) | Tempo ref. |
-|--------|------------------|---------------------|------------|
-| `amostra_100k` | `a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe` | 24 MiB | ~50 s |
-| `amostra_1M` | `1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69` | 164 MiB | ~25 s |
-| `amostra_50M` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | 366 MiB | ~9 min |
+| Rótulo | SHA-256 (`.zip`) | Tamanho `.zip` (≈) | Tempo ref. | Uso na demo |
+|--------|------------------|---------------------|------------|-------------|
+| `amostra_100k` | `a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe` | 24 MiB | ~50 s | Playlist **14–15** (teste mínimo / SF) |
+| `amostra_1M` | `1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69` | 164 MiB | ~25 s | Escala intermédia |
+| `amostra_50M` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | 366 MiB | ~9 min | [Experimentos](#experimentos) (grafo 32→5) |
 
-Espelho Google Drive: link em `test-samples/README.md`.
+Espelho Google Drive: pasta [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) — detalhe em `test-samples/README.md`.
 
 ---
 
@@ -215,7 +247,8 @@ Software **as-is** para pesquisa e operações de segurança autorizadas. VirusT
 
 ## Instalação
 
-> **Guia ilustrado (máquina limpa):** [`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md)
+> **Guia ilustrado (máquina limpa):** [`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md)  
+> **Vídeos:** playlist **06–12** na pasta [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing); binários em [`instaladores`](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing).
 
 ### 1. Clonar o repositório
 
@@ -491,15 +524,46 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 
 ---
 
-## Vídeo técnico (SF)
+## Vídeos de demonstração (playlist)
 
-Para o **Salão de Ferramentas 2026** (modalidade Código Aberto), incluir na submissão um vídeo com:
+Screencasts com **legendas queimadas** (PT-BR). A playlist é uma **demonstração do fluxo** (download → instalação → configuração → execução → resultados), alinhada a este README e ao apêndice de demonstração do artigo — no mesmo formato do [TOMWare](https://github.com/TOMWare-analises/TOMWare) §1.4. **Não** pretende cobrir todos os 16 lotes nem as corridas stress de [Experimentos](#experimentos).
 
-1. Instalação em máquina limpa (clone → `pnpm install` → `.env` → `pnpm dev`).
-2. Teste mínimo (Parte B).
-3. Demonstração de redução, interpretação consolidada e grafo compacto.
+| Recurso | URL |
+|---------|-----|
+| Pasta Drive **`demonstracao`** (vídeos `.mp4`) | [abrir](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing) |
+| Pasta Drive **`instaladores`** (binários oficiais) | [abrir](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing) — ver [pacote de instaladores](#pacote-de-instaladores-google-drive) |
+| Pasta Drive **`amostras`** (espelho de `test-samples/`) | [abrir](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) |
+| Código-fonte | [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace) — `git clone https://github.com/fluxtrace/fluxtrace.git` |
 
-**URL do vídeo:** [Google Drive — pasta `demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing)
+### Sequência (ordem de assistir)
+
+| # | Fase | O que o vídeo mostra | Arquivo | README |
+|---|------|----------------------|---------|--------|
+| 01 | Download | Git for Windows | `01-git-download.mp4` | [Dependências](#dependências) / instaladores |
+| 02 | Download | Node.js 22 LTS (+ pnpm via Corepack) | `02-download-nodejs.mp4` | [Dependências](#dependências) |
+| 03 | Download | Git LFS (`test-samples/*.zip`) | `03-download-git-lfs.mp4` | [Amostras](#amostras-de-teste) |
+| 04 | Download | PostgreSQL (instalador EDB) | `04-download-postgres.mp4` | [Dependências](#dependências) |
+| 05 | Download | Visual Studio Code | `05-download-vscode.mp4` | [Dependências](#dependências) |
+| 06 | Instalação | Instalar Git + Git LFS | `06-instalacao-git-git-lfs.mp4` | [Instalação](#instalação) · passo 1 |
+| 07 | Instalação | Instalar Node.js + activar pnpm | `07-instalacao-nodejs-pnpm.mp4` | [Instalação](#instalação) · passo 2 |
+| 08 | Instalação | Instalar PostgreSQL | `08-instalacao-postgres.mp4` | [Instalação](#instalação) · `DATABASE_URL` |
+| 09 | Instalação | Instalar VS Code | `09-instalacao-vscode.mp4` | opcional |
+| 10 | Configuração | `git clone` + `git lfs pull` (ou ZIP / Drive `amostras`) | `10-configuracao-clone.mp4` | [Instalação](#instalação) · passo 1 |
+| 11 | Configuração | Copiar `.env` e preencher credenciais locais | `11-configuracao-env.mp4` | [Instalação](#instalação) · passo 3 |
+| 12 | Configuração | `pnpm install` → `pnpm db:push` → `pnpm dev` | `12-configuracao-pnpm-dev.mp4` | [Instalação](#instalação) · passos 2–5 |
+| 13 | Execução | Criar utilizador local + login → dashboard | `13-execucao-login.mp4` | [Teste mínimo](#teste-mínimo) |
+| 14 | Execução | Upload + redução — amostra `a0aeb837…` | `14-execucao-reduzir-logs.mp4` | [Teste mínimo](#teste-mínimo) · apêndice SF (i) |
+| 15 | Resultados | Interpretação consolidada: MITRE, evidências, fluxos e grafo compacto (`a0aeb837…`) | `15-resultados-interpretacao.mp4` | [Experimentos](#experimentos) · apêndice SF (ii)–(iii) |
+
+Convenção de nomes: `NN-fase-assunto.mp4` (ordem lexicográfica = ordem de assistir). Legendas **queimadas** no MP4.
+
+**Notas de alinhamento**
+
+- A demo rápida da playlist usa a amostra **`a0aeb837…`** (vídeos **14–15**), a mesma do [teste mínimo](#teste-mínimo) e do momento (i) do apêndice SF.
+- Os lotes stress do artigo (`49aa7438…` redução 99,7%; `db32e48a…` grafo 32→5 / M1) estão documentados em [Experimentos](#experimentos) e em `resultados/` — **não** há vídeos **16+** separados na pasta `demonstracao`.
+- Não há vídeo só de «download do repositório / amostras»: use o vídeo **10** e as pastas Drive desta secção.
+
+Para o **Salão de Ferramentas 2026** (modalidade Código Aberto), a URL da playlist a indicar na submissão é a pasta [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing).
 
 ---
 
