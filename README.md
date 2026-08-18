@@ -296,9 +296,17 @@ FUNCOES_MAPEADAS=/caminho/absoluto/para/fluxtrace/funcoes-mapeadas
 
 ### 4. Criar esquema da base de dados
 
+Pré-requisitos: **PostgreSQL a correr**, `fluxtrace_web/.env` preenchido (sem placeholders `SEU-USUARIO` / `SUA_SENHA`) e a base da `DATABASE_URL` **existente** (ex. `fluxtrace_dev` — criar no pgAdmin se ainda não existir). No instalador EDB o superutilizador é normalmente `postgres`; prefira `127.0.0.1` em vez de `localhost`.
+
+Ainda em `fluxtrace_web/`:
+
 ```bash
 pnpm db:push
 ```
+
+O script valida a ligação **antes** de chamar o Drizzle e imprime a causa (serviço parado, palavra-passe, base inexistente). Se a base não existir mas o servidor responder, tenta `CREATE DATABASE` automaticamente.
+
+**Se falhar com «Pulling schema from database…» e exit 1 (sem mais texto):** o `drizzle-kit` por vezes omite o erro real. Confirme os pré-requisitos acima, volte a correr `pnpm db:push` (a mensagem `[db:push]` indica o problema) e veja [`MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md) §0.6 / §6.
 
 ### 5. Arrancar a aplicação
 

@@ -22,7 +22,7 @@ git lfs pull
 corepack enable
 cd fluxtrace_web
 cp backend/.env.example .env
-# edit DATABASE_URL, JWT_SECRET, AUTH_MODE=local, VITE_AUTH_MODE=local
+# edit DATABASE_URL (real postgres user/password, database exists), JWT_SECRET, AUTH_MODE=local, VITE_AUTH_MODE=local
 pnpm install
 pnpm db:push
 pnpm dev

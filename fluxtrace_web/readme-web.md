@@ -192,7 +192,7 @@ Express + tRPC, Drizzle/PostgreSQL, integrações. **View:** SPA em `frontend/`.
 
 - Esquema: `drizzle/schema/`.
 - Migrações geradas: `drizzle/migrations/`.
-- `pnpm db:push` na raiz (usa `backend/drizzle.config.ts`).
+- `pnpm db:push` na raiz de `fluxtrace_web/` (pré-verifica a ligação PostgreSQL e depois chama `backend/drizzle.config.ts`).
 - Arranque pode fazer push automático; `SKIP_DB_AUTO_PUSH=1` para desligar.
 
 ### Migrações / SQL manual
@@ -208,7 +208,7 @@ Express + tRPC, Drizzle/PostgreSQL, integrações. **View:** SPA em `frontend/`.
 |------|-----------|
 | `setup/` | `ensure-7zip-executable.mjs` — `postinstall` |
 | `mitre/` | `generate-ta0005-catalog.mjs` — `pnpm mitre:ta0005-catalog` |
-| `db/` | `query-batch-once.mts`, `run-rename-jobs-to-batches.mts`, `sync-legacy-backlog.mts` |
+| `db/` | `push-schema.mts` (`pnpm db:push`), `query-batch-once.mts`, `run-rename-jobs-to-batches.mts`, `sync-legacy-backlog.mts` |
 | `sql/` | SQL de referência |
 
 ### Testes (backend)

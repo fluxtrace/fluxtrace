@@ -15,7 +15,7 @@
     "format": "prettier --config frontend/config/prettier/.prettierrc --ignore-path frontend/config/prettier/.prettierignore --write frontend backend package.json",
     "test": "vitest run -c frontend/config/vitest.config.ts && vitest run -c backend/vitest.config.ts",
     "mitre:ta0005-catalog": "node backend/scripts/mitre/generate-ta0005-catalog.mjs",
-    "db:push": "drizzle-kit push --config backend/drizzle.config.ts",
+    "db:push": "tsx backend/scripts/db/push-schema.mts",
     "db:migrate-rename-jobs-to-batches": "tsx backend/scripts/db/run-rename-jobs-to-batches.mts"
   },
   "dependencies": {

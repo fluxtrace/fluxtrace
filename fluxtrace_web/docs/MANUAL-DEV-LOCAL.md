@@ -348,7 +348,7 @@ Ainda em **`fluxtrace_web/`**:
 pnpm db:push
 ```
 
-Isto aplica o schema esperado pelo Drizzle Ã  base apontada por `DATABASE_URL`. Execute de novo quando o projecto exigir migraÃ§Ãµes (ver comunicados no repositÃ³rio ou `MANUAL-TECNICO.md`).
+Isto aplica o schema esperado pelo Drizzle Ã  base apontada por `DATABASE_URL`. O comando testa a ligaÃ§Ã£o primeiro (mensagem `[db:push]`) e, se a base ainda nÃ£o existir, tenta criÃ¡-la. Execute de novo quando o projecto exigir migraÃ§Ãµes (ver comunicados no repositÃ³rio ou `MANUAL-TECNICO.md`).
 
 ### 6.1 Erro Â«No schema files foundÂ» (`drizzle/schema/index.ts`)
 
@@ -362,6 +362,19 @@ O repositÃ³rio usa caminhos **absolutos normalizados com `/`** em `backend/dri
 ### 6.2 `drizzle-kit` pede confirmaÃ§Ã£o interativa (truncate / alteraÃ§Ãµes perigosas)
 
 Se o `push` perguntar se quer **esvaziar** uma tabela ou alterar constraints e o terminal **nÃ£o** for interactivo (ex.: output colado, algumas extensÃµes), pode aparecer erro de **TTY**. Use um **PowerShell** ou **cmd** normal no VS Code e rode `pnpm db:push` de novo para poder responder **`Yes`/`No`** com seguranÃ§a **apÃ³s ler** o aviso (dados podem ser afectados).
+
+
+### 6.3 `db:push` falha em «Pulling schema from database…» (exit 1, sem detalhe)
+
+O `drizzle-kit` pode terminar com código 1 **sem** imprimir `ECONNREFUSED`, palavra-passe incorrecta ou «database does not exist». Causas habituais no Windows:
+
+1. Serviço PostgreSQL **parado** (Services → `postgresql-x64-…` → Start), ou Docker Desktop desligado.
+2. `fluxtrace_web/.env` ainda com `SEU-USUARIO` / `SUA_SENHA` do `.env.example` — o ficheiro tem de estar na raiz de **`fluxtrace_web/`**, não em `backend/`.
+3. A base da URL (ex. `fluxtrace_dev`) **não foi criada** no pgAdmin. O wrapper tenta `CREATE DATABASE`; se isso falhar, crie-a à mão.
+4. Palavra-passe / utilizador errados (instalador EDB: utilizador `postgres`).
+5. `localhost` a resolver para IPv6 (`::1`) — use `127.0.0.1` na `DATABASE_URL`.
+
+Volte a correr `pnpm db:push`: a linha `[db:push]` deve mostrar o erro real.
 
 ---
 
@@ -424,6 +437,7 @@ Execute `pnpm check` e `pnpm test` antes de considerar o ambiente â€œvalidad
 | Sintoma | O que verificar |
 |---------|------------------|
 | `db:push`: Â«No schema files foundÂ» para `drizzle/...` | **SecÃ§Ã£o 6.1** â€” caminhos do `drizzle.config.ts` / Windows; actualize o repositÃ³rio. |
+| `db:push`: Pulling schema e exit 1 sem detalhe | **Secção 6.3** — Postgres a correr, `.env` sem placeholders, base criada, `127.0.0.1`. |
 | `db:push`: TTY / prompts interactivos | **SecÃ§Ã£o 6.2** â€” correr num terminal real e responder ao drizzle-kit. |
 | PowerShell: `pnpm.ps1` / Â«execuÃ§Ã£o de scripts desabilitadaÂ» | **SecÃ§Ã£o 0.4.1:** `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`, ou `pnpm.cmd â€¦`, ou terminal **cmd** / Git Bash. |
 | `pnpm` nÃ£o encontrado | `corepack enable`; fechar e reabrir o terminal. |
