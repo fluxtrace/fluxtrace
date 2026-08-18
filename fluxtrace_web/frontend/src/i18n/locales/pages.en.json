@@ -323,7 +323,7 @@
     "selectBatchAria": "Select analysis batch",
     "noBatchPlaceholder": "No batch available",
     "listLoadErrorTitle": "Could not load the batch list",
-    "listLoadErrorHint": "If the database still has analysisJobs instead of analysisBatches, run: npm run db:migrate-rename-jobs-to-batches (from fluxtrace_web).",
+    "listLoadErrorHint": "Failed to fetch means the browser could not reach /api/trpc: check that pnpm dev is still running and that the tab URL matches the port printed in the terminal (3000, 3001, …). Reload the page. Only run pnpm db:migrate-rename-jobs-to-batches if the error mentions analysisJobs — skip it on a fresh install.",
     "chipTitleId": "Batch ID: {{id}}",
     "chipKickerId": "Batch ID",
     "nothingSelected": "No analysis selected.",

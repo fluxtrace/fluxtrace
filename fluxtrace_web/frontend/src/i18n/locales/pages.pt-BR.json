@@ -323,7 +323,7 @@
     "selectBatchAria": "Selecionar lote de análise",
     "noBatchPlaceholder": "Nenhum lote disponível",
     "listLoadErrorTitle": "Erro ao carregar a lista de lotes",
-    "listLoadErrorHint": "Se a base ainda tiver analysisJobs em vez de analysisBatches, execute: npm run db:migrate-rename-jobs-to-batches (na pasta fluxtrace_web).",
+    "listLoadErrorHint": "Failed to fetch indica que o navegador não alcançou /api/trpc: confira se o pnpm dev continua no mesmo terminal e se a URL do browser é exatamente a impressa (porta 3000, 3001, …). Recarregue a página. Só execute pnpm db:migrate-rename-jobs-to-batches se o erro citar analysisJobs — em instalação nova isso não se aplica.",
     "chipTitleId": "ID do lote: {{id}}",
     "chipKickerId": "ID do lote",
     "nothingSelected": "Nenhuma análise selecionada.",

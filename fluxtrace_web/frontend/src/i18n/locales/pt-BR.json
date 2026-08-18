@@ -205,6 +205,6 @@
     "updatedAt": "Atualizado em {{time}}",
     "emptyList": "Nenhuma análise na lista. Ajuste os filtros ou submeta um lote em \"Reduzir logs\".",
     "loadErrorTitle": "Erro ao carregar estatísticas do dashboard",
-    "loadErrorHint": "Se a base ainda tiver a tabela legacy analysisJobs, execute na pasta fluxtrace_web: npm run db:migrate-rename-jobs-to-batches"
+    "loadErrorHint": "Failed to fetch: confirme que o pnpm dev segue ativo e que a URL do browser usa a mesma porta do terminal. Só rode pnpm db:migrate-rename-jobs-to-batches se a mensagem citar analysisJobs."
   }
 }

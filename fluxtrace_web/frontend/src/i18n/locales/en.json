@@ -205,6 +205,6 @@
     "updatedAt": "Updated {{time}}",
     "emptyList": "No analyses match. Adjust filters or submit a batch in \"Reduce logs\".",
     "loadErrorTitle": "Failed to load dashboard statistics",
-    "loadErrorHint": "If the DB still has the legacy analysisJobs table, run from fluxtrace_web: npm run db:migrate-rename-jobs-to-batches"
+    "loadErrorHint": "Failed to fetch: confirm pnpm dev is still running and the browser URL uses the same port as the terminal. Only run pnpm db:migrate-rename-jobs-to-batches if the error mentions analysisJobs."
   }
 }
