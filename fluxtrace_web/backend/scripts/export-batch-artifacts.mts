@@ -1,6 +1,7 @@
 /**
  * Exporta artefactos gerados pela ferramenta (relatórios, logs reduzidos JSON,
- * grafo, Mermaid) de F:/contradef-tmp/analysis para resultados/artefatos/ no repo.
+ * grafo, Mermaid) de CONTRADEF_WORK_TMP (default: {tmpdir}/contradef-tmp/analysis)
+ * para resultados/artefatos/ no repo.
  *
  * Uso (a partir de fluxtrace_web/):
  *   npx tsx backend/scripts/export-batch-artifacts.mts

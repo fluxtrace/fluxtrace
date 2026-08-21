@@ -6,9 +6,9 @@ Saídas **reais** após redução e correlação: relatórios, logs reduzidos (J
 
 | Local | Conteúdo | Versionar? |
 |-------|----------|------------|
-| **`CONTRADEF_REDUCE_LOGS_TMP`** (ex.: `F:/contradef-tmp/reduce-logs/<SHA>/`) | Upload multipart **em curso** (cópia do `.zip` enviado) | **Não** — staging temporário |
-| **`CONTRADEF_WORK_TMP`** (ex.: `F:/contradef-tmp/analysis/<SHA>/`) | Extração temporária do arquivo durante processamento | **Não** — trabalho intermédio |
-| **`CONTRADEF_WORK_TMP/<batchId>/artifacts/`** (ex.: `F:/contradef-tmp/analysis/ctr-JD-QvLcmsO/artifacts/`) | **Resultados do lote** | **Sim** — exportar para esta pasta |
+| **`CONTRADEF_REDUCE_LOGS_TMP`** (ex.: `D:/contradef-tmp/reduce-logs/<SHA>/`) | Upload multipart **em curso** (cópia do `.zip` enviado) | **Não** — staging temporário |
+| **`CONTRADEF_WORK_TMP`** (ex.: `D:/contradef-tmp/analysis/<SHA>/`) | Extração temporária do arquivo durante processamento | **Não** — trabalho intermédio |
+| **`CONTRADEF_WORK_TMP/<batchId>/artifacts/`** (ex.: `…/analysis/ctr-JD-QvLcmsO/artifacts/`) | **Resultados do lote** | **Sim** — exportar para esta pasta |
 
 ### Ficheiros gerados por lote (`artifacts/reports/`)
 
@@ -38,7 +38,7 @@ resultados/artefatos/
 
 ## Exportar da máquina local para o Git
 
-Com PostgreSQL e lotes concluídos em `F:/contradef-tmp/analysis/`:
+Com PostgreSQL e lotes concluídos em `CONTRADEF_WORK_TMP` (ou o default `{tmpdir}/contradef-tmp/analysis`):
 
 ```bash
 cd fluxtrace_web

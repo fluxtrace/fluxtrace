@@ -12,6 +12,7 @@ import { path7za } from "7zip-bin";
 import { nanoid } from "nanoid";
 
 import { getContradefWorkTmpRoot } from "../../_core/config/contradefPaths";
+import { deriveRiskLevelFromCounts } from "../../_core/config/riskLevelThresholds";
 import { LOG_HEURISTIC_STAGE_ORDER } from "../../shared/const";
 import {
   addAnalysisEvent,
@@ -779,6 +780,11 @@ function inferTransitionRelation(event: NormalizedEvent) {
   return "progressão da execução";
 }
 
+/**
+ * Classificação heurística Trojan/Spyware/Ransomware/Backdoor.
+ * Pesos constantes abaixo são deliberados (versão do artigo); calibração futura
+ * pode externalizar pesos de forma análoga a `RISK_*` em riskLevelThresholds.ts.
+ */
 function classifyMalware(techniques: Set<string>, events: NormalizedEvent[]): MalwareCategory {
   const scores: Record<MalwareCategory, number> = {
     Trojan: 1,
@@ -811,11 +817,13 @@ function classifyMalware(techniques: Set<string>, events: NormalizedEvent[]): Ma
   return winner ?? "Unknown";
 }
 
+/**
+ * Rótulo de risco do lote (critical/high/medium/low).
+ * Limiares: `backend/_core/config/riskLevelThresholds.ts` (env RISK_*); defaults = artigo SBSeg.
+ * Não altera ρ de redução de linhas — só a classificação de risco apresentada na UI/relatório.
+ */
 function deriveRiskLevel(techniques: Set<string>, triggerCount: number, suspiciousCount: number): RiskLevel {
-  if (triggerCount >= 2 || techniques.size >= 5 || suspiciousCount >= 20) return "critical";
-  if (triggerCount >= 1 || techniques.size >= 3 || suspiciousCount >= 10) return "high";
-  if (techniques.size >= 2 || suspiciousCount >= 5) return "medium";
-  return "low";
+  return deriveRiskLevelFromCounts(techniques.size, triggerCount, suspiciousCount);
 }
 
 function deriveCurrentPhase(events: NormalizedEvent[]) {

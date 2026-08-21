@@ -193,6 +193,16 @@ export function buildMitreDefenseEvasion(heuristicTags: string[], suspiciousApis
   return buildMitreDefenseEvasionFromEvidence({ heuristicTags, suspiciousApis });
 }
 
+/**
+ * Infere técnicas TA0005 a partir de APIs e heurísticas presentes no lote.
+ *
+ * Importante (CTA / ablação multi-log): o mapeamento é **API ou heurística → ID ATT&CK**,
+ * não «módulo de log exclusivo → ID». Ex.: T1027.007 exige GetProcAddress em *qualquer*
+ * fonte residual (TraceFcnCall, TraceInstructions, …); remover TraceFcnCall não elimina
+ * T1027.007 se GetProcAddress permanecer noutro módulo. Idem WriteProcessMemory → T1055.002.
+ * A correlação multi-log altera volume, classificação e evidência agregada; não cria
+ * pré-condição 1:1 entre nome do ficheiro .cdf e o ID MITRE.
+ */
 export function buildMitreDefenseEvasionFromEvidence(input: BuildInput): MitreDefenseEvasion {
   const apis = input.suspiciousApis;
   const apiSet = new Set(apis);

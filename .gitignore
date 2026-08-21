@@ -51,6 +51,9 @@ __pycache__/
 # Material local do artigo (não versionar)
 paper/
 
+# Apresentação local (PDF/PPTX) — não versionar
+apresentacao/
+
 # Upload multipart temporário (não são logs reduzidos — ver resultados/artefatos/)
 test-samples/reduce-logs/
 

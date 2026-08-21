@@ -299,12 +299,16 @@ Ajuste utilizador, palavra-passe e nome da base ao valor em **`DATABASE_URL`** (
 
    A UI pode mostrar utilizador em modo bypass de administrador; para **login / registo** locais, siga os comentÃ¡rios no `.env.example` (`AUTH_MODE=local`, `VITE_AUTH_MODE=local`, `pnpm db:push`, etc.).
 
-4. **Opcional:** `VIRUSTOTAL_API_KEY` â€” sÃ³ necessÃ¡rio para enriquecimento VirusTotal na InterpretaÃ§Ã£o consolidada (chave sÃ³ no servidor, **sem** prefixo `VITE_`).
+4. **Opcional:** `VIRUSTOTAL_API_KEY` — só necessário para enriquecimento VirusTotal na Interpretação consolidada (chave só no servidor, **sem** prefixo `VITE_`).
 
-ReferÃªncia de todas as variÃ¡veis: comentÃ¡rios em **`backend/.env.example`** e cÃ³digo em **`backend/_core/config/env.ts`**.
+5. **Disco temporário:** se omitir `CONTRADEF_WORK_TMP` / `CONTRADEF_REDUCE_LOGS_TMP`, o default é `{os.tmpdir()}/contradef-tmp/...` (portável em Windows e Linux; **não** assume unidade `F:`). Para lotes multi-GB, defina um volume dedicado no `.env`.
+
+6. **Checklist Windows rápido:** `AUTH_MODE` = `VITE_AUTH_MODE`; reiniciar `pnpm dev` após mudar `VITE_*`; `.env` em `fluxtrace_web/.env` (não em `backend/`); se PowerShell bloquear `pnpm`, ver §0.4.1; URL da UI = a do terminal (em geral `http://localhost:3000/`).
+
+Referência de todas as variáveis: comentários em **`backend/.env.example`** e código em **`backend/_core/config/env.ts`** / `riskLevelThresholds.ts` (`RISK_*`).
 
 
-## 5. Instalar dependÃªncias
+## 5. Instalar dependências
 
 No terminal, com `cwd` = **`fluxtrace_web/`**:
 

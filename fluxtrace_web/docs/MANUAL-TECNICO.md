@@ -66,7 +66,7 @@ flowchart LR
 | `CONTRADEF_WORK_TMP/<SHA>/` | Extração intermédia durante processamento |
 | **`CONTRADEF_WORK_TMP/<batchId>/artifacts/reports/`** | **Saídas:** `reduced-logs.json`, `final-report.md`, `flow-graph.json`, `malware-flow-map.md` |
 
-Por defeito no Windows (sem `.env`): `F:\contradef-tmp\…`. Com `.env` do projecto: `CONTRADEF_WORK_TMP=F:/contradef-tmp/analysis`.
+Por defeito (sem `.env`): `{os.tmpdir()}/contradef-tmp/analysis` em qualquer SO. Para lotes grandes, defina um volume dedicado, ex.: `CONTRADEF_WORK_TMP=D:/contradef-tmp/analysis`.
 
 Exportar para o repositório (evidências CTA):
 

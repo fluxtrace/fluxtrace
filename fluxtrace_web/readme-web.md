@@ -275,7 +275,7 @@ Obter ou actualizar materiais de referência **a partir de `fluxtrace`**: trabal
 
 #### Outros
 
-`SKIP_DB_AUTO_PUSH`, `OWNER_OPEN_ID`, `CONTRADEF_WORK_TMP` (trabalho da análise e artefactos no disco), `CONTRADEF_REDUCE_LOGS_TMP` (temporários do upload multipart legado), `CONTRADEF_DISCARD_ORIGINAL_LOGS_AFTER_SUCCESS` (`1` = não guardar log bruto após redução; poupa espaço local). No Windows, se omitires ambos paths, o backend usa por defeito `F:\contradef-tmp\...` — ver `backend/_core/config/contradefPaths.ts` e `.env.example`.
+`SKIP_DB_AUTO_PUSH`, `OWNER_OPEN_ID`, `CONTRADEF_WORK_TMP` (trabalho da análise e artefactos no disco), `CONTRADEF_REDUCE_LOGS_TMP` (temporários do upload multipart legado), `CONTRADEF_DISCARD_ORIGINAL_LOGS_AFTER_SUCCESS` (`1` = não guardar log bruto após redução; poupa espaço local). Se omitir ambos os paths, o backend usa `{os.tmpdir()}/contradef-tmp/...` em qualquer SO (incluindo Windows) — ver `backend/_core/config/contradefPaths.ts` e `.env.example`. Limiares de risco (`RISK_*`) documentados no mesmo `.env.example`.
 
 **Build/start:** ver `render.yaml` na raiz do repositório Git (se existir).
 

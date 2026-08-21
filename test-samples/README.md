@@ -43,11 +43,15 @@ O rótulo **ficheiro** (`amostra_100k.csv`, etc.) é convencional nos relatório
 
 ---
 
-## Opção 1 — Google Drive
+## Opção 1 — Google Drive (espelho estável — preferível se LFS falhar)
+
+Espelho dos mesmos `.zip` (nome = SHA-256). Use esta opção se o `git lfs pull` for **lento, instável ou esgotar a quota**.
 
 [Abrir / descarregar no Google Drive](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link)
 
 URL: `https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link`
+
+Coloque os ficheiros descarregados em `test-samples/` (substituindo pointers LFS de ~130 bytes, se existirem).
 
 ---
 
@@ -64,11 +68,11 @@ cd fluxtrace
 git lfs pull
 ```
 
-Quota LFS no GitHub (plano gratuito ~1 GiB); volumes maiores: use o Google Drive ou outro armazenamento LFS.
+Quota LFS no GitHub (plano gratuito ~1 GiB); volumes maiores ou falhas de rede: use o **Google Drive** (Opção 1).
 
 | Opção | Quando usar |
 |-------|-------------|
-| **1 — Google Drive** | Download simples dos `.zip` |
+| **1 — Google Drive** | Download estável dos `.zip` (recomendado na avaliação CTA se o LFS falhar) |
 | **2 — FSF (Git LFS)** | Clone do repositório com os `.zip` em `test-samples/` |
 
 ---

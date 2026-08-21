@@ -216,7 +216,7 @@ Inventário completo: [`test-samples/README.md`](test-samples/README.md) — **1
 | `amostra_1M` | `1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69` | 164 MiB | ~25 s | Escala intermédia |
 | `amostra_50M` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | 366 MiB | ~9 min | [Experimentos](#experimentos) (grafo 32→5) |
 
-Espelho Google Drive: pasta [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) — detalhe em `test-samples/README.md`.
+> **Espelho estável (recomendado se LFS falhar):** pasta Drive [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) — mesmos ficheiros SHA-256 que `test-samples/`. Inventário e hashes: [`test-samples/README.md`](test-samples/README.md).
 
 ---
 
@@ -259,7 +259,7 @@ cd fluxtrace
 git lfs pull
 ```
 
-Se algum `.zip` aparecer como pointer LFS (~130 bytes), use o [Google Drive](test-samples/README.md) ou `git lfs pull` com quota disponível.
+Se algum `.zip` aparecer como pointer LFS (~130 bytes), o download LFS falhar ou for lento/instável, **prefira o espelho Google Drive** — pasta [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link): descarregue os `.zip` e coloque-os em `test-samples/` (mesmo nome SHA-256). Detalhe: [`test-samples/README.md`](test-samples/README.md).
 
 ### 2. Instalar dependências Node
 
@@ -293,6 +293,23 @@ FUNCOES_MAPEADAS=/caminho/absoluto/para/fluxtrace/funcoes-mapeadas
 ```
 
 > No Windows use barras `/`, ex.: `FUNCOES_MAPEADAS=D:/MMB/DBI/fluxtrace/funcoes-mapeadas`. Se omitido, o servidor tenta `../funcoes-mapeadas` relativo a `fluxtrace_web/`.
+
+**Disco temporário (recomendado em lotes grandes):**
+
+```env
+CONTRADEF_WORK_TMP=D:/contradef-tmp/analysis
+CONTRADEF_REDUCE_LOGS_TMP=D:/contradef-tmp/reduce-logs
+```
+
+Se omitido, o default é portável: `{os.tmpdir()}/contradef-tmp/...` (Windows incluído; **não** assume unidade `F:`). Em contentores com pouco disco, defina sempre um volume com espaço suficiente.
+
+**Checklist Windows (evitar falhas frequentes):**
+
+1. PostgreSQL a correr; `DATABASE_URL` com `127.0.0.1` (não `localhost` se IPv6 atrapalhar) e base `fluxtrace_dev` existente.
+2. `AUTH_MODE` e `VITE_AUTH_MODE` **iguais** (ex. ambos `local`); **reiniciar** `pnpm dev` após mudar `VITE_*`.
+3. Se o PowerShell bloquear `pnpm.ps1`, use `pnpm.cmd` ou ajuste a ExecutionPolicy (ver `MANUAL-DEV-LOCAL.md` §0.4.1).
+4. `.env` em `fluxtrace_web/.env` (não em `backend/.env`).
+5. Abra a UI no URL do terminal (em geral `http://localhost:3000/`). «Failed to fetch» na Interpretação consolidada = front sem API — confirme se `pnpm dev` ainda está a correr.
 
 ### 4. Criar esquema da base de dados
 
@@ -491,6 +508,29 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 Evidências típicas no veredito: `IsDebuggerPresent`, `CheckRemoteDebuggerPresent`, `Sleep`, `VirtualProtect` (RW→RX), `GetProcAddress`.
 
 > **VirusTotal / LLM:** opcionais. Sem chaves, o veredito usa **resumo determinístico** — suficiente para SeloR das reivindicações de redução/correlação/evasão heurística.
+
+---
+
+### IDs MITRE ATT&CK (TA0005) no FluxTrace
+
+Os identificadores usados na Tabela 1 do artigo (T1027, T1027.007, T1055, T1622, …) são produzidos pelo motor em `fluxtrace_web/backend/shared/mitre/mitreDefenseEvasion.ts` e aparecem na UI (**Interpretação consolidada** → técnicas TA0005) e no insight do lote (`mitreDefenseEvasion.techniques[].id`).
+
+**Como listar os IDs de um lote concluído:**
+
+1. Abrir `/interpretacao-consolidada` e seleccionar o lote; ou
+2. Consultar o JSON de insight / relatório gerado pelo lote (campo `techniques[].id`).
+
+O mapeamento é **API ou heurística → ID ATT&CK** (ex.: `GetProcAddress` → T1027.007; `WriteProcessMemory` → T1055.002; heurística «Anti-debug» → T1622). Não depende do nome do ficheiro `.cdf`.
+
+### Correlação multi-log — semântica (ablação)
+
+Remover módulos (ex.: `TraceInstructions`) altera fortemente **volume**, **classificação** e evidência agregada — isso confirma o valor da correlação multi-log.
+
+Contudo, **não** há pré-condição exclusiva «módulo X ⇒ técnica Y» no código: se a API gatilho permanecer noutro log residual, o ID ATT&CK correspondente **permanece**. Exemplo: remover só `TraceFcnCall` não elimina T1027.007 se `GetProcAddress` ainda existir em `TraceInstructions` (ou noutro módulo). Na leitura experimental, associações módulo↔técnica devem ser tratadas como **fontes típicas / evidência predominante**, não como dependências 1:1 do motor.
+
+### Limiares de risco (`RISK_*`)
+
+O rótulo critical/high/medium/low usa limiares em `backend/_core/config/riskLevelThresholds.ts`, configuráveis no `.env` (ver `backend/.env.example`). Os defaults coincidem com os experimentos do artigo. **Não** alteram a métrica de redução de linhas (ρ).
 
 ---
 
