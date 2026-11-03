@@ -8,6 +8,8 @@ Para correr a aplicação com estes dados: **`fluxtrace_web/readme-web.md`**.
 
 Cada pacote é um diretório nomeado pelo **SHA-256** do bundle, com ficheiros Contradef (`FunctionInterceptor`, `TraceFcnCall.M1`/`.M2`, `TraceInstructions`, `TraceMemory`, `TraceDisassembly`, etc.).
 
+A lista SHA-256 das **100 amostras do lote CotB** (50 benignas + 50 infectadas; 99 no lote oficial) está em [`cotb-2027-sample-hashes.csv`](cotb-2027-sample-hashes.csv). São só hashes e rótulo — sem PE, ZIP de malware nem `.cdf`. Os 16 `.zip` desta pasta são pacotes de teste da UI; não são esse lote.
+
 ---
 
 ## Inventário (16 pacotes)
