@@ -4,7 +4,7 @@
 
 O **FluxTrace** é uma aplicação web (*full-stack*: React + Node.js/Express + PostgreSQL) para **correlação**, **redução heurística de logs**, **visualização de fluxo** e **fluxos de trabalho do analista** sobre rastros gerados pelo pipeline de instrumentação **[Contradef](https://github.com/contradef)** (`*.cdf`, lotes `.zip`). O artefato complementa a pintool Contradef: a Contradef **gera** rastros em ambiente controlado; o FluxTrace **ingere, reduz, persiste e explora** esses dados via interface web, APIs REST/tRPC e exportações (Excel, JSON, Mermaid).
 
-Este repositório contém o código-fonte da ferramenta, **16 pacotes de amostras** Contradef em `test-samples/`, documentação de **47 funções mapeadas (M1)** em `funcoes-mapeadas/`, capturas de evidência experimental em `resultados/capturas-tela/` e instruções para reproduzir as principais reivindicações do artigo *FluxTrace: Uma Ferramenta Baseada em Logs para Análise de Comportamentos Evasivos* (SBSeg 2026 / Salão de Ferramentas).
+Este repositório contém o código-fonte da ferramenta, **16 pacotes de amostras** Contradef em `test-samples/`, documentação de **47 funções mapeadas (M1)** em `funcoes-mapeadas/`, capturas de evidência experimental em `resultados/capturas-tela/` e instruções para reproduzir a cadeia ingestão–redução–auditoria descrita no artigo *FluxTrace: orquestração e redução seletiva de rastros de DBI para análise de comportamentos evasivos*.
 
 **Repositório:** [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace)
 
@@ -13,7 +13,7 @@ Este repositório contém o código-fonte da ferramenta, **16 pacotes de amostra
 ## Sumário
 
 - [Estrutura do readme.md](#estrutura-do-readmemd)
-- [Selos considerados](#selos-considerados)
+- [O que está disponível](#o-que-está-disponível)
 - [Informações básicas](#informações-básicas)
 - [Dependências](#dependências)
 - [Preocupações com segurança](#preocupações-com-segurança)
@@ -28,11 +28,11 @@ Este repositório contém o código-fonte da ferramenta, **16 pacotes de amostra
 
 ## Estrutura do readme.md
 
-Este README segue o [modelo obrigatório do CTA SBSeg 2026](https://doc-artefatos.github.io/sbseg2026/subinstrucoes.html) e organiza-se em:
+Este README organiza-se em:
 
 1. **Resumo** — objetivo do artefato e ligação ao artigo.
-2. **Estrutura do readme.md** — mapa deste documento e do repositório; **playlist de vídeos** (secção final, padrão [TOMWare](https://github.com/TOMWare-analises/TOMWare) §1.4).
-3. **Selos considerados** — selos pleiteados na avaliação (D, F, S, R).
+2. **Estrutura do readme.md** — mapa deste documento e do repositório.
+3. **O que está disponível** — código, amostras, documentação e capturas.
 4. **Informações básicas** — componentes, arquitetura e ambiente de execução.
 5. **Dependências** — software, versões, [pacote de instaladores (Drive)](#pacote-de-instaladores-google-drive) e espelho de amostras.
 6. **Preocupações com segurança** — riscos e mitigação para avaliadores.
@@ -46,7 +46,7 @@ Este README segue o [modelo obrigatório do CTA SBSeg 2026](https://doc-artefato
 
 ```text
 fluxtrace/
-├── README.md                       ← este ficheiro (artefato CTA / SF)
+├── README.md                       ← este ficheiro
 ├── README.en.md                    ← versão em inglês (referência)
 ├── LICENSE                         ← MIT
 ├── fluxtrace_web/                  ← aplicação web (pnpm: frontend + backend)
@@ -77,20 +77,21 @@ fluxtrace/
 
 ---
 
-## Selos considerados
+## O que está disponível
 
-Os autores solicitam a avaliação do artefato para **todos os selos disponíveis** no processo CTA SBSeg 2026:
+O repositório destina-se a repetir a cadeia da ferramenta (código, amostras, catálogo M1 e capturas):
 
-| Selo | Nome | Justificativa no FluxTrace |
-|------|------|----------------------------|
-| **Selo D** | Artefatos Disponíveis | Código-fonte, amostras (`test-samples/`), documentação M1 e capturas públicas em [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace); pastas Drive [`instaladores`](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing), [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing) e [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link); licença MIT. |
-| **Selo F** | Artefatos Funcionais | Dependências e [pacote de instaladores](#pacote-de-instaladores-google-drive); [Instalação](#instalação); **teste mínimo** (`pnpm check`, `pnpm test`) e **fluxo UI** (upload → redução → interpretação); playlist **01–15**. |
-| **Selo S** | Artefatos Sustentáveis | Código modular (`frontend/`, `backend/services/`, testes Vitest); manuais PT (`MANUAL-TECNICO`, `MANUAL-USUARIO`, `readme-web.md`); catálogo `funcoes-mapeadas/` com hiperligações por função. |
-| **Selo R** | Experimentos Reprodutíveis | Secção [Experimentos](#experimentos) com SHA-256, passos na UI, tempos de referência e capturas em `resultados/capturas-tela/`; playlist como demonstração do fluxo (não substitui os lotes stress do artigo). |
+| Item | Onde |
+|------|------|
+| Código-fonte (MIT) | este repositório; [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace) |
+| Amostras Contradef | `test-samples/`; pasta Drive [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) |
+| Instaladores e vídeos | Drive [`instaladores`](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing), [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing) |
+| Teste mínimo | `pnpm check`, `pnpm test` (inclui pipeline e2e); fluxo UI (upload → interpretação); playlist **01–15** |
+| Manuais | `fluxtrace_web/docs/` (`MANUAL-TECNICO`, `MANUAL-USUARIO`, `readme-web.md`) |
+| Catálogo M1 | `funcoes-mapeadas/` |
+| Experimentos e capturas | [Experimentos](#experimentos); `resultados/capturas-tela/` |
 
-> **Apêndice LaTeX (HotCRP):** chaves opcionais (`VIRUSTOTAL_API_KEY`, LLM) e credenciais privadas devem ser declaradas no apêndice do CTA, não neste README. Modelo: [Exemplo-Apendice](https://doc-artefatos.github.io/sbseg2026/subinstrucoes.html).
-
-> **Salão de Ferramentas (SF) 2026:** modalidade **Código Aberto** — URL da playlist = pasta Drive [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing) (ver [Vídeos de demonstração (playlist)](#vídeos-de-demonstração-playlist)).
+> Chaves opcionais (`VIRUSTOTAL_API_KEY`, LLM) ficam só no `.env` local — nunca neste README nem no git. Playlist de vídeos: pasta Drive [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing).
 
 ---
 
@@ -101,28 +102,29 @@ Os autores solicitam a avaliação do artefato para **todos os selos disponívei
 | Projeto | Função |
 |---------|--------|
 | [**Contradef**](https://github.com/contradef) | DBI (Intel Pin): gera rastros `*.cdf` em VM Windows isolada. |
-| **FluxTrace** (este repo) | Plataforma web: upload, redução heurística, dashboards, interpretação consolidada, grafo de fluxo, funções M1, exportações e enriquecimento opcional VT/MITRE. |
+| **FluxTrace** (este repo) | Plataforma web: upload dos `.cdf`, discovery das APIs **no rastro**, índice reprodutível, grafo (vista), painel de evidências, catálogo M1 (anotação), exportações. LLM/VT opcionais. |
 
 ### Capacidades principais
 
 - **Lotes de análise** — submissão multipart, fila, estados (`queued`, `running`, `completed`), métricas de tempo.
-- **Redução heurística** — preservação de APIs sensíveis, gatilhos e contexto mínimo (janelas 4+4, cabeçalhos).
-- **Interpretação consolidada** — categoria, risco, APIs suspeitas, veredito técnico (LLM opcional ou resumo determinístico).
-- **Fluxo de malware compacto** — grafo reduzido por fases (evasão, execução, persistência).
-- **Funções mapeadas (M1)** — planilha e diagramas das 47 funções interceptadas.
-- **Integrações opcionais** — VirusTotal v3, MITRE TA0005, export XLSX comparativo Flux×VT.
+- **Discovery no log** — os nomes de API saem do `.cdf` (interceptor, M1/M2, instruções). Não há lista fechada de 21 nomes. O catálogo M1 **anota** o que já apareceu.
+- **Origem Pin vs amostra** — cada ocorrência leva `pin-runtime` / `target` / `unknown` (imagem/módulo no `.cdf`). O índice **guarda tudo**; redução, correlação, grafo e técnicas usam só `target`.
+- **Índice e artefactos** — `trace-index.json` (todas as ocorrências, SHA-256 dos `.cdf`, versão do motor); `observed-api-graph.json`; relatório determinístico. O grafo da UI **pagina**; o índice não corta.
+- **Interpretação consolidada** — categoria e risco são **rótulos da ferramenta**, não ground truth. LLM opcional (`CONTRADEF_SKIP_LLM=1` no artigo).
+- **Funções mapeadas (M1)** — documentação das ~47 APIs que a **Contradef** intercepta; a FluxTrace não intercepta.
+- **Integrações opcionais** — VirusTotal v3, MITRE TA0005 (etiqueta), export XLSX.
 
 ### Arquitetura
 
-![FluxTrace — pipeline funcional: ingestão, processamento/redução e visualização](fluxtrace_web/docs/fluxtrace-arquitetura.png)
+![FluxTrace — pipeline: ingestão dos .cdf, processamento (discovery + índice) e visualização](fluxtrace_web/docs/fluxtrace-arquitetura.png)
 
-O FluxTrace organiza-se em **três fases** (ver diagrama acima):
+O FluxTrace organiza-se em **três fases** (ver diagrama acima). A PNG tem de coincidir com `fluxtrace_web/docs/fluxtrace-arquitetura.drawio` — **não** descreve o redutor antigo (lista de 21, «99,7%», «47 interceptadas»).
 
 | Fase | Módulos / saídas | Implementação na app web |
 |------|-------------------|---------------------------|
 | **1. Ingestão** | Analista submete logs Contradef (`.cdf` / `.zip`, multi‑GB); módulo de ingestão; logs filtrados | `/reduce-logs` — upload multipart, fila, estados do lote |
-| **2. Processamento e redução** | Redutor heurístico (ex.: **99,7%** no lote `49aa7438…`); banco M1 (**47** APIs); agregador (`TraceFcnCall`, `TraceMemory`, `TraceInstructions`, `FunctionInterceptor`); engine de correlação | `backend/services/analysis/` — redução, heurísticas, correlação |
-| **3. Visualização e saída** | Diagrama M1; grafo compacto (**32→5** nós, lote `db32e48a…`); painel de evidências; MITRE ATT&CK; interpretação consolidada e veredito | `/funcoes-mapeadas`, `/funcoes-mapeadas/fluxo-malware`, `/interpretacao-consolidada` |
+| **2. Processamento** | Discovery das APIs no `.cdf`; índice fiel; M1 só anota; agregação das seis fontes (`FunctionInterceptor`, `TraceFcnCall` M1/M2, `TraceMemory`, `TraceInstructions`, `TraceDisassembly`) | `backend/services/analysis/` (`traceApiDiscovery`, `traceIndexArtifact`) |
+| **3. Visualização e saída** | Grafo das APIs observadas (primeira ocorrência + linha); painel até à linha do `.cdf`; MITRE heurístico; relatório determinístico | `/interpretacao-consolidada`, `/funcoes-mapeadas` |
 
 #### Stack técnico (camadas de software)
 
@@ -171,7 +173,7 @@ Diagrama técnico detalhado (protocolos e pastas): [`fluxtrace_web/docs/MANUAL-T
 
 ### Pacote de instaladores (Google Drive)
 
-Espelho dos sites oficiais (Git, Node.js, Git LFS, EDB PostgreSQL, VS Code), no mesmo espírito da pasta `Instaladores` do [TOMWare](https://github.com/TOMWare-analises/TOMWare). Prefira as páginas oficiais quando possível; use o Drive para montar o ambiente mais rápido.
+Espelho dos sites oficiais (Git, Node.js, Git LFS, EDB PostgreSQL, VS Code). Prefira as páginas oficiais quando possível; use o Drive para montar o ambiente mais rápido.
 
 **Pasta:** [`instaladores`](https://drive.google.com/drive/folders/1XqR8_CynMEV7oGc8AC7jGSnmUv6JdSOg?usp=sharing)
 
@@ -214,7 +216,7 @@ Inventário completo: [`test-samples/README.md`](test-samples/README.md) — **1
 |--------|------------------|---------------------|------------|-------------|
 | `amostra_100k` | `a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe` | 24 MiB | ~50 s | Playlist **14–15** (teste mínimo / SF) |
 | `amostra_1M` | `1db3df87facac7ad4bf2fc7f9c49392f6f1cd69ce3d5db0d7b1a23074ad0dd69` | 164 MiB | ~25 s | Escala intermédia |
-| `amostra_50M` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | 366 MiB | ~9 min | [Experimentos](#experimentos) (grafo 32→5) |
+| `amostra_50M` | `db32e48a61c59884c1ce4c28f12feee426d361982e2491fbaaf7cb4e75a501dd` | 366 MiB | ~9 min | [Experimentos](#experimentos) (volume em TraceInstructions) |
 
 > **Espelho estável (recomendado se LFS falhar):** pasta Drive [`amostras`](https://drive.google.com/drive/folders/1FJOeVxw23scx84wSle-e5d1UssIqq8gV?usp=drive_link) — mesmos ficheiros SHA-256 que `test-samples/`. Inventário e hashes: [`test-samples/README.md`](test-samples/README.md).
 
@@ -375,7 +377,7 @@ pnpm build
    - **Ficheiro:** `test-samples/a0aeb837cb5e762fc0b7d657c71d343e765cccb5780cd315756f682418b3cdfe.zip`
    - **Nome de validação:** `teste-minimo-cta`
 5. Aguarde estado **concluído** (≈ **50 s** em hardware de referência; depende de CPU/disco).
-6. Abra **Interpretação consolidada** — confirme cartões de redução, APIs e painéis carregados.
+6. Abra **Interpretação consolidada** — confirme APIs observadas no rastro, painel até à linha do `.cdf` e artefactos (`trace-index.json`).
 7. Abra **Funções mapeadas** (`/funcoes-mapeadas`) — confirme planilha M1 (requer `funcoes-mapeadas/` acessível).
 
 **Resultado esperado:** lote concluído sem erro; dashboard actualizado; interpretação e funções mapeadas visíveis.
@@ -386,11 +388,14 @@ pnpm build
 
 ## Experimentos
 
-Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experimentos e Avaliação*): **(i)** tempo de processamento; **(ii)** redução de volume; **(iii)** eventos correlacionados; **(iv)** eventos críticos / evasão.
+Duas leituras que **não** se misturam:
 
-> **Amostras de referência:** redução **99,7%** / Trojan → `49aa7438…` (`ctr-JD-QvLcmsO`); grafo compacto **32→5** / Backdoor → `db32e48a…` (`ctr-ZbPqaQOXo0`). Artefactos pré-exportados em [`resultados/artefatos/`](resultados/artefatos/README.md).
+| Eixo | O que mede | O que **não** é |
+|------|------------|-----------------|
+| **A — volume** | ρ = 1 − L_red/L_orig em rastros enormes (`TraceInstructions`). Os números **99,7%** (`49aa7438…`) e o grafo **32→5** (`db32e48a…`) são **históricos** desse eixo (vista/janela). | «A ferramenta só vê 21 APIs» ou «o produto reduz 99,7% em qualquer lote» |
+| **B — fidelidade** | Motor `trace-discovery-1`: as APIs saem do `.cdf`; `trace-index.json` + `indexSha256`. No piloto Pin (interceptor+M1+M2) $\rho$ fica baixo (~0,16) porque o índice **não descarta** o que o log registou. | Recall de uma lista fechada |
 
-> **Nota:** tempos são **aproximados** (Win 11 25H2, CPU i5-1135G7 @ 2,42 GHz, 16 GB RAM, SSD). Lotes multi‑GB podem levar horas — use amostras menores primeiro.
+Categoria / risco / MITRE / gatilho são **rótulos**. Artefactos pré-exportados (Eixo A) em [`resultados/artefatos/`](resultados/artefatos/README.md). Tempos aproximados (Win 11 25H2, i5-1135G7, 16 GB, SSD).
 
 ### Pré-requisitos comuns
 
@@ -401,9 +406,9 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 
 ---
 
-### Reivindicação 1 — Redução heurística de logs (métrica ii)
+### Reivindicação 1 — Volume em rastros enormes (Eixo A)
 
-**Objetivo:** demonstrar redução superior a **90%** do volume mantendo linhas críticas para análise.
+**Objetivo:** mostrar que a **vista** consegue acompanhar `TraceInstructions` multi‑GB (métrica de volume, não de fidelidade).
 
 | Campo | Valor |
 |-------|--------|
@@ -420,11 +425,11 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 
 **Resultado esperado (referência experimental — lote `49aa7438…`):**
 
-- Redução **≥ 99%** (valor observado: **99,7%**).
-- **329 603** linhas preservadas (exportadas em `resultados/artefatos/49aa7438…/reports/`).
-- Classificação **Trojan**, risco **crítico**; APIs sensíveis e gatilhos visíveis nos cartões.
+- Volume (vista histórica): **99,7%** / **329 603** linhas preservadas em `resultados/artefatos/49aa7438…/reports/`.
+- Rótulos dessa corrida: **Trojan**, risco **crítico** — não são ground truth.
+- O índice actual (`trace-index.json`) lista **todas** as APIs observadas no `.cdf`, inclusive fora de qualquer lista de 21.
 
-> **Alternativa rápida:** amostra `db32e48a…` (`amostra_50M`, ≈ 9 min) também reduz ≥ 99%, mas com **≈ 230 082** linhas e veredito **Backdoor** — usar para a Reivindicação 3, não para estes números do artigo.
+> **Alternativa rápida:** `db32e48a…` (`amostra_50M`, ≈ 9 min) — usar para a Reivindicação 3 (grafo), não para estes números de volume.
 
 ---
 
@@ -453,9 +458,9 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 
 ---
 
-### Reivindicação 3 — Correlação e grafo compacto (métrica iii)
+### Reivindicação 3 — Grafo das APIs observadas (vista)
 
-**Objetivo:** compactar grafo extenso preservando fases comportamentais.
+**Objetivo:** o grafo mostra a **primeira ocorrência** de cada API (ficheiro + linha). A UI **pagina**; o índice não corta.
 
 | Campo | Valor |
 |-------|--------|
@@ -472,15 +477,15 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 
 **Resultado esperado (referência):**
 
-- Grafo: **32 → 5** nós, **58 → 4** arestas.
-- Fases: *Evasão → Execução maliciosa → Persistência*.
-- Veredito agregado compatível com **Backdoor** / resolução dinâmica de APIs.
+- Referência histórica (vista compacta dessa corrida): **32 → 5** nós, **58 → 4** arestas.
+- Hoje o artefacto canónico é `observed-api-graph.json` (ordem de primeira ocorrência).
+- Rótulo daquela corrida: **Backdoor** — não é ground truth.
 
 ---
 
 ### Reivindicação 4 — Detecção de comportamento evasivo (métrica iv)
 
-**Objetivo:** destacar APIs sensíveis, gatilhos heurísticos e técnicas MITRE.
+**Objetivo:** mostrar etiquetas (gatilho, MITRE) **sobre** o que o `.cdf` já registou — não como filtro de entrada.
 
 | Campo | Valor |
 |-------|--------|
@@ -492,7 +497,7 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 
 1. Abrir interpretação consolidada do lote concluído.
 2. Registar: **categoria**, **risco**, **APIs suspeitas**, **gatilhos**, **técnicas MITRE**.
-3. Abrir **Funções mapeadas** — confirmar catálogo das **47** funções M1 com links para fluxos.
+3. Abrir **Funções mapeadas** — o catálogo M1 **documenta** as APIs que a Contradef intercepta; a FluxTrace **anota** as que também apareceram no rastro.
 
 **Resultado esperado (referência experimental):**
 
@@ -503,11 +508,11 @@ Esta secção reproduz as **quatro métricas** do artigo (Sec. **4** — *Experi
 | APIs suspeitas | 19 |
 | Gatilhos heurísticos | 63 |
 | Técnicas MITRE destacadas | 9 |
-| Funções M1 documentadas | 47 |
+| Funções M1 documentadas (catálogo, não filtro) | ~47 |
 
 Evidências típicas no veredito: `IsDebuggerPresent`, `CheckRemoteDebuggerPresent`, `Sleep`, `VirtualProtect` (RW→RX), `GetProcAddress`.
 
-> **VirusTotal / LLM:** opcionais. Sem chaves, o veredito usa **resumo determinístico** — suficiente para SeloR das reivindicações de redução/correlação/evasão heurística.
+> **VirusTotal / LLM:** opcionais. Sem chaves, o veredito usa **resumo determinístico** — suficiente para reproduzir redução, correlação e evasão heurística.
 
 ---
 
@@ -563,7 +568,7 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 | [`fluxtrace_web/readme-web.md`](fluxtrace_web/readme-web.md) | Rotas, env, deploy |
 | [`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md) | Instalação passo a passo (PT) |
 | [`fluxtrace_web/docs/MANUAL-TECNICO.md`](fluxtrace_web/docs/MANUAL-TECNICO.md) | Arquitetura e operação |
-| [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama funcional (ingestão → redução → visualização) |
+| [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama (ingestão → discovery/índice → visualização); fonte: `.drawio` |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | Manual do utilizador |
 | [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
 | [`resultados/README.md`](resultados/README.md) | Índice de capturas e mapeamento amostra → figura |
@@ -574,7 +579,7 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 
 ## Vídeos de demonstração (playlist)
 
-Screencasts com **legendas queimadas** (PT-BR). A playlist é uma **demonstração do fluxo** (download → instalação → configuração → execução → resultados), alinhada a este README e ao apêndice de demonstração do artigo — no mesmo formato do [TOMWare](https://github.com/TOMWare-analises/TOMWare) §1.4. **Não** pretende cobrir todos os 16 lotes nem as corridas stress de [Experimentos](#experimentos).
+Screencasts com **legendas queimadas** (PT-BR). A playlist demonstra o fluxo (download → instalação → configuração → execução → resultados). **Não** cobre todos os 16 lotes nem as corridas stress de [Experimentos](#experimentos).
 
 | Recurso | URL |
 |---------|-----|
@@ -600,18 +605,18 @@ Screencasts com **legendas queimadas** (PT-BR). A playlist é uma **demonstraç�
 | 11 | Configuração | Copiar `.env` e preencher credenciais locais | `11-configuracao-env.mp4` | [Instalação](#instalação) · passo 3 |
 | 12 | Configuração | `pnpm install` → `pnpm db:push` → `pnpm dev` | `12-configuracao-pnpm-dev.mp4` | [Instalação](#instalação) · passos 2–5 |
 | 13 | Execução | Criar utilizador local + login → dashboard | `13-execucao-login.mp4` | [Teste mínimo](#teste-mínimo) |
-| 14 | Execução | Upload + redução — amostra `a0aeb837…` | `14-execucao-reduzir-logs.mp4` | [Teste mínimo](#teste-mínimo) · apêndice SF (i) |
-| 15 | Resultados | Interpretação consolidada: MITRE, evidências, fluxos e grafo compacto (`a0aeb837…`) | `15-resultados-interpretacao.mp4` | [Experimentos](#experimentos) · apêndice SF (ii)–(iii) |
+| 14 | Execução | Upload + redução — amostra `a0aeb837…` | `14-execucao-reduzir-logs.mp4` | [Teste mínimo](#teste-mínimo) |
+| 15 | Resultados | Interpretação consolidada: MITRE, evidências, fluxos e grafo compacto (`a0aeb837…`) | `15-resultados-interpretacao.mp4` | [Experimentos](#experimentos) |
 
 Convenção de nomes: `NN-fase-assunto.mp4` (ordem lexicográfica = ordem de assistir). Legendas **queimadas** no MP4.
 
 **Notas de alinhamento**
 
-- A demo rápida da playlist usa a amostra **`a0aeb837…`** (vídeos **14–15**), a mesma do [teste mínimo](#teste-mínimo) e do momento (i) do apêndice SF.
-- Os lotes stress do artigo (`49aa7438…` redução 99,7%; `db32e48a…` grafo 32→5 / M1) estão documentados em [Experimentos](#experimentos) e em `resultados/` — **não** há vídeos **16+** separados na pasta `demonstracao`.
+- A demo rápida da playlist usa a amostra **`a0aeb837…`** (vídeos **14–15**), a mesma do [teste mínimo](#teste-mínimo).
+- Os lotes stress (`49aa7438…`, `db32e48a…`) estão em [Experimentos](#experimentos) e em `resultados/` — **não** há vídeos **16+** na pasta `demonstracao`.
 - Não há vídeo só de «download do repositório / amostras»: use o vídeo **10** e as pastas Drive desta secção.
 
-Para o **Salão de Ferramentas 2026** (modalidade Código Aberto), a URL da playlist a indicar na submissão é a pasta [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing).
+A playlist de demonstração está na pasta Drive [`demonstracao`](https://drive.google.com/drive/folders/1PVQBnYi5gXSyhSvYnkqgdOvoj5xhCEZf?usp=sharing).
 
 ---
 

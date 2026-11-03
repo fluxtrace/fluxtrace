@@ -110,6 +110,93 @@ export type FlowGraph = z.infer<typeof flowGraphSchema>;
 export const correlationGraphSchema = flowGraphSchema;
 export type CorrelationGraph = FlowGraph;
 
+export const traceOriginKindSchema = z.enum(["pin-runtime", "target", "unknown"]);
+export type TraceOriginKind = z.infer<typeof traceOriginKindSchema>;
+
+export const originCountsSchema = z.object({
+  "pin-runtime": z.number().int().nonnegative().default(0),
+  target: z.number().int().nonnegative().default(0),
+  unknown: z.number().int().nonnegative().default(0),
+});
+export type OriginCounts = z.infer<typeof originCountsSchema>;
+
+export const observedApiOriginRowSchema = z.object({
+  api: z.string(),
+  fileName: z.string(),
+  logType: z.string(),
+  lineNumber: z.number().int().nonnegative(),
+  occurrences: z.number().int().nonnegative(),
+  origin: traceOriginKindSchema.default("unknown"),
+  mapped: z.array(z.string()).default([]),
+});
+export type ObservedApiOriginRow = z.infer<typeof observedApiOriginRowSchema>;
+
+export const EMPTY_ORIGIN_COUNTS: OriginCounts = { "pin-runtime": 0, target: 0, unknown: 0 };
+
+export const EMPTY_TRACE_ORIGIN = {
+  engine: "trace-discovery-2",
+  indexSha256: "",
+  originCounts: EMPTY_ORIGIN_COUNTS,
+  observedApis: [] as ObservedApiOriginRow[],
+  observedTargetApis: [] as ObservedApiOriginRow[],
+  observedGraph: { nodes: [] as FlowNode[], edges: [] as FlowEdge[] },
+};
+
+export const contradefModuleSchema = z.enum([
+  "FunctionInterceptor",
+  "TraceFcnCall.M1",
+  "TraceFcnCall.M2",
+  "TraceInstructions",
+  "TraceMemory",
+  "TraceDisassembly",
+]);
+
+export const pivotModuleHitsSchema = z.object({
+  module: contradefModuleSchema,
+  fileName: z.string().default(""),
+  occurrences: z.number().int().nonnegative().default(0),
+  firstLine: z.number().int().nonnegative().default(0),
+  addresses: z.array(z.string()).default([]),
+});
+
+export const pivotValidationStepSchema = z.object({
+  id: z.enum(["named", "origin_target", "m1_or_m2", "instructions", "memory", "disassembly"]),
+  status: z.enum(["pass", "fail"]),
+  detail: z.string(),
+});
+
+export const pivotFlowSchema = z.object({
+  api: z.string(),
+  joinBy: z.literal("name").default("name"),
+  mapped: z.boolean().default(false),
+  modules: z.array(pivotModuleHitsSchema).default([]),
+  sharedAddresses: z.array(z.string()).default([]),
+  mermaid: z.string().default(""),
+  origin: originCountsSchema.default(EMPTY_ORIGIN_COUNTS),
+  chainLevel: z.enum(["absent", "name-only", "call-origin", "full-chain"]).default("absent"),
+  likeIsDebuggerPresent: z.boolean().default(false),
+  validationSteps: z.array(pivotValidationStepSchema).default([]),
+});
+export type PivotFlow = z.infer<typeof pivotFlowSchema>;
+
+export const mappedCatalogSyncSchema = z.object({
+  root: z.string().default(""),
+  added: z.array(z.string()).default([]),
+  already: z.array(z.string()).default([]),
+  skipped: z.array(z.string()).default([]),
+});
+export type MappedCatalogSyncDto = z.infer<typeof mappedCatalogSyncSchema>;
+
+export const traceOriginSchema = z.object({
+  engine: z.string().default("trace-discovery-2"),
+  indexSha256: z.string().default(""),
+  originCounts: originCountsSchema.default(EMPTY_ORIGIN_COUNTS),
+  observedApis: z.array(observedApiOriginRowSchema).default([]),
+  observedTargetApis: z.array(observedApiOriginRowSchema).default([]),
+  observedGraph: flowGraphSchema.default({ nodes: [], edges: [] }),
+});
+export type TraceOriginDto = z.infer<typeof traceOriginSchema>;
+
 export const reductionMetricsSchema = z.object({
   originalLineCount: z.number().default(0),
   reducedLineCount: z.number().default(0),
@@ -236,6 +323,9 @@ export const analysisBatchDetailSchema = z.object({
   classification: malwareCategorySchema.default("Unknown"),
   riskLevel: riskLevelSchema.default("low"),
   currentPhase: z.string().default("Inicialização"),
+  traceOrigin: traceOriginSchema.default(EMPTY_TRACE_ORIGIN),
+  pivotFlows: z.array(pivotFlowSchema).default([]),
+  mappedCatalogSync: mappedCatalogSyncSchema.optional(),
   serverProcessDebug: serverProcessDebugSnapshotSchema.optional(),
 });
 export type AnalysisBatchDetail = z.infer<typeof analysisBatchDetailSchema>;

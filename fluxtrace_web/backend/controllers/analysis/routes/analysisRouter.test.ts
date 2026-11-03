@@ -25,6 +25,10 @@ vi.mock("../../../services/analysis/analysisService", () => ({
   getReductionBaselineMetrics: mockGetReductionBaselineMetrics,
   syncAnalysisBatch: mockSyncAnalysisBatch,
   syncActiveAnalysisBatches: mockSyncActiveAnalysisBatches,
+  getPivotCoverage: vi.fn(),
+  syncMappedCatalogFromBatch: vi.fn(),
+  regenerateInsightWithLlm: vi.fn(),
+  explainSampleTrace: vi.fn(),
 }));
 
 vi.mock("../../../models/db", async () => {

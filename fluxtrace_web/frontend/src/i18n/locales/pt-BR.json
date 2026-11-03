@@ -204,6 +204,11 @@
     "noMessage": "Sem mensagem adicional.",
     "updatedAt": "Atualizado em {{time}}",
     "emptyList": "Nenhuma análise na lista. Ajuste os filtros ou submeta um lote em \"Reduzir logs\".",
+    "importOfficial": "Importar campanha oficial (disco)",
+    "importOfficialPending": "A importar…",
+    "importOfficialOk": "Campanha oficial: {{imported}} novos, {{updated}} actualizados, {{skipped}} já na base.",
+    "officialCampaignTitle": "Campanha oficial CotB (A5)",
+    "officialCampaignHint": "{{n}} amostras na UI · infected={{infected}} · benign={{benign}}. Processadas no disco; não são os 4 uploads locais.",
     "loadErrorTitle": "Erro ao carregar estatísticas do dashboard",
     "loadErrorHint": "Failed to fetch: confirme que o pnpm dev segue ativo e que a URL do browser usa a mesma porta do terminal. Só rode pnpm db:migrate-rename-jobs-to-batches se a mensagem citar analysisJobs."
   }

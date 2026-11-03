@@ -77,6 +77,8 @@ export function downloadAnalysisSummaryJson(params: {
     techniques: d.techniques,
     recommendations: d.recommendations,
     mitreDefenseEvasion: d.mitreDefenseEvasion,
+    traceOrigin: d.traceOrigin,
+    pivotFlows: d.pivotFlows,
     _note:
       "`insight.summaryJson` não estava disponível como objeto neste detail; campos foram reconstruídos a partir da resposta `analysis.detail`.",
   };

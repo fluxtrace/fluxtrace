@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createReadStream } from "node:fs";
-import { access, readFile, stat } from "node:fs/promises";
-import { basename } from "node:path";
+import { access, readdir, readFile, stat } from "node:fs/promises";
+import { basename, join } from "node:path";
 import readline from "node:readline";
 
 import { LOG_HEURISTIC_STAGE_ORDER, MUST_CHANGE_PASSWORD_ERR_MSG } from "../../../shared/const";
@@ -69,6 +69,139 @@ async function resolveSourceLogLocalPath(batchId: string, fileNameRaw: string): 
     }
   }
 
+  const batch = await getAnalysisBatchByBatchId(batchId);
+  if (batch) {
+    const official = await resolveOfficialCampaignCdf(batch, base);
+    if (official) return official;
+  }
+
+  return null;
+}
+
+function officialUploadRoots(): string[] {
+  const env = process.env.COTB_UPLOAD_ROOT?.trim();
+  return [...new Set([
+    env,
+    "G:\\cotb-pin-100\\fluxtrace-upload",
+    "F:\\cotb-pin-100\\fluxtrace-upload",
+    "D:\\cotb-pin-100\\fluxtrace-upload",
+    "E:\\cotb-pin-100\\fluxtrace-upload",
+  ].filter((item): item is string => Boolean(item)))];
+}
+
+async function resolveOfficialCampaignCdf(
+  batch: {
+    sampleSha256?: string | null;
+    sampleName?: string | null;
+    pipelineExternalPath?: string | null;
+    sourceArchiveStorageKey?: string | null;
+  },
+  baseFileName: string,
+): Promise<string | null> {
+  const hash = (batch.sampleSha256 ?? "").trim().toLowerCase();
+  const safeBase = basename(baseFileName.replace(/\\/g, "/"));
+  if (!safeBase || safeBase.includes("..") || !/\.cdf$/i.test(safeBase)) return null;
+
+  const dirs: string[] = [];
+  for (const extra of [batch.pipelineExternalPath, batch.sourceArchiveStorageKey]) {
+    if (extra && !extra.includes("..")) dirs.push(extra);
+  }
+  if (/^[a-f0-9]{64}$/.test(hash)) {
+    const sample = (batch.sampleName ?? "").toLowerCase();
+    const labels = [
+      ...(sample.includes("benign") ? ["benign"] : []),
+      ...(sample.includes("infect") ? ["infected"] : []),
+      "benign",
+      "infected",
+    ];
+    for (const root of officialUploadRoots()) {
+      dirs.push(join(root, hash));
+      for (const label of labels) dirs.push(join(root, label, hash));
+    }
+  }
+
+  const seen = new Set<string>();
+  for (const dir of dirs) {
+    const key = dir.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const direct = join(dir, safeBase);
+    try {
+      await access(direct);
+      return direct;
+    } catch {
+      /* scan folder */
+    }
+    try {
+      const names = await readdir(dir);
+      const hit = names.find((name) => name.toLowerCase() === safeBase.toLowerCase());
+      if (!hit) continue;
+      const abs = join(dir, hit);
+      await access(abs);
+      return abs;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+async function snippetFromBatchIndex(
+  batchId: string,
+  fileName: string,
+  anchorLine: number,
+): Promise<{
+  api: string;
+  fileName: string;
+  lineNumber: number;
+  occurrences: number;
+  origin: string;
+} | null> {
+  const insight = await getAnalysisInsight(batchId);
+  const json =
+    insight?.summaryJson && typeof insight.summaryJson === "object" && !Array.isArray(insight.summaryJson)
+      ? (insight.summaryJson as Record<string, unknown>)
+      : {};
+  const origin = json.traceOrigin && typeof json.traceOrigin === "object" ? (json.traceOrigin as Record<string, unknown>) : {};
+  const observed = Array.isArray(origin.observedApis) ? origin.observedApis : [];
+  const base = basename(fileName.replace(/\\/g, "/")).toLowerCase();
+  const rows = observed
+    .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : null))
+    .filter((item): item is Record<string, unknown> => item != null)
+    .filter((item) => basename(String(item.fileName ?? "")).toLowerCase() === base);
+  const exact = rows.find((item) => Number(item.lineNumber) === anchorLine) ?? rows[0];
+  if (!exact) return null;
+  return {
+    api: String(exact.api ?? ""),
+    fileName: String(exact.fileName ?? fileName),
+    lineNumber: Number(exact.lineNumber) || anchorLine,
+    occurrences: Number(exact.occurrences) || 1,
+    origin: String(exact.origin ?? "unknown"),
+  };
+}
+
+async function resolveReducedLogsJsonPath(batch: {
+  batchId: string;
+  pipelineExternalPath?: string | null;
+  sourceArchiveStorageKey?: string | null;
+}): Promise<string | null> {
+  try {
+    const local = resolveLocalArtifactPath(batch.batchId, REDUCED_LOGS_RELATIVE_PATH);
+    await access(local);
+    return local;
+  } catch {
+    /* official campaign copy */
+  }
+  for (const root of [batch.pipelineExternalPath, batch.sourceArchiveStorageKey]) {
+    if (!root || root.includes("..")) continue;
+    const candidate = join(root, "reports", "reduced-logs.json");
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      continue;
+    }
+  }
   return null;
 }
 
@@ -323,21 +456,38 @@ export function registerAnalysisArtifactDownloadRoute(app: Express) {
       return;
     }
 
-    let diskPath: string;
-    try {
-      diskPath = resolveLocalArtifactPath(batchId, REDUCED_LOGS_RELATIVE_PATH);
-    } catch {
-      res.status(400).send("Invalid path");
-      return;
+    const diskPath = await resolveReducedLogsJsonPath(batchRecord);
+    let raw = "";
+    if (diskPath) {
+      try {
+        raw = await readFile(diskPath, "utf8");
+      } catch {
+        raw = "";
+      }
     }
-
-    let raw: string;
-    try {
-      raw = await readFile(diskPath, "utf8");
-    } catch {
-      res
-        .status(404)
-        .send("Artefato de logs reduzidos indisponível no servidor (sem cópia local).");
+    if (!raw) {
+      const indexed = await snippetFromBatchIndex(batchId, fileName, 1);
+      if (!indexed) {
+        res.status(404).send("Artefato de logs reduzidos indisponível no servidor (sem cópia local).");
+        return;
+      }
+      const wantsJsonMissing = typeof req.query.format === "string" && req.query.format.toLowerCase() === "json";
+      const kept = [
+        {
+          lineNumber: indexed.lineNumber,
+          text: `${indexed.api}  ×${indexed.occurrences}  origem=${indexed.origin}  [índice — sem .reduced.txt neste lote oficial]`,
+        },
+      ];
+      if (wantsJsonMissing) {
+        res.status(200);
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader("Cache-Control", "no-store");
+        res.json({ fileName: indexed.fileName, keptLines: kept, source: "index" });
+        return;
+      }
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.send(kept.map((line) => line.text).join("\n"));
       return;
     }
 
@@ -430,9 +580,35 @@ export function registerAnalysisArtifactDownloadRoute(app: Express) {
 
     const absPath = await resolveSourceLogLocalPath(batchId, fileName);
     if (!absPath) {
-      res
-        .status(404)
-        .send("Artefato de log original indisponível localmente neste lote (ou apenas em armazenamento remoto não materializado).");
+      const indexed = await snippetFromBatchIndex(batchId, fileName, anchorLine);
+      if (!indexed) {
+        res
+          .status(404)
+          .send("Artefato de log original indisponível localmente neste lote (ou apenas em armazenamento remoto não materializado).");
+        return;
+      }
+      const line = indexed.lineNumber || anchorLine;
+      res.status(200);
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Cache-Control", "no-store");
+      res.json({
+        source: "index",
+        fileName: basename(indexed.fileName).replace(/\0/g, "").slice(0, 256),
+        anchorLine: line,
+        highlightLine: line,
+        reducedAvailable: false,
+        lines: [
+          { lineNumber: Math.max(1, line - 1), text: indexed.fileName },
+          {
+            lineNumber: line,
+            text: `${indexed.api}  ×${indexed.occurrences}  origem=${indexed.origin}`,
+          },
+          {
+            lineNumber: line + 1,
+            text: "Índice do lote (Postgres). O .cdf original não está neste PC — ligue o HD G:\\cotb-pin-100 para o texto integral da linha.",
+          },
+        ],
+      });
       return;
     }
 
@@ -498,21 +674,38 @@ export function registerAnalysisArtifactDownloadRoute(app: Express) {
       return;
     }
 
-    let diskPath: string;
-    try {
-      diskPath = resolveLocalArtifactPath(batchId, REDUCED_LOGS_RELATIVE_PATH);
-    } catch {
-      res.status(400).send("Invalid path");
-      return;
+    const diskPath = await resolveReducedLogsJsonPath(batchRecord);
+    let raw = "";
+    if (diskPath) {
+      try {
+        raw = await readFile(diskPath, "utf8");
+      } catch {
+        raw = "";
+      }
     }
-
-    let raw: string;
-    try {
-      raw = await readFile(diskPath, "utf8");
-    } catch {
-      res
-        .status(404)
-        .send("Artefato de logs reduzidos indisponível no servidor (sem cópia local).");
+    if (!raw) {
+      const indexed = await snippetFromBatchIndex(batchId, fileName, 1);
+      if (!indexed) {
+        res.status(404).send("Artefato de logs reduzidos indisponível no servidor (sem cópia local).");
+        return;
+      }
+      const wantsJsonMissing = typeof req.query.format === "string" && req.query.format.toLowerCase() === "json";
+      const kept = [
+        {
+          lineNumber: indexed.lineNumber,
+          text: `${indexed.api}  ×${indexed.occurrences}  origem=${indexed.origin}  [índice — sem .reduced.txt neste lote oficial]`,
+        },
+      ];
+      if (wantsJsonMissing) {
+        res.status(200);
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.setHeader("Cache-Control", "no-store");
+        res.json({ fileName: indexed.fileName, keptLines: kept, source: "index" });
+        return;
+      }
+      res.status(200);
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.send(kept.map((line) => line.text).join("\n"));
       return;
     }
 

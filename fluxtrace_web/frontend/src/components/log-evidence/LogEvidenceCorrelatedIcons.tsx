@@ -366,7 +366,7 @@ function LogEvidenceCorrelationPanel({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-[min(1100px,98vw)] overflow-y-auto">
+      <DialogContent className="flex h-[min(94vh,980px)] w-[min(96vw,1680px)] max-w-[min(96vw,1680px)] sm:max-w-[min(96vw,1680px)] flex-col gap-3 overflow-hidden p-6 md:p-8">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="break-all font-mono text-xs">
@@ -441,6 +441,7 @@ function LogEvidenceCorrelationPanel({
           ) : null}
         </DialogHeader>
 
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {compare ? (
           <Tabs defaultValue="images" className="mt-1 w-full min-w-0">
             <TabsList className="grid h-auto w-full max-w-lg grid-cols-2 gap-1 p-1 sm:max-w-md">
@@ -471,7 +472,7 @@ function LogEvidenceCorrelationPanel({
                     <img
                       src={dualOrig}
                       alt="Trecho original"
-                      className="w-full rounded-lg border border-border object-contain dark:border-white/10"
+                      className="max-h-[min(68vh,720px)] w-full rounded-lg border border-border object-contain dark:border-white/10"
                     />
                     <Button
                       type="button"
@@ -496,7 +497,7 @@ function LogEvidenceCorrelationPanel({
                     <img
                       src={dualRed}
                       alt="Trecho reduzido"
-                      className="w-full rounded-lg border border-border object-contain dark:border-white/10"
+                      className="max-h-[min(68vh,720px)] w-full rounded-lg border border-border object-contain dark:border-white/10"
                     />
                     <Button
                       type="button"
@@ -569,7 +570,7 @@ function LogEvidenceCorrelationPanel({
             <img
               src={singlePng}
               alt=""
-              className="mt-2 w-full rounded-lg border border-border object-contain dark:border-white/10"
+              className="mt-2 max-h-[min(72vh,780px)] w-full rounded-lg border border-border object-contain dark:border-white/10"
             />
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 dark:border-white/10">
@@ -625,6 +626,7 @@ function LogEvidenceCorrelationPanel({
             ) : null}
           </div>
         ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

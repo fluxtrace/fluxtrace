@@ -14,6 +14,7 @@ import { ENV, validateProductionEnv } from "../config/env";
 import { seedDefaultLocalAdminIfNeeded } from "../../controllers/admin/localAdminSeed";
 import { applyPostgresSchemaIfNeeded } from "../postgres/postgresSchemaSync";
 import { serveStatic, setupVite } from "./vite";
+import { scheduleMitreCatalogDailySync } from "../../services/mitre/mitreCatalogSync";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -97,6 +98,8 @@ async function startServer() {
       process.exit(1);
     }
   }
+
+  scheduleMitreCatalogDailySync();
 
   const listenHost = process.env.NODE_ENV === "production" ? "0.0.0.0" : undefined;
 

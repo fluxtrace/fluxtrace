@@ -68,7 +68,7 @@ function VtJsonCompareContent() {
   const [unifiedBindLoading, setUnifiedBindLoading] = useState(false);
 
   const utils = trpc.useUtils();
-  const batchesQuery = trpc.analysis.list.useQuery({ limit: 50 }, { refetchInterval: 5000 });
+  const batchesQuery = trpc.analysis.list.useQuery({ limit: 200 }, { refetchInterval: 5000 });
 
   const batchesRecentFirst = useMemo(() => {
     const rows = batchesQuery.data ?? [];

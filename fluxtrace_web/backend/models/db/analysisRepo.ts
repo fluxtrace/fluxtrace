@@ -120,7 +120,7 @@ export async function listAnalysisBatches(filters?: {
       return true;
     });
 
-    return filtered.slice(0, filters?.limit ?? 50);
+    return filtered.slice(0, filters?.limit ?? 200);
   }
 
   const conditions = [];
@@ -144,7 +144,7 @@ export async function listAnalysisBatches(filters?: {
   }
 
   const query = db.select().from(analysisBatches);
-  const rows = conditions.length ? await query.where(and(...conditions)).orderBy(desc(analysisBatches.createdAt)).limit(filters?.limit ?? 50) : await query.orderBy(desc(analysisBatches.createdAt)).limit(filters?.limit ?? 50);
+  const rows = conditions.length ? await query.where(and(...conditions)).orderBy(desc(analysisBatches.createdAt)).limit(filters?.limit ?? 200) : await query.orderBy(desc(analysisBatches.createdAt)).limit(filters?.limit ?? 200);
 
   return rows;
 }

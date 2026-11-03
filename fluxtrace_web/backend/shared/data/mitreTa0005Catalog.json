@@ -3,6 +3,8 @@
   "tacticName": "Defense Evasion",
   "source": "https://attack.mitre.org/tactics/TA0005/",
   "generatedAt": "2026-05-06",
+  "version": "bundled-2026-05-06",
+  "syncedAt": null,
   "techniques": [
     {
       "id": "T1006",

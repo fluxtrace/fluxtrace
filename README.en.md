@@ -4,7 +4,7 @@
 
 **Repository:** [github.com/fluxtrace/fluxtrace](https://github.com/fluxtrace/fluxtrace)
 
-> **Note:** The **canonical artifact README** for SBSeg 2026 CTA / Tool Demo is **[README.md](README.md)** (Portuguese, full CTA template). This file is an English reference only.
+> **Note:** The canonical README is **[README.md](README.md)** (Portuguese). This file is an English reference only.
 
 ## Abstract
 
@@ -63,10 +63,10 @@ fluxtrace/
 
 | Claim | SHA-256 (prefix) | batchId | Reference |
 |-------|------------------|---------|-----------|
-| Reduction 99.7% / Trojan | `49aa7438…` | `ctr-JD-QvLcmsO` | `fluxtrace_07.png`, `resultados/artefatos/49aa7438…/` |
-| Compact graph / Backdoor | `db32e48a…` | `ctr-ZbPqaQOXo0` | `fluxtrace_10.png`, `resultados/artefatos/db32e48a…/` |
+| Axis A volume (historical 99.7%) / label Trojan | `49aa7438…` | `ctr-JD-QvLcmsO` | `fluxtrace_07.png`, `resultados/artefatos/49aa7438…/` |
+| Axis A compact-graph view / label Backdoor | `db32e48a…` | `ctr-ZbPqaQOXo0` | `fluxtrace_10.png`, `resultados/artefatos/db32e48a…/` |
 
-**Aggregate (15 completed batches):** 150.1 GB raw (913.1 M lines) reduced to 666 MB (3.39 M lines) — **99.56% overall reduction** (98.08%–99.97% per batch), 0 failures. Full per-batch and per-file tables: [`resultados/README.md`](resultados/README.md).
+Those percentages are **volume** on huge `TraceInstructions` traces (Axis A), not “the tool only keeps 21 APIs”. The current engine (`trace-discovery-1`) indexes every API name found in the `.cdf`. Full tables: [`resultados/README.md`](resultados/README.md).
 
 Full reproduction steps: [README.md](README.md) (Portuguese, CTA template).
 

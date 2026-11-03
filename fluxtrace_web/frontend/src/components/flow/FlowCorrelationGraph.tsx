@@ -39,6 +39,7 @@ export type FlowNodeData = {
   label: string;
   kind: string;
   severity: string;
+  origin?: string;
   evidencePeek?: EvidencePeekPayload | null;
   /** Chamado ao abrir o PNG de evidência: recentrar o grafo neste nó. */
   focusThisNode?: () => void;
@@ -49,12 +50,26 @@ function peekFromNodeDetails(batchId: string, sourceFile: string | null, lineNum
   return { batchId, fileName: sourceFile, lineNumber };
 }
 
-function nodeAccentClass(kind: string) {
+function originFromMetadata(metadata: Record<string, unknown> | undefined): string | undefined {
+  const origin = metadata?.origin;
+  return typeof origin === "string" && origin.trim() ? origin : undefined;
+}
+
+function nodeAccentClass(kind: string, origin?: string) {
   if (kind === "phase") {
     return "border-cyan-500/45 bg-cyan-500/12 dark:border-cyan-400/40 dark:bg-cyan-500/[0.12]";
   }
   if (kind === "verdict") {
     return "border-violet-500/45 bg-violet-500/12 dark:border-violet-400/40 dark:bg-violet-500/[0.12]";
+  }
+  if (origin === "target") {
+    return "border-emerald-500/45 bg-emerald-500/12 dark:border-emerald-400/40 dark:bg-emerald-500/[0.12]";
+  }
+  if (origin === "pin-runtime") {
+    return "border-slate-400/45 bg-slate-500/12 dark:border-slate-300/35 dark:bg-slate-500/[0.12]";
+  }
+  if (origin === "unknown") {
+    return "border-amber-500/45 bg-amber-500/12 dark:border-amber-400/40 dark:bg-amber-500/[0.12]";
   }
   return "border-border bg-card dark:border-white/12 dark:bg-slate-950/80";
 }
@@ -62,6 +77,7 @@ function nodeAccentClass(kind: string) {
 const ContradefFlowNode = memo(function ContradefFlowNode({ data, selected }: NodeProps<Node<FlowNodeData>>) {
   const kind = data.kind ?? "event";
   const peek = data.evidencePeek;
+  const origin = data.origin;
 
   return (
     <>
@@ -69,14 +85,17 @@ const ContradefFlowNode = memo(function ContradefFlowNode({ data, selected }: No
       <div
         className={`rounded-xl border px-3 py-2 shadow-lg transition-[box-shadow] ${
           peek ? "max-w-[min(300px,calc(100vw-48px))]" : "max-w-[260px]"
-        } ${selected ? "ring-2 ring-cyan-500/55 ring-offset-2 ring-offset-background dark:ring-cyan-400/50" : ""} ${nodeAccentClass(kind)}`}
+        } ${selected ? "ring-2 ring-cyan-500/55 ring-offset-2 ring-offset-background dark:ring-cyan-400/50" : ""} ${nodeAccentClass(kind, origin)}`}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <p className="whitespace-pre-wrap break-words text-xs font-medium leading-snug text-foreground dark:text-zinc-100" title={data.label}>
               {data.label}
             </p>
-            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground dark:text-zinc-500">{kind}</p>
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground dark:text-zinc-500">
+              {kind}
+              {origin ? ` · ${origin}` : ""}
+            </p>
           </div>
           {peek ? (
             <LogEvidenceCorrelatedIcons
@@ -182,7 +201,7 @@ function layoutBfsRings(
         id: n.id,
         type: "contradef",
         position: { x, y },
-        data: { label: n.label, kind: n.kind, severity: n.severity },
+        data: { label: n.label, kind: n.kind, severity: n.severity, origin: originFromMetadata(n.metadata) },
       });
     });
   }
@@ -206,6 +225,48 @@ function layoutBfsRings(
     });
   }
 
+  return { rfNodes, rfEdges };
+}
+
+function layoutPhaseColumns(
+  nodes: FlowGraph["nodes"],
+  edges: FlowGraph["edges"],
+  evidenceNodeIdSet: ReadonlySet<string>,
+): { rfNodes: Node<FlowNodeData>[]; rfEdges: Edge[] } {
+  const COL_W = 236;
+  const ROW_H = 78;
+  const rfNodes: Node<FlowNodeData>[] = nodes.map((n) => {
+    const meta = (n.metadata ?? {}) as { columnIndex?: number; rowIndex?: number };
+    const col = Number.isFinite(meta.columnIndex) ? Number(meta.columnIndex) : 0;
+    const row = Number.isFinite(meta.rowIndex) ? Number(meta.rowIndex) : 0;
+    const { width, height } = estimateNodeSize(n, evidenceNodeIdSet.has(n.id));
+    return {
+      id: n.id,
+      type: "contradef",
+      position: { x: col * COL_W, y: row * ROW_H },
+      data: { label: n.label, kind: n.kind, severity: n.severity, origin: originFromMetadata(n.metadata) },
+      style: { width, height },
+    };
+  });
+
+  const ids = new Set(nodes.map((n) => n.id));
+  const rfEdges: Edge[] = [];
+  for (let i = 0; i < edges.length; i++) {
+    const e = edges[i];
+    if (!ids.has(e.source) || !ids.has(e.target)) continue;
+    rfEdges.push({
+      id: `flow-phase-${i}-${e.source}-${e.target}`,
+      source: e.source,
+      target: e.target,
+      label: e.relation,
+      style: { stroke: "rgba(34, 211, 238, 0.55)", strokeWidth: 1.6 },
+      labelStyle: { fill: "#a5f3fc", fontSize: 10, fontWeight: 500 },
+      labelBgStyle: { fill: "rgba(15, 23, 42, 0.94)" },
+      labelBgPadding: [4, 6] as [number, number],
+      labelBgBorderRadius: 6,
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#22d3ee", width: 16, height: 16 },
+    });
+  }
   return { rfNodes, rfEdges };
 }
 
@@ -243,7 +304,7 @@ function layoutWithDagre(
       id: n.id,
       type: "contradef",
       position: { x: laid.x - laid.width / 2, y: laid.y - laid.height / 2 },
-      data: { label: n.label, kind: n.kind, severity: n.severity },
+      data: { label: n.label, kind: n.kind, severity: n.severity, origin: originFromMetadata(n.metadata) },
     };
   });
 
@@ -351,7 +412,7 @@ function FlowCorrelationGraphInner({
   phaseLogPeekOverride: PhaseLogPeekOverride | null;
   focusFitNodeId: string | null;
   graphFitPulse: number;
-  layoutMode: "timeline" | "network";
+  layoutMode: "timeline" | "network" | "phases";
 }) {
   const { t } = useTranslation();
   const peekByNodeId = useMemo(
@@ -364,6 +425,9 @@ function FlowCorrelationGraphInner({
   const { rfNodes, rfEdges } = useMemo(() => {
     if (layoutMode === "network") {
       return layoutBfsRings(graph.nodes, graph.edges, selectedNodeId, evidenceNodeIdSet);
+    }
+    if (layoutMode === "phases") {
+      return layoutPhaseColumns(graph.nodes, graph.edges, evidenceNodeIdSet);
     }
     return layoutWithDagre(graph.nodes, graph.edges, evidenceNodeIdSet);
   }, [layoutMode, graph.nodes, graph.edges, evidenceNodeIdSet, selectedNodeId]);
@@ -404,7 +468,9 @@ function FlowCorrelationGraphInner({
       <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
         {layoutMode === "network"
           ? t("interpretacao.graphLayoutHintNetwork")
-          : t("interpretacao.graphLayoutHintTimeline")}
+          : layoutMode === "phases"
+            ? t("fluxoMalware.graphLayoutHintPhases")
+            : t("interpretacao.graphLayoutHintTimeline")}
       </p>
       <div
         className={`${boxHeight} w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border bg-muted dark:border-white/10 dark:bg-slate-950`}
@@ -432,9 +498,12 @@ function FlowCorrelationGraphInner({
             nodeStrokeWidth={2}
             maskColor="rgba(15,23,42,0.12)"
             nodeColor={(n) => {
-              const k = (n.data as FlowNodeData | undefined)?.kind;
-              if (k === "phase") return "#22d3ee";
-              if (k === "verdict") return "#a78bfa";
+              const data = n.data as FlowNodeData | undefined;
+              if (data?.kind === "phase") return "#22d3ee";
+              if (data?.kind === "verdict") return "#a78bfa";
+              if (data?.origin === "target") return "#34d399";
+              if (data?.origin === "unknown") return "#f59e0b";
+              if (data?.origin === "pin-runtime") return "#94a3b8";
               return "#64748b";
             }}
           />
@@ -465,7 +534,7 @@ export default function FlowCorrelationGraph({
   focusFitNodeId?: string | null;
   graphFitPulse?: number;
   /** `timeline` = Dagre LR (fluxo analítico). `network` = anéis BFS a partir do nó seleccionado (vista rede). */
-  layoutMode?: "timeline" | "network";
+  layoutMode?: "timeline" | "network" | "phases";
 }) {
   return (
     <ReactFlowProvider>

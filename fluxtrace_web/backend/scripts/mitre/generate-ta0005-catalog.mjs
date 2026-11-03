@@ -54,11 +54,14 @@ for (const e of entries) {
 // Stable sort: parent before subs (T1548 before T1548.001)
 unique.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
 
+const generatedAt = new Date().toISOString().slice(0, 10);
 const catalog = {
   tacticId: "TA0005",
   tacticName: "Defense Evasion",
   source: "https://attack.mitre.org/tactics/TA0005/",
-  generatedAt: new Date().toISOString().slice(0, 10),
+  generatedAt,
+  version: `bundled-${generatedAt}`,
+  syncedAt: null,
   techniques: unique,
 };
 

@@ -5,6 +5,8 @@ import { MetricCard } from "@/components/widgets/MetricCard";
 import { LogEvidenceCorrelatedIcons } from "@/components/log-evidence/LogEvidenceCorrelatedIcons";
 import { LogEvidenceShellContext } from "@/components/log-evidence/LogEvidenceShellContext";
 import { LogEvidenceFileMetricsContext } from "@/components/log-evidence/LogEvidenceFileMetricsContext";
+import { TraceOriginPanel } from "@/components/analysis/TraceOriginPanel";
+import { PivotCoveragePanel } from "@/components/analysis/PivotCoveragePanel";
 import { MitreDefenseEvasionPanel } from "@/components/mitre/MitreDefenseEvasionPanel";
 import { VirusTotalIntegratedPanel } from "@/components/virus-total/VirusTotalIntegratedPanel";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +48,8 @@ import { removeTrackedBatchIdFromStorage } from "@/lib/reduce-logs/reduceLogsSes
 import { asRecord } from "@/lib/core/payload";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/api/trpc";
-import type { MitreEvidenceOccurrence } from "@shared/analysis";
+import type { MitreEvidenceOccurrence, ObservedApiOriginRow } from "@shared/analysis";
+import { JOURNEY_PAGE_SIZE, pageFlowGraph } from "@shared/analysis";
 import { buildContradefFlowchartMermaid, buildContradefMindmapMermaid } from "@shared/flowGraph/flowGraphMermaidDiagrams";
 import {
   AlertTriangle,
@@ -169,6 +172,41 @@ function InterpretationSourceBadge({ modelName }: { modelName?: string | null })
   );
 }
 
+function GraphPageControls({
+  page,
+  pageCount,
+  total,
+  onPage,
+}: {
+  page: number;
+  pageCount: number;
+  total: number;
+  onPage: (page: number) => void;
+}) {
+  const { t } = useTranslation();
+  if (total <= JOURNEY_PAGE_SIZE && pageCount <= 1) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+      <span>
+        {t("interpretacao.graphPageStatus", {
+          page: page + 1,
+          pages: pageCount,
+          n: total,
+          size: JOURNEY_PAGE_SIZE,
+        })}
+      </span>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" disabled={page <= 0} onClick={() => onPage(page - 1)}>
+          {t("interpretacao.graphPagePrev")}
+        </Button>
+        <Button type="button" variant="outline" size="sm" disabled={page + 1 >= pageCount} onClick={() => onPage(page + 1)}>
+          {t("interpretacao.graphPageNext")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function InterpretacaoConsolidadaContent() {
   const { t } = useTranslation();
   const { sidebarCollapsed } = useDashboardShell();
@@ -181,6 +219,10 @@ function InterpretacaoConsolidadaContent() {
   const [interpretationTab, setInterpretationTab] = useState("overview");
   const [flowLayoutMode, setFlowLayoutMode] = useState<"timeline" | "network">("timeline");
   const [overviewIntelTab, setOverviewIntelTab] = useState("mitre");
+  const [selectedObservedNodeId, setSelectedObservedNodeId] = useState<string | null>(null);
+  const [originGraphPage, setOriginGraphPage] = useState(0);
+  const [journeyGraphPage, setJourneyGraphPage] = useState(0);
+  const [pivotApi, setPivotApi] = useState<string | null>(null);
   const [mitreTraceTarget, setMitreTraceTarget] = useState<{
     batchId: string;
     targetNodeId: string;
@@ -197,7 +239,7 @@ function InterpretacaoConsolidadaContent() {
   const selectedBatchId = searchParams.get("batch");
 
   const batchesQuery = trpc.analysis.list.useQuery(
-    { limit: 50 },
+    { limit: 200 },
     { refetchInterval: 5000 },
   );
 
@@ -221,6 +263,13 @@ function InterpretacaoConsolidadaContent() {
   );
 
   const deleteBatchMutation = trpc.analysis.deleteBatch.useMutation();
+  const regenerateInsight = trpc.analysis.regenerateInsight.useMutation({
+    onSuccess: async () => {
+      toast.success(t("interpretacao.regenerateLlmOk"));
+      if (selectedBatchId) await utils.analysis.detail.invalidate({ batchId: selectedBatchId });
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const canDeleteSelectedBatch = Boolean(
     !authLoading
@@ -229,6 +278,12 @@ function InterpretacaoConsolidadaContent() {
       && typeof selectedBatchFromList.createdByUserId === "number"
       && selectedBatchFromList.createdByUserId === user.id,
   );
+
+  useEffect(() => {
+    setOriginGraphPage(0);
+    setJourneyGraphPage(0);
+    setSelectedObservedNodeId(null);
+  }, [selectedBatchId]);
 
   useEffect(() => {
     if (selectedBatchId) return;
@@ -340,6 +395,15 @@ function InterpretacaoConsolidadaContent() {
   }, [selectedDetail]);
 
   const hasFlowGraphDiagram = Boolean(selectedDetail?.flowGraph.nodes.length);
+  const observedGraphPaged = useMemo(() => {
+    const graph = selectedDetail?.traceOrigin?.observedGraph ?? { nodes: [], edges: [] };
+    return pageFlowGraph(graph, originGraphPage, JOURNEY_PAGE_SIZE);
+  }, [originGraphPage, selectedDetail?.traceOrigin?.observedGraph]);
+  const observedGraphView = observedGraphPaged.graph;
+  const journeyGraphPaged = useMemo(
+    () => pageFlowGraph(selectedDetail?.flowGraph ?? { nodes: [], edges: [] }, journeyGraphPage, JOURNEY_PAGE_SIZE),
+    [journeyGraphPage, selectedDetail?.flowGraph],
+  );
 
   const mermaidDirectedDiagramHref = useMemo(() => {
     if (!selectedDetail || !hasFlowGraphDiagram) return null;
@@ -418,6 +482,21 @@ function InterpretacaoConsolidadaContent() {
     },
     [selectedBatchId, selectedDetail?.flowGraph.nodes, focusFlowNode, t],
   );
+
+  const handleOriginEvidence = useCallback((row: ObservedApiOriginRow) => {
+    const all = selectedDetail?.traceOrigin?.observedGraph.nodes ?? [];
+    const index = all.findIndex((item) => {
+      const meta = item.metadata as Record<string, unknown> | undefined;
+      return item.label === row.api && Number(meta?.sourceLineNumber) === row.lineNumber;
+    });
+    const fallback = index >= 0 ? index : all.findIndex((item) => item.label === row.api);
+    setPivotApi(row.api);
+    setInterpretationTab("graph");
+    if (fallback >= 0) {
+      setOriginGraphPage(Math.floor(fallback / JOURNEY_PAGE_SIZE));
+      setSelectedObservedNodeId(all[fallback]!.id);
+    }
+  }, [selectedDetail?.traceOrigin?.observedGraph.nodes]);
 
   function handleExportFlowExcel() {
     if (!selectedDetail?.flowGraph.nodes.length) {
@@ -655,6 +734,15 @@ function InterpretacaoConsolidadaContent() {
                     <MetricCard icon={BrainCircuit} label={t("interpretacao.metricApis")} value={String(selectedDetail.suspiciousApis.length)} helper={t("interpretacao.metricApisHelper", { n: selectedDetail.metrics.triggerCount })} />
                   </div>
 
+                  <TraceOriginPanel origin={selectedDetail.traceOrigin} onOpenEvidence={handleOriginEvidence} />
+
+                  <PivotCoveragePanel
+                    batchId={selectedBatchId}
+                    api={pivotApi ?? selectedDetail.traceOrigin.observedApis.find((row) => row.mapped.length)?.api ?? selectedDetail.traceOrigin.observedApis[0]?.api ?? null}
+                    apis={selectedDetail.traceOrigin.observedApis.map((row) => row.api)}
+                    onApiChange={setPivotApi}
+                  />
+
                   <Tabs value={interpretationTab} onValueChange={setInterpretationTab} className="space-y-4">
                     <div className="space-y-2">
                       <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{t("interpretacao.overviewContentKicker")}</p>
@@ -692,7 +780,21 @@ function InterpretacaoConsolidadaContent() {
                           <CardHeader>
                             <CardTitle className="text-lg">{t("interpretacao.verdictTitle")}</CardTitle>
                             <CardAction>
-                              <InterpretationSourceBadge modelName={selectedDetail.insight?.modelName} />
+                              <div className="flex flex-col items-end gap-2">
+                                <InterpretationSourceBadge modelName={selectedDetail.insight?.modelName} />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 gap-1 text-xs"
+                                  disabled={!selectedBatchId || regenerateInsight.isPending}
+                                  title={t("interpretacao.regenerateLlmHint")}
+                                  onClick={() => selectedBatchId && regenerateInsight.mutate({ batchId: selectedBatchId })}
+                                >
+                                  <Sparkles className="h-3.5 w-3.5" />
+                                  {t("interpretacao.regenerateLlm")}
+                                </Button>
+                              </div>
                             </CardAction>
                           </CardHeader>
                           <CardContent className="pb-6 pt-2">
@@ -874,7 +976,7 @@ function InterpretacaoConsolidadaContent() {
                             </div>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
-                            {selectedDetail.flowGraph.nodes.length ? selectedDetail.flowGraph.nodes.map((node) => (
+                            {journeyGraphPaged.graph.nodes.length ? journeyGraphPaged.graph.nodes.map((node) => (
                               <button
                                 key={node.id}
                                 type="button"
@@ -899,9 +1001,42 @@ function InterpretacaoConsolidadaContent() {
                                 {t("interpretacao.mitreTraceHint")}
                               </p>
                             ) : null}
+                            <p className="text-[11px] text-muted-foreground">
+                              {t("interpretacao.originGraphLegend")}
+                            </p>
+                            {observedGraphView.nodes.length ? (
+                              <div className="space-y-2">
+                                <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+                                  {t("interpretacao.originGraphTitle")}
+                                </p>
+                                <GraphPageControls
+                                  page={observedGraphPaged.page}
+                                  pageCount={observedGraphPaged.pageCount}
+                                  total={observedGraphPaged.totalPagedNodes}
+                                  onPage={setOriginGraphPage}
+                                />
+                                <FlowCorrelationGraph
+                                  key={`origin-graph-${selectedBatchId ?? "none"}-${observedGraphPaged.page}`}
+                                  graph={observedGraphView}
+                                  selectedNodeId={selectedObservedNodeId}
+                                  onSelectNode={setSelectedObservedNodeId}
+                                  expandedHeight={sidebarCollapsed}
+                                  batchId={selectedBatchId}
+                                  layoutMode="timeline"
+                                  focusFitNodeId={selectedObservedNodeId}
+                                  graphFitPulse={selectedObservedNodeId ? 1 : 0}
+                                />
+                              </div>
+                            ) : null}
+                            <GraphPageControls
+                              page={journeyGraphPaged.page}
+                              pageCount={journeyGraphPaged.pageCount}
+                              total={journeyGraphPaged.totalPagedNodes}
+                              onPage={setJourneyGraphPage}
+                            />
                             <FlowCorrelationGraph
-                              key={`flow-graph-${selectedBatchId ?? "none"}-${flowLayoutMode}`}
-                              graph={selectedDetail.flowGraph}
+                              key={`flow-graph-${selectedBatchId ?? "none"}-${flowLayoutMode}-${journeyGraphPaged.page}`}
+                              graph={journeyGraphPaged.graph}
                               selectedNodeId={effectiveGraphNodeId}
                               onSelectNode={focusFlowNode}
                               expandedHeight={sidebarCollapsed}
@@ -966,6 +1101,14 @@ function InterpretacaoConsolidadaContent() {
                                 <p><span className="text-muted-foreground">{t("interpretacao.logTypeLabel")}</span> {selectedGraphNodeDetails.sourceLogType ?? "—"}</p>
                                 <p><span className="text-muted-foreground">{t("interpretacao.lineLabel")}</span> {selectedGraphNodeDetails.sourceLineNumber ?? "—"}</p>
                                 <p><span className="text-muted-foreground">{t("interpretacao.phaseLabel")}</span> {selectedGraphNodeDetails.stage ?? "—"}</p>
+                                <p>
+                                  <span className="text-muted-foreground">{t("interpretacao.originKindLabel")}</span>{" "}
+                                  {typeof selectedGraphNode?.metadata?.origin === "string"
+                                    ? t(`interpretacao.originKind.${selectedGraphNode.metadata.origin}`, {
+                                        defaultValue: selectedGraphNode.metadata.origin,
+                                      })
+                                    : "—"}
+                                </p>
                                 <p>
                                   <span className="text-muted-foreground">{t("interpretacao.transitionLabel")}</span>{" "}
                                   {selectedGraphNodeIncomingEdge

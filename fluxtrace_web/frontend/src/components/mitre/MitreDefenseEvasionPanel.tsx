@@ -19,7 +19,9 @@ import {
 import type { MitreDefenseEvasion, MitreEvidenceOccurrence } from "@shared/analysis";
 import { listHeuristicsOutsideTa0005 } from "@shared/analysis";
 import { MITRE_TA0005_CATALOG } from "@shared/mitre/mitreDefenseEvasion";
-import { ChevronDown, ExternalLink } from "lucide-react";
+import { trpc } from "@/lib/api/trpc";
+import { ChevronDown, ExternalLink, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   mitre: MitreDefenseEvasion;
@@ -27,6 +29,14 @@ type Props = {
   /** Ao escolher uma ocorrência (ficheiro, linha, nó no grafo — separador Fluxo). */
   onEvidenceTrace?: (occurrence: MitreEvidenceOccurrence) => void;
 };
+
+function formatCatalogDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const day = value.slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(day);
+  if (!match) return value;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
 
 function EvidencePill({
   rowId,
@@ -103,28 +113,76 @@ function EvidencePill({
 export function MitreDefenseEvasionPanel({ mitre, heuristicTags, onEvidenceTrace }: Props) {
   const outsideTa0005 = listHeuristicsOutsideTa0005(heuristicTags);
   const [showUnobserved, setShowUnobserved] = useState(false);
+  const catalogQuery = trpc.mitre.catalogStatus.useQuery(undefined, { staleTime: 60_000 });
+  const utils = trpc.useUtils();
+  const syncCatalog = trpc.mitre.syncCatalog.useMutation({
+    onSuccess: (data) => {
+      void utils.mitre.catalogStatus.invalidate();
+      if (data.idsChanged) {
+        toast.message("Catálogo MITRE actualizado com alterações de IDs/nomes.");
+      } else {
+        toast.success("Catálogo MITRE sincronizado (STIX Enterprise).");
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const observed = mitre.techniques;
+  const catalogTechniques = catalogQuery.data?.techniques ?? MITRE_TA0005_CATALOG.techniques;
+  const catalogDate = catalogQuery.data?.syncedAt ?? catalogQuery.data?.generatedAt ?? MITRE_TA0005_CATALOG.generatedAt;
 
   const unobservedRows = useMemo(() => {
     const seen = new Set(mitre.techniques.map((t) => t.id));
-    return MITRE_TA0005_CATALOG.techniques.filter((e) => !seen.has(e.id));
-  }, [mitre.techniques]);
+    return catalogTechniques.filter((e) => !seen.has(e.id));
+  }, [catalogTechniques, mitre.techniques]);
 
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-muted/50 p-4 dark:border-white/10 dark:bg-slate-950/60">
       <div className="flex min-w-0 flex-row items-center justify-between gap-3">
-        <p className="min-w-0 text-sm font-medium text-foreground">MITRE ATT&CK — evasão de defesas</p>
-        <a
-          href={mitre.tacticUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10"
-        >
-          Abrir TA0005
-          <ExternalLink className="h-3 w-3" />
-        </a>
+        <div className="min-w-0 space-y-1">
+          <p className="min-w-0 text-sm font-medium text-foreground">MITRE ATT&CK — evasão de defesas</p>
+          <p className="text-[11px] text-muted-foreground">
+            Catálogo de {formatCatalogDate(catalogDate)}
+            {catalogQuery.data?.version ? ` · ${catalogQuery.data.version}` : ""}
+            {catalogQuery.data?.techniqueCount != null ? ` · ${catalogQuery.data.techniqueCount} técnicas` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1 text-xs"
+            disabled={syncCatalog.isPending}
+            onClick={() => syncCatalog.mutate()}
+          >
+            <RefreshCw className={`h-3 w-3 ${syncCatalog.isPending ? "animate-spin" : ""}`} />
+            Actualizar catálogo
+          </Button>
+          <a
+            href={mitre.tacticUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/50 px-2 py-1 text-xs text-muted-foreground hover:bg-muted dark:border-white/10 dark:bg-white/5 dark:text-zinc-300 dark:hover:bg-white/10"
+          >
+            Abrir TA0005
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
       </div>
+      {catalogQuery.data?.idsChanged ? (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+          O STIX alterou IDs ou nomes desde o catálogo anterior
+          {catalogQuery.data.idDelta.added.length ? ` · novos: ${catalogQuery.data.idDelta.added.join(", ")}` : ""}
+          {catalogQuery.data.idDelta.removed.length ? ` · removidos: ${catalogQuery.data.idDelta.removed.join(", ")}` : ""}
+          {catalogQuery.data.idDelta.renamed.length
+            ? ` · nomes: ${catalogQuery.data.idDelta.renamed.map((row) => `${row.id}`).join(", ")}`
+            : ""}
+          . O mapeamento heurístico (etiqueta→técnica) continua nosso.
+        </p>
+      ) : null}
 
       {observed.length === 0 ? (
         <p className="text-sm text-muted-foreground">

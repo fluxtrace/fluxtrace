@@ -32,7 +32,9 @@ import {
   copyTempFileToLocalArtifact,
   jobArtifactsDirectory,
   localArtifactExists,
+  localArtifactByteSize,
   persistBatchArtifactBuffer,
+  resolveLocalArtifactPath,
   storageGetBuffer,
   storagePut,
 } from "../../models/storage";
@@ -40,6 +42,30 @@ import { renderMalwareFlowMapMarkdown } from "../flowGraph/flowGraphMindMapMarkd
 import { invokeLLM } from "../../_core/integrations/llm";
 import { getServerProcessDebugSnapshot } from "../../_core/debug/serverProcessDebug";
 import { harvestSha256FromNormalizedCorrelation, harvestSha256FromStoredEvents } from "../samples/sampleSha256Harvest";
+import { annotateMapped, discoverApisInLine, resetMappedCatalogCache } from "./traceApiDiscovery";
+import {
+  buildPivotFlow,
+  buildPivotFlows,
+  catalogSourceApis,
+  hitsFromObservedRows,
+  hydratePivotFlow,
+  presentApisMermaid,
+  pickDefaultPivot,
+  rankPivotFlow,
+  syncMappedCatalogFromApis,
+} from "./mappedCatalogSync";
+import { buildDeterministicSampleNarrative } from "./traceNarrative";
+import { createOriginTracker, isBehaviorOrigin, type TraceOrigin } from "./traceOrigin";
+import {
+  buildTraceIndexDocument,
+  compactTraceOriginFromIndexDocument,
+  firstSeenApis,
+  sha256OfBuffer,
+  sha256OfPath,
+  TRACE_ENGINE_VERSION,
+  type SourceFileHash,
+  type TraceIndexHit,
+} from "./traceIndexArtifact";
 import { extractBestNormalizedSha256FromBodies, normalizeOptionalSampleSha256 } from "../../shared/virusTotal";
 import {
   type AnalysisArtifactDto,
@@ -54,13 +80,22 @@ import {
   type ReductionMetrics,
   type RiskLevel,
   type SupportedLogType,
+  type TraceOriginDto,
+  type PivotFlow,
+  type MappedCatalogSyncDto,
+  type MitreDefenseEvasion,
   buildMitreDefenseEvasionFromEvidence,
+  EMPTY_TRACE_ORIGIN,
+  mappedCatalogSyncSchema,
   mitreDefenseEvasionSchema,
+  pivotFlowSchema,
+  traceOriginSchema,
 } from "../../shared/analysis";
 
 const MAX_FILE_BYTES = 32 * 1024 * 1024;
 const MAX_SOURCE_ARTIFACT_UPLOAD_BYTES = 24 * 1024 * 1024;
 const MAX_FILES = 20;
+/** Primeira página da jornada correlacionada (vista). APIs únicas ficam no índice / traceOrigin. */
 const MAX_EVENTS = 320;
 const DEFAULT_FOCUS = "FluxTrace log intelligence — traced flow to malware identification";
 const ARCHIVE_EXTENSIONS = new Set([".7z", ".zip", ".rar"]);
@@ -125,30 +160,6 @@ function ensure7zaExecutable(): void {
     /* already executable or read-only */
   }
 }
-
-const suspiciousApis = [
-  "IsDebuggerPresent",
-  "CheckRemoteDebuggerPresent",
-  "NtQueryInformationProcess",
-  "ZwQueryInformationProcess",
-  "VirtualProtect",
-  "VirtualAlloc",
-  "WriteProcessMemory",
-  "CreateRemoteThread",
-  "Sleep",
-  "EnumSystemFirmwareTables",
-  "GetTickCount",
-  "RtlQueryPerformanceCounter",
-  "NtDelayExecution",
-  "GetProcAddress",
-  "WriteFile",
-  "URLDownloadToFile",
-  "WinHttpSendRequest",
-  "InternetOpenUrl",
-  "RegSetValue",
-  "CreateFile",
-  "DeleteFile",
-];
 
 const stageOrder = LOG_HEURISTIC_STAGE_ORDER;
 
@@ -221,6 +232,15 @@ const PARSE_YIELD_EVERY_LINES = (() => {
 })();
 /** Uma linha de vários MB pode rebentar memória ou atrasar muito o regex; truncar para processamento. */
 const MAX_LOG_LINE_CODE_UNITS = 512_000;
+/**
+ * TraceInstructions de vários GiB gera dezenas de milhões de `dll:Export`.
+ * O índice guarda todas as APIs únicas (1.ª linha + contagem); o array de hits
+ * fica limitado para não esgotar RAM. Override: CONTRADEF_MAX_INDEX_HITS.
+ */
+const MAX_INDEX_HITS = (() => {
+  const n = Number.parseInt(process.env.CONTRADEF_MAX_INDEX_HITS ?? "100000", 10);
+  return Number.isFinite(n) && n >= 1000 ? n : 100_000;
+})();
 
 function formatEtaMinutesPortuguese(etaSeconds: number): string {
   const mTotal = Math.max(1, Math.round(etaSeconds / 60));
@@ -425,6 +445,7 @@ type NormalizedEvent = {
   trigger: boolean;
   addresses: string[];
   techniqueTags: string[];
+  origin: TraceOrigin;
 };
 
 type AnalysisComputationResult = {
@@ -457,6 +478,8 @@ type ProcessedLogLine = {
   techniqueTags: string[];
   suspicious: boolean;
   trigger: boolean;
+  origin: TraceOrigin;
+  originEvidence: string;
 };
 
 type ParsedLogResult = {
@@ -475,6 +498,26 @@ type ParsedLogResult = {
   reducedBytes: number;
   suspiciousEventCount: number;
   triggerCount: number;
+  /** Linhas em que o .cdf nomeou uma API (pode estar truncado; ver observedHitCount). */
+  observedHits: Array<{
+    lineNumber: number;
+    apis: string[];
+    mapped: string[];
+    origin: TraceOrigin;
+    originEvidence: string;
+    occurrences?: number;
+    addresses?: string[];
+  }>;
+  observedHitCount: number;
+  observedHitsTruncated: boolean;
+  observedApiStats: Array<{
+    api: string;
+    lineNumber: number;
+    origin: TraceOrigin;
+    originEvidence: string;
+    mapped: string[];
+    occurrences: number;
+  }>;
 };
 
 function decodeBase64(input: string) {
@@ -674,7 +717,7 @@ async function normalizeSubmittedLogs(input: StartAnalysisBatchInput): Promise<S
 }
 
 function detectApis(line: string) {
-  return suspiciousApis.filter((api) => line.includes(api));
+  return discoverApisInLine(line);
 }
 
 function extractAddresses(line: string) {
@@ -819,7 +862,7 @@ function classifyMalware(techniques: Set<string>, events: NormalizedEvent[]): Ma
 
 /**
  * Rótulo de risco do lote (critical/high/medium/low).
- * Limiares: `backend/_core/config/riskLevelThresholds.ts` (env RISK_*); defaults = artigo SBSeg.
+ * Limiares: `backend/_core/config/riskLevelThresholds.ts` (env RISK_*); defaults = artigo.
  * Não altera ρ de redução de linhas — só a classificação de risco apresentada na UI/relatório.
  */
 function deriveRiskLevel(techniques: Set<string>, triggerCount: number, suspiciousCount: number): RiskLevel {
@@ -835,9 +878,9 @@ function deriveCurrentPhase(events: NormalizedEvent[]) {
   return current;
 }
 
-/** Deve seguir a mesma regra de ids que `buildFlowGraph` (jornada suspeita, até 28 eventos). */
+/** Deve seguir a mesma regra de ids que `buildFlowGraph` (jornada suspeita; a UI pagina a 320). */
 function buildSuspiciousJourneyFileLineToNodeId(events: NormalizedEvent[]): Map<string, string> {
-  const journey = events.filter((e) => e.suspicious).slice(0, 28);
+  const journey = events.filter((e) => e.suspicious);
   const map = new Map<string, string>();
   journey.forEach((event, index) => {
     const apiLabel = event.suspiciousApis[0] ?? event.eventType;
@@ -901,7 +944,7 @@ function buildFlowGraph(
     }
   });
 
-  const suspiciousJourney = events.filter((event) => event.suspicious).slice(0, 28);
+  const suspiciousJourney = events.filter((event) => event.suspicious);
   suspiciousJourney.forEach((event, index) => {
     const apiLabel = event.suspiciousApis[0] ?? event.eventType;
     const nodeId = `event:${index}:${apiLabel}`;
@@ -928,6 +971,7 @@ function buildFlowGraph(
         suspiciousApis: event.suspiciousApis,
         techniques: event.techniqueTags,
         evidence: event.message,
+        origin: event.origin,
       },
     });
     eventEdges.push({
@@ -1105,6 +1149,9 @@ async function generateInsight(params: {
   flowGraph: FlowGraph;
   notableEvents: NormalizedEvent[];
   recommendations: string[];
+  mitreDefenseEvasion?: MitreDefenseEvasion;
+  pivotFlows?: PivotFlow[];
+  originCounts?: { "pin-runtime": number; target: number; unknown: number };
 }) {
   const fallbackMarkdown = buildFallbackSummary(params);
   if (ENV.skipInsightLlm) {
@@ -1121,11 +1168,24 @@ async function generateInsight(params: {
   }
   const payload = {
     analysisName: params.analysisName,
-    classification: params.classification,
-    riskLevel: params.riskLevel,
+    engineClassification: params.classification,
+    engineRiskLevel: params.riskLevel,
     currentPhase: params.currentPhase,
-    techniques: params.techniques,
+    heuristicTags: params.techniques,
     suspiciousApis: params.suspiciousApis,
+    originCounts: params.originCounts ?? null,
+    mitreTa0005: (params.mitreDefenseEvasion?.techniques ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      evidence: row.heuristicEvidence.map((item) => item.label),
+    })),
+    pivotChains: (params.pivotFlows ?? []).slice(0, 40).map((flow) => ({
+      api: flow.api,
+      chainLevel: flow.chainLevel,
+      likeIsDebuggerPresent: flow.likeIsDebuggerPresent,
+      origin: flow.origin,
+      modulesObserved: flow.modules.filter((m) => m.occurrences > 0).map((m) => `${m.module}×${m.occurrences}`),
+    })),
     metrics: params.metrics,
     recommendations: params.recommendations,
     notableEvents: params.notableEvents.slice(0, 20).map((event) => ({
@@ -1134,6 +1194,7 @@ async function generateInsight(params: {
       fileName: event.fileName,
       logType: event.logType,
       suspiciousApis: event.suspiciousApis,
+      origin: event.origin,
     })),
   };
 
@@ -1142,11 +1203,12 @@ async function generateInsight(params: {
       messages: [
         {
           role: "system",
-          content: "Você é um analista de malware especializado em interpretar logs capturados no ambiente Contradef processados pela plataforma FluxTrace (redução, correlação e rasto até identificação). Produza uma saída JSON objetiva e tecnicamente consistente.",
+          content:
+            "És analista de malware. O JSON já contém a correlação determinística do FluxTrace (APIs no rastro, origem Pin vs amostra, cadeia FI/M1/M2/TI/TM/TD, IDs MITRE TA0005). NÃO inventes APIs, módulos, endereços nem IDs ATT&CK que não estejam no JSON. NÃO alteres a classificação nem as técnicas do motor — interpreta-as. Se chainLevel não for full-chain, diz o que falta no rastro. Escreve o veredito em português técnico.",
         },
         {
           role: "user",
-          content: `Com base no seguinte resumo estruturado, gere um veredito técnico em português para um analista de segurança: ${JSON.stringify(payload)}`,
+          content: `Interpreta este rastro já correlacionado e produz o JSON de veredito. Mantém classification e techniques iguais aos do motor (engineClassification / heuristicTags / mitreTa0005): ${JSON.stringify(payload)}`,
         },
       ],
       response_format: {
@@ -1180,10 +1242,10 @@ async function generateInsight(params: {
 
     return {
       title: parsed.title as string,
-      classification: parsed.classification as MalwareCategory,
-      riskLevel: parsed.riskLevel as RiskLevel,
-      currentPhase: parsed.currentPhase as string,
-      techniques: Array.isArray(parsed.techniques) ? parsed.techniques as string[] : params.techniques,
+      classification: params.classification,
+      riskLevel: params.riskLevel,
+      currentPhase: params.currentPhase,
+      techniques: params.techniques,
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations as string[] : params.recommendations,
       summaryMarkdown: typeof parsed.summaryMarkdown === "string" ? parsed.summaryMarkdown : fallbackMarkdown,
       modelName: response.model ?? "default-llm",
@@ -1315,7 +1377,14 @@ function computeMetrics(params: {
   };
 }
 
-function buildProcessedLine(rawLine: string, fileName: string, logType: SupportedLogType, lineNumber: number): ProcessedLogLine {
+function buildProcessedLine(
+  rawLine: string,
+  fileName: string,
+  logType: SupportedLogType,
+  lineNumber: number,
+  origin: TraceOrigin,
+  originEvidence: string,
+): ProcessedLogLine {
   const normalizedLine = normalizeWhitespace(rawLine);
   const apis = detectApis(normalizedLine);
   const addresses = extractAddresses(normalizedLine);
@@ -1336,6 +1405,8 @@ function buildProcessedLine(rawLine: string, fileName: string, logType: Supporte
     techniqueTags,
     suspicious,
     trigger,
+    origin,
+    originEvidence,
   };
 }
 
@@ -1352,10 +1423,12 @@ function toNormalizedEvent(item: ProcessedLogLine): NormalizedEvent {
     trigger: item.trigger,
     addresses: item.addresses,
     techniqueTags: item.techniqueTags,
+    origin: item.origin,
   };
 }
 
 function createLogCollector(fileName: string, logType: SupportedLogType, perFileEventLimit: number) {
+  const originTracker = createOriginTracker(logType);
   /** Só guarda linhas de contexto (nº limitado), não o ficheiro completo. O stage fica aqui, não num Map por linha. */
   const keepLineMap = new Map<number, { text: string; stage: string }>();
   const previousLines: ProcessedLogLine[] = [];
@@ -1373,6 +1446,21 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
   let approximateOriginalBytes = 0;
   let suspiciousEventCount = 0;
   let triggerCount = 0;
+  const observedHits: Array<{
+    lineNumber: number;
+    apis: string[];
+    mapped: string[];
+    origin: TraceOrigin;
+    originEvidence: string;
+    occurrences?: number;
+    addresses?: string[];
+  }> = [];
+  const apiStats = new Map<
+    string,
+    { lineNumber: number; origin: TraceOrigin; originEvidence: string; mapped: string[]; occurrences: number }
+  >();
+  let observedHitCount = 0;
+  let lastBulkLine: { lineNumber: number; text: string } | null = null;
 
   const rememberLine = (item: ProcessedLogLine) => {
     if (item.rawLine.trim().length > 0) {
@@ -1384,12 +1472,87 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
     originalLineCount += 1;
     approximateOriginalBytes += Buffer.byteLength(rawLine, "utf-8") + 1;
 
-    const item = buildProcessedLine(rawLine, fileName, logType, originalLineCount);
+    /**
+     * TraceInstructions / Memory / Dasm: dezenas de milhões de linhas `dll:Export`.
+     * Não materializar ProcessedLogLine nem o array de hits — só estatísticas.
+     */
+    const bulkTrace =
+      logType === "TraceInstructions" || logType === "TraceMemory" || logType === "TraceDisassembly";
+    if (bulkTrace) {
+      const originInfo = originTracker.classify(rawLine);
+      const apis = discoverApisInLine(rawLine, []);
+      originalLinesByStage["—"] = (originalLinesByStage["—"] ?? 0) + 1;
+      if (apis.length) {
+        observedHitCount += 1;
+        for (const api of apis) {
+          const prev = apiStats.get(api);
+          if (!prev) {
+            apiStats.set(api, {
+              lineNumber: originalLineCount,
+              origin: originInfo.origin,
+              originEvidence: originInfo.evidence,
+              mapped: annotateMapped([api]).mapped,
+              occurrences: 1,
+            });
+          } else {
+            prev.occurrences += 1;
+          }
+        }
+      }
+      if (originalLineCount <= 3 && rawLine.trim()) {
+        keepLineMap.set(originalLineCount, { text: rawLine, stage: "—" });
+      }
+      if (rawLine.trim()) {
+        lastBulkLine = { lineNumber: originalLineCount, text: rawLine };
+      }
+      return;
+    }
+
+    const originInfo = originTracker.classify(rawLine);
+    const item = buildProcessedLine(
+      rawLine,
+      fileName,
+      logType,
+      originalLineCount,
+      originInfo.origin,
+      originInfo.evidence,
+    );
+    const forBehavior = isBehaviorOrigin(item.origin);
 
     originalLinesByStage[item.stage] = (originalLinesByStage[item.stage] ?? 0) + 1;
 
-    item.apis.forEach((api) => suspiciousApiSet.add(api));
-    item.techniqueTags.forEach((tag) => techniqueSet.add(tag));
+    if (forBehavior) {
+      item.apis.forEach((api) => suspiciousApiSet.add(api));
+      item.techniqueTags.forEach((tag) => techniqueSet.add(tag));
+    }
+    if (item.apis.length) {
+      observedHitCount += 1;
+      for (const api of item.apis) {
+        const mappedOne = annotateMapped([api]).mapped;
+        const prev = apiStats.get(api);
+        if (!prev) {
+          apiStats.set(api, {
+            lineNumber: originalLineCount,
+            origin: item.origin,
+            originEvidence: item.originEvidence,
+            mapped: mappedOne,
+            occurrences: 1,
+          });
+        } else {
+          prev.occurrences += 1;
+        }
+      }
+      if (observedHits.length < MAX_INDEX_HITS) {
+        observedHits.push({
+          lineNumber: originalLineCount,
+          apis: item.apis,
+          mapped: annotateMapped(item.apis).mapped,
+          origin: item.origin,
+          originEvidence: item.originEvidence,
+          ...(item.addresses.length ? { addresses: item.addresses.slice(0, 12) } : {}),
+        });
+      }
+    }
 
     if (item.lineNumber <= 25) {
       firstLines.push(item);
@@ -1402,7 +1565,7 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       futureContextBudget -= 1;
     }
 
-    if (item.suspicious) {
+    if (forBehavior && item.suspicious) {
       suspiciousEventCount += 1;
       previousLines.forEach(rememberLine);
       rememberLine(item);
@@ -1422,7 +1585,7 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       }
     }
 
-    if (item.trigger) {
+    if (forBehavior && item.trigger) {
       triggerCount += 1;
     }
 
@@ -1438,6 +1601,9 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
   };
 
   const finalize = (exactOriginalBytes?: number): ParsedLogResult => {
+    if (lastBulkLine) {
+      keepLineMap.set(lastBulkLine.lineNumber, { text: lastBulkLine.text, stage: "—" });
+    }
     lastLines.forEach(rememberLine);
 
     if (keepLineMap.size === 0) {
@@ -1491,6 +1657,10 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       reducedBytes,
       suspiciousEventCount,
       triggerCount,
+      observedHits,
+      observedHitCount,
+      observedHitsTruncated: observedHits.length < observedHitCount,
+      observedApiStats: Array.from(apiStats.entries()).map(([api, stat]) => ({ api, ...stat })),
     };
   };
 
@@ -1498,6 +1668,50 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
     consume,
     finalize,
   };
+}
+
+/** Pipeline determinístico sem BD — teste de integração do motor (discovery + índice). */
+export function analyzeLogTextOffline(fileName: string, text: string) {
+  const logType = inferLogType(fileName);
+  const collector = createLogCollector(fileName, logType, 50_000);
+  for (const line of text.split(/\r?\n/)) {
+    collector.consume(line);
+  }
+  return collector.finalize(Buffer.byteLength(text, "utf8"));
+}
+
+/** Lê um `.cdf` por linhas (TraceInstructions de vários GiB). Sem BD. */
+export async function analyzeCdfPathOffline(
+  filePath: string,
+  opts?: { fileName?: string; onProgress?: (lineCount: number, byteWeight: number, sizeBytes: number) => void },
+) {
+  const fileName = opts?.fileName ?? basename(filePath);
+  const logType = inferLogType(fileName);
+  const sizeBytes = (await stat(filePath)).size;
+  const collector = createLogCollector(fileName, logType, 50_000);
+  const reader = createInterface({
+    input: createReadStream(filePath, { encoding: "utf-8" }),
+    crlfDelay: Infinity,
+  });
+  let lineCount = 0;
+  let byteWeight = 0;
+  let lastProgressMs = 0;
+  for await (const rawLine of reader) {
+    const line = truncateOversizeLogLine(rawLine);
+    collector.consume(line);
+    lineCount += 1;
+    byteWeight += Buffer.byteLength(line, "utf-8") + 1;
+    if (lineCount % PARSE_YIELD_EVERY_LINES === 0) {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      const now = Date.now();
+      if (opts?.onProgress && now - lastProgressMs >= 5000) {
+        lastProgressMs = now;
+        opts.onProgress(lineCount, byteWeight, sizeBytes);
+      }
+    }
+  }
+  opts?.onProgress?.(lineCount, byteWeight, sizeBytes);
+  return collector.finalize(sizeBytes);
 }
 
 async function analyzeSingleLogFile(
@@ -1968,6 +2182,8 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
   const techniqueSet = new Set<string>();
   const reducedLogEntries: Array<{ fileName: string; logType: SupportedLogType; keptLines: Array<{ lineNumber: number; text: string }> }> = [];
   const fileMetrics: ReductionFileMetric[] = [];
+  const traceIndex: TraceIndexHit[] = [];
+  const sourceFiles: SourceFileHash[] = [];
 
   const artifacts: AnalysisArtifactDto[] = [];
   let originalLineCount = 0;
@@ -2009,6 +2225,21 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
     const fileWallStartedAt = Date.now();
 
     try {
+      if (logFile.tempFilePath) {
+        const st = await stat(logFile.tempFilePath);
+        sourceFiles.push({
+          fileName: logFile.fileName,
+          sha256: await sha256OfPath(logFile.tempFilePath),
+          sizeBytes: st.size,
+        });
+      } else if (logFile.base64) {
+        const buf = decodeBase64(logFile.base64);
+        sourceFiles.push({
+          fileName: logFile.fileName,
+          sha256: sha256OfBuffer(buf),
+          sizeBytes: buf.byteLength,
+        });
+      }
       await updateAnalysisBatch(batchId, {
         status: "running",
         progress: startProgress,
@@ -2063,6 +2294,33 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
 
       parsed.suspiciousApis.forEach((api) => suspiciousApiSet.add(api));
       parsed.techniqueTags.forEach((tag) => techniqueSet.add(tag));
+      if (parsed.observedHitsTruncated) {
+        for (const stat of parsed.observedApiStats) {
+          traceIndex.push({
+            fileName: logFile.fileName,
+            logType: parsed.logType,
+            lineNumber: stat.lineNumber,
+            apis: [stat.api],
+            mapped: stat.mapped,
+            origin: stat.origin,
+            originEvidence: stat.originEvidence,
+            occurrences: stat.occurrences,
+          });
+        }
+      } else {
+        for (const hit of parsed.observedHits) {
+          traceIndex.push({
+            fileName: logFile.fileName,
+            logType: parsed.logType,
+            lineNumber: hit.lineNumber,
+            apis: hit.apis,
+            mapped: hit.mapped,
+            origin: hit.origin,
+            originEvidence: hit.originEvidence,
+            ...(hit.addresses?.length ? { addresses: hit.addresses } : {}),
+          });
+        }
+      }
 
       triggerCount += parsed.triggerCount;
       originalLineCount += parsed.originalLineCount;
@@ -2231,6 +2489,38 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
     fileLineToNodeId,
   });
   const recommendations = buildRecommendations(techniques, classification);
+
+  let mappedCatalogSync: MappedCatalogSyncDto = {
+    root: process.env.FUNCOES_MAPEADAS?.trim() ?? "",
+    added: [],
+    already: [],
+    skipped: [],
+  };
+  try {
+    mappedCatalogSync = await syncMappedCatalogFromApis(catalogSourceApis(traceIndex), { hits: traceIndex });
+    if (mappedCatalogSync.added.length) {
+      resetMappedCatalogCache();
+      for (const hit of traceIndex) {
+        const extra = annotateMapped(hit.apis).mapped;
+        if (!extra.length) continue;
+        const seen = new Set(hit.mapped);
+        for (const name of extra) {
+          if (!seen.has(name)) {
+            seen.add(name);
+            hit.mapped.push(name);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("[mappedCatalogSync] não foi possível actualizar funcoes-mapeadas:", error);
+  }
+  const pivotFlows = buildPivotFlows(traceIndex);
+  const originCounts = { "pin-runtime": 0, target: 0, unknown: 0 };
+  for (const hit of traceIndex) {
+    originCounts[hit.origin ?? "unknown"] += hit.occurrences != null && hit.occurrences > 0 ? hit.occurrences : 1;
+  }
+
   const insight = await generateInsight({
     analysisName: input.analysisName,
     classification,
@@ -2242,12 +2532,15 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
     flowGraph,
     notableEvents: sortedEvents,
     recommendations,
+    mitreDefenseEvasion,
+    pivotFlows,
+    originCounts,
   });
 
   const summaryJson = {
-    classification: insight.classification,
-    riskLevel: insight.riskLevel,
-    currentPhase: insight.currentPhase,
+    classification,
+    riskLevel,
+    currentPhase,
     techniques,
     mitreDefenseEvasion,
     suspiciousApis: suspiciousApisList,
@@ -2255,6 +2548,9 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
     metrics,
     fileMetrics,
     flowGraph,
+    traceOrigin: EMPTY_TRACE_ORIGIN,
+    pivotFlows,
+    mappedCatalogSync,
   };
 
   const reportArtifact = await uploadArtifactOptional(batchId, "reports/final-report.md", insight.summaryMarkdown, "text/markdown");
@@ -2318,6 +2614,68 @@ async function analyzeLogs(input: StartAnalysisBatchInput, batchId: string): Pro
     storageKey: flowMapArtifact.storageKey,
     mimeType: "text/markdown",
     sizeBytes: flowMapArtifact.sizeBytes,
+  });
+
+  const traceIndexDocument = buildTraceIndexDocument({
+    sourceFiles,
+    hits: traceIndex,
+    eventCapInGraph: MAX_EVENTS,
+  });
+  summaryJson.traceOrigin = compactTraceOriginFromIndexDocument(traceIndexDocument);
+  const indexArtifact = await uploadArtifactOptional(
+    batchId,
+    "reports/trace-index.json",
+    JSON.stringify(traceIndexDocument, null, 2),
+    "application/json",
+  );
+  artifacts.push({
+    artifactType: "trace-index",
+    label: "Índice de APIs observadas no rastro",
+    relativePath: indexArtifact.relativePath,
+    sourcePath: null,
+    storageUrl: indexArtifact.storageUrl,
+    storageKey: indexArtifact.storageKey,
+    mimeType: "application/json",
+    sizeBytes: indexArtifact.sizeBytes,
+  });
+
+  const observedJourney = firstSeenApis(traceIndex, { origin: "target" });
+  const observedApiGraph = {
+    engine: TRACE_ENGINE_VERSION,
+    indexSha256: traceIndexDocument.indexSha256,
+    nodes: observedJourney.map((item, index) => ({
+      id: `api:${index}:${item.api}`,
+      label: item.api,
+      kind: "api",
+      metadata: {
+        sourceFile: item.fileName,
+        sourceLogType: item.logType,
+        sourceLineNumber: item.lineNumber,
+        occurrences: item.occurrences,
+        origin: item.origin,
+      },
+    })),
+    edges: observedJourney.slice(1).map((item, index) => ({
+      source: `api:${index}:${observedJourney[index]!.api}`,
+      target: `api:${index + 1}:${item.api}`,
+      relation: "seguida no rastro",
+    })),
+  };
+  const observedGraphArtifact = await uploadArtifactOptional(
+    batchId,
+    "reports/observed-api-graph.json",
+    JSON.stringify(observedApiGraph, null, 2),
+    "application/json",
+  );
+  artifacts.push({
+    artifactType: "observed-api-graph",
+    label: "Grafo das APIs observadas (ordem de primeira ocorrência)",
+    relativePath: observedGraphArtifact.relativePath,
+    sourcePath: null,
+    storageUrl: observedGraphArtifact.storageUrl,
+    storageKey: observedGraphArtifact.storageKey,
+    mimeType: "application/json",
+    sizeBytes: observedGraphArtifact.sizeBytes,
   });
 
   const derivedSampleSha256 = harvestSha256FromNormalizedCorrelation(normalizedEvents, reducedLogEntries, {
@@ -2529,6 +2887,46 @@ async function enrichArtifactsWithDownloadUrl(
   }));
 }
 
+function resolvePivotFlows(summaryJson: Record<string, unknown>): PivotFlow[] {
+  const parsed = pivotFlowSchema.array().safeParse(summaryJson.pivotFlows);
+  if (parsed.success && parsed.data.length) return parsed.data.map(hydratePivotFlow);
+  return [];
+}
+
+const TRACE_INDEX_FALLBACK_MAX_BYTES = 8 * 1024 * 1024;
+
+async function resolveTraceOriginDto(
+  summaryJson: Record<string, unknown>,
+  batchId: string,
+): Promise<TraceOriginDto> {
+  const parsed = traceOriginSchema.safeParse(summaryJson.traceOrigin);
+  if (parsed.success && (parsed.data.indexSha256 || parsed.data.observedApis.length > 0)) {
+    return parsed.data;
+  }
+
+  try {
+    const relativePath = "reports/trace-index.json";
+    if (await localArtifactExists(batchId, relativePath)) {
+      const size = await localArtifactByteSize(batchId, relativePath);
+      if (size > 0 && size <= TRACE_INDEX_FALLBACK_MAX_BYTES) {
+        const raw = JSON.parse(await readFile(resolveLocalArtifactPath(batchId, relativePath), "utf8")) as Record<string, unknown>;
+        return compactTraceOriginFromIndexDocument({
+          engine: typeof raw.engine === "string" ? raw.engine : undefined,
+          indexSha256: typeof raw.indexSha256 === "string" ? raw.indexSha256 : undefined,
+          originCounts: raw.originCounts as TraceOriginDto["originCounts"] | undefined,
+          observedApis: Array.isArray(raw.observedApis) ? raw.observedApis : undefined,
+          observedTargetApis: Array.isArray(raw.observedTargetApis) ? raw.observedTargetApis : undefined,
+          hits: Array.isArray(raw.hits) ? raw.hits : undefined,
+        });
+      }
+    }
+  } catch {
+    /* lote antigo sem índice compacto: devolver o parse vazio */
+  }
+
+  return parsed.success ? parsed.data : { ...EMPTY_TRACE_ORIGIN };
+}
+
 export async function getAnalysisBatchDetail(
   batchId: string,
   options?: { includeServerProcess?: boolean },
@@ -2626,6 +3024,12 @@ export async function getAnalysisBatchDetail(
     classification: (summaryJson.classification as MalwareCategory | undefined) ?? "Unknown",
     riskLevel: (summaryJson.riskLevel as RiskLevel | undefined) ?? "low",
     currentPhase: (summaryJson.currentPhase as string | undefined) ?? "Inicialização",
+    traceOrigin: await resolveTraceOriginDto(summaryJson, batchId),
+    pivotFlows: resolvePivotFlows(summaryJson),
+    mappedCatalogSync: (() => {
+      const parsed = mappedCatalogSyncSchema.safeParse(summaryJson.mappedCatalogSync);
+      return parsed.success ? parsed.data : undefined;
+    })(),
   };
   if (options?.includeServerProcess) {
     return {
@@ -2634,6 +3038,217 @@ export async function getAnalysisBatchDetail(
     };
   }
   return base;
+}
+
+export async function getPivotCoverage(batchId: string, api?: string) {
+  const insight = await getAnalysisInsight(batchId);
+  const summaryJson =
+    insight?.summaryJson && !Array.isArray(insight.summaryJson)
+      ? (insight.summaryJson as Record<string, unknown>)
+      : {};
+  const origin = await resolveTraceOriginDto(summaryJson, batchId);
+  const originHits = hitsFromObservedRows(origin.observedApis);
+  const stored = resolvePivotFlows(summaryJson);
+  const storedHasHits = stored.some((flow) => flow.modules.some((row) => row.occurrences > 0));
+  let flows: PivotFlow[] = storedHasHits
+    ? stored.filter((flow) => flow.modules.some((row) => row.occurrences > 0))
+    : origin.observedApis.slice(0, 200).map((row) => buildPivotFlow(row.api, originHits));
+  if (storedHasHits && originHits.length) {
+    const have = new Set(flows.map((flow) => flow.api));
+    for (const row of origin.observedApis) {
+      if (have.has(row.api)) continue;
+      flows.push(buildPivotFlow(row.api, originHits));
+      have.add(row.api);
+      if (flows.length >= 200) break;
+    }
+  }
+  const order = new Map(origin.observedApis.map((row, index) => [row.api, index]));
+  flows = [...flows].sort((a, b) => {
+    const ranked = rankPivotFlow(b) - rankPivotFlow(a);
+    if (ranked !== 0) return ranked;
+    return (order.get(a.api) ?? 9999) - (order.get(b.api) ?? 9999);
+  });
+  const present = flows.filter((flow) => flow.chainLevel !== "absent");
+  const mappedCatalogSync = mappedCatalogSyncSchema.safeParse(summaryJson.mappedCatalogSync);
+  const selected =
+    (api ? present.find((item) => item.api === api) ?? flows.find((item) => item.api === api) : null)
+    ?? pickDefaultPivot(present)
+    ?? null;
+  return {
+    flow: selected,
+    flows: present,
+    observedApiCount: origin.observedApis.length,
+    sampleMermaid: presentApisMermaid(present),
+    mappedCatalogSync: mappedCatalogSync.success ? mappedCatalogSync.data : undefined,
+  };
+}
+
+export async function regenerateInsightWithLlm(batchId: string) {
+  if (ENV.skipInsightLlm) {
+    throw new Error("CONTRADEF_SKIP_LLM=1 — defina a chave LLM e CONTRADEF_SKIP_LLM=0 no .env, depois reinicie o servidor.");
+  }
+  if (!ENV.llmApiKey) {
+    throw new Error("Sem CONTRADEF_LLM_API_KEY / OPENAI_API_KEY no servidor. Cole a chave no .env (nunca no chat) e reinicie.");
+  }
+  const detail = await getAnalysisBatchDetail(batchId);
+  if (!detail) {
+    throw new Error("Lote não encontrado.");
+  }
+  const notableEvents: NormalizedEvent[] = detail.events.slice(0, 40).map((event) => {
+    const payload = event.payloadJson && typeof event.payloadJson === "object" && !Array.isArray(event.payloadJson)
+      ? (event.payloadJson as Record<string, unknown>)
+      : {};
+    const apis = Array.isArray(payload.suspiciousApis)
+      ? payload.suspiciousApis.filter((item): item is string => typeof item === "string")
+      : [];
+    return {
+      eventType: event.eventType,
+      stage: event.stage ?? "—",
+      message: event.message,
+      logType: (typeof payload.logType === "string" ? payload.logType : "Unknown") as SupportedLogType,
+      fileName: typeof payload.fileName === "string" ? payload.fileName : "",
+      lineNumber: Number(payload.lineNumber) || 0,
+      suspiciousApis: apis,
+      suspicious: apis.length > 0,
+      trigger: Boolean(payload.trigger),
+      addresses: Array.isArray(payload.addresses)
+        ? payload.addresses.filter((item): item is string => typeof item === "string")
+        : [],
+      techniqueTags: Array.isArray(payload.techniqueTags)
+        ? payload.techniqueTags.filter((item): item is string => typeof item === "string")
+        : [],
+      origin: payload.origin === "pin-runtime" || payload.origin === "target" || payload.origin === "unknown"
+        ? payload.origin
+        : "unknown",
+    };
+  });
+  const generated = await generateInsight({
+    analysisName: detail.batch.sampleName,
+    classification: detail.classification,
+    riskLevel: detail.riskLevel,
+    currentPhase: detail.currentPhase,
+    techniques: detail.techniques,
+    suspiciousApis: detail.suspiciousApis,
+    metrics: detail.metrics,
+    flowGraph: detail.flowGraph,
+    notableEvents,
+    recommendations: detail.recommendations,
+    mitreDefenseEvasion: detail.mitreDefenseEvasion,
+    pivotFlows: detail.pivotFlows,
+    originCounts: detail.traceOrigin.originCounts,
+  });
+  const prevJson =
+    detail.insight?.summaryJson && typeof detail.insight.summaryJson === "object" && !Array.isArray(detail.insight.summaryJson)
+      ? (detail.insight.summaryJson as Record<string, unknown>)
+      : {};
+  await upsertAnalysisInsight(batchId, {
+    batchId,
+    modelName: generated.modelName,
+    riskLevel: detail.riskLevel,
+    title: generated.title,
+    summaryMarkdown: generated.summaryMarkdown,
+    summaryJson: {
+      ...prevJson,
+      recommendations: generated.recommendations,
+    },
+  });
+  await updateAnalysisBatch(batchId, {
+    llmSummaryStatus: "completed",
+    message: `Veredito LLM (${generated.modelName}). Correlação e MITRE permanecem do motor.`,
+  });
+  return getAnalysisBatchDetail(batchId);
+}
+
+export async function explainSampleTrace(batchId: string, api?: string) {
+  const batchRow = await getAnalysisBatchByBatchId(batchId);
+  if (!batchRow) {
+    throw new Error("Lote não encontrado.");
+  }
+  const coverage = await getPivotCoverage(batchId, api);
+  const deterministic = buildDeterministicSampleNarrative({
+    sampleName: batchRow.sampleName,
+    flows: coverage.flows,
+    focusApi: api ?? coverage.flow?.api ?? null,
+  });
+  if (ENV.skipInsightLlm || !ENV.llmApiKey.trim()) {
+    return {
+      markdown: deterministic,
+      graphCaption: coverage.flow
+        ? `Nó único ou cadeia parcial de ${coverage.flow.api} (${coverage.flow.chainLevel}).`
+        : "Sem APIs presentes.",
+      modelName: ENV.skipInsightLlm ? "deterministic-skipped-env" : "deterministic-fallback",
+    };
+  }
+  try {
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content:
+            "Um parágrafo, máximo 50 palavras, português. NÃO inventes APIs nem IDs MITRE. Sem títulos. Naturaliza as notas; se só houver TraceInstructions, diz que não se afirma chamada da amostra.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            sampleName: batchRow.sampleName,
+            presentApis: coverage.flows.map((flow) => ({
+              api: flow.api,
+              chainLevel: flow.chainLevel,
+              origin: flow.origin,
+              modules: flow.modules.filter((row) => row.occurrences > 0).map((row) => ({
+                module: row.module,
+                occurrences: row.occurrences,
+                fileName: row.fileName,
+              })),
+            })),
+            focus: coverage.flow?.api ?? null,
+            notes: deterministic,
+          }),
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "fluxtrace_sample_narrative",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              markdown: { type: "string" },
+              graphCaption: { type: "string" },
+            },
+            required: ["markdown", "graphCaption"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const content = response.choices?.[0]?.message?.content;
+    const parsed = typeof content === "string" ? JSON.parse(content) : null;
+    return {
+      markdown: typeof parsed?.markdown === "string" ? parsed.markdown : deterministic,
+      graphCaption: typeof parsed?.graphCaption === "string" ? parsed.graphCaption : "",
+      modelName: response.model ?? "default-llm",
+    };
+  } catch (error) {
+    console.warn("[explainSampleTrace] LLM indisponível, texto determinístico:", error);
+    return {
+      markdown: deterministic,
+      graphCaption: "",
+      modelName: "deterministic-fallback",
+    };
+  }
+}
+
+export async function syncMappedCatalogFromBatch(batchId: string) {
+  const insight = await getAnalysisInsight(batchId);
+  const summaryJson =
+    insight?.summaryJson && !Array.isArray(insight.summaryJson)
+      ? (insight.summaryJson as Record<string, unknown>)
+      : {};
+  const origin = await resolveTraceOriginDto(summaryJson, batchId);
+  const hits = hitsFromObservedRows(origin.observedApis);
+  return syncMappedCatalogFromApis(catalogSourceApis(hits), { hits });
 }
 
 export async function syncAnalysisBatch(batchId: string) {

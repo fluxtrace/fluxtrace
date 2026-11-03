@@ -15,7 +15,11 @@ import {
 import { batchStatusBadgeClass } from "@/lib/analysis/analysisUi";
 import { formatBytes, formatDateTimeShort, formatDurationMs, formatPercentRounded } from "@/lib/core/format";
 import { trpc } from "@/lib/api/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { OFFICIAL_CAMPAIGN_ARCHIVE } from "@shared/analysis";
 import { Activity, AlertCircle, FileSearch, Link as LinkIcon, ShieldCheck, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -119,8 +123,24 @@ function formatShortDate(iso: string) {
 
 export default function HomeDashboard() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const utils = trpc.useUtils();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sampleFilter, setSampleFilter] = useState("");
+  const importOfficial = trpc.analysis.importOfficialCampaign.useMutation({
+    onSuccess: (data) => {
+      toast.success(
+        t("dashboardHome.importOfficialOk", {
+          imported: data.imported,
+          updated: data.updated,
+          skipped: data.skipped,
+        }),
+      );
+      void utils.analysis.list.invalidate();
+      void utils.analysis.dashboardStats.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
   const statsQuery = trpc.analysis.dashboardStats.useQuery(undefined, {
     /** Alinhado à lista de incidentes para totais/gráficos acompanharem “quase tempo real”. */
@@ -131,7 +151,7 @@ export default function HomeDashboard() {
     {
       sampleName: sampleFilter.trim() || undefined,
       status: statusFilter === "all" ? undefined : [statusFilter],
-      limit: 50,
+      limit: 200,
     },
     {
       refetchInterval: 5000,
@@ -156,6 +176,13 @@ export default function HomeDashboard() {
       })),
     [s?.createdLast7Days],
   );
+
+  const officialBatches = useMemo(
+    () => (batchesQuery.data ?? []).filter((row) => row.sourceArchiveName === OFFICIAL_CAMPAIGN_ARCHIVE),
+    [batchesQuery.data],
+  );
+  const officialInfected = officialBatches.filter((row) => row.sampleName.includes("-infected-")).length;
+  const officialBenign = officialBatches.filter((row) => row.sampleName.includes("-benign-")).length;
 
   const wallSeries = useMemo(() => {
     const rows = [...(s?.completedWallTimes ?? [])];
@@ -373,6 +400,17 @@ export default function HomeDashboard() {
                   <CardTitle>{t("dashboardHome.incidentsTitle")}</CardTitle>
                   <CardDescription className="mt-1">{t("dashboardHome.incidentsDesc")}</CardDescription>
                 </div>
+                {user?.role === "admin" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={importOfficial.isPending}
+                    onClick={() => importOfficial.mutate({})}
+                  >
+                    {importOfficial.isPending ? t("dashboardHome.importOfficialPending") : t("dashboardHome.importOfficial")}
+                  </Button>
+                ) : null}
                 <Badge className={batchStatusBadgeClass(statusFilter === "all" ? undefined : statusFilter)}>
                   {statusFilter === "all" ? t("dashboardHome.filterAll") : statusFilter}
                 </Badge>
@@ -400,6 +438,18 @@ export default function HomeDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
+              {officialBatches.length ? (
+                <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm dark:border-cyan-400/25 dark:bg-cyan-500/[0.07]">
+                  <p className="font-medium text-foreground">{t("dashboardHome.officialCampaignTitle")}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("dashboardHome.officialCampaignHint", {
+                      n: officialBatches.length,
+                      infected: officialInfected,
+                      benign: officialBenign,
+                    })}
+                  </p>
+                </div>
+              ) : null}
               <ScrollArea className="h-[520px] pr-4">
                 <div className="space-y-3">
                   {(batchesQuery.data ?? []).map((batchRow) => {

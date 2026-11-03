@@ -145,11 +145,17 @@ function fluxoMarkdownFilename(slug: string): string {
 function placeholderFlowMarkdown(slug: string): string {
   return `# Fluxo ${slug}
 
-Esboço automático com diagrama inicial; substituir quando a metodologia M1 estiver disponível nesta pasta em \`funcoes-mapeadas/${slug}/\`.
+Esboço automático. Cadeia Contradef igual à validada em \`IsDebuggerPresent\`: o **nome da função** liga os seis artefatos; endereços hex na mesma linha reforçam o cruzamento.
 
 \`\`\`mermaid
-flowchart LR
-  N("${slug}") --> P["M1 pendente"]
+flowchart TB
+  FI["${slug}\\nFunctionInterceptor"] --> ori{"origem da chamada?"}
+  ori -->|directa| M1["TraceFcnCall.M1"]
+  ori -->|indirecta| M2["TraceFcnCall.M2"]
+  M1 --> TI["TraceInstructions"]
+  M2 --> TI
+  TI --> TM["TraceMemory"]
+  TM --> TD["TraceDisassembly"]
 \`\`\`
 `;
 }

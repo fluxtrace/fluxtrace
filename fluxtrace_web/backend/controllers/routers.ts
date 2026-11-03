@@ -18,6 +18,7 @@ import { sdk } from "../_core/integrations/sdk";
 import type { User } from "../drizzle/schema";
 import { analysisRouter } from "./analysis/routes/analysisRouter";
 import { legacyArtifactsRouter } from "./analysis/routes/legacyArtifactsRouter";
+import { mitreRouter } from "./mitre/mitreRouter";
 
 /** Bcrypt of `neutral-dummy` @ 12 — used to keep login timing similar when the email is unknown. */
 const DUMMY_BCRYPT = "$2b$12$sIfrKHBkHIMptxuqEZQRSOaahpO9a/sQ2M5q1TQGC66XhW/sqi.IG";
@@ -141,6 +142,7 @@ export const appRouter = router({
   }),
   admin: adminRouter,
   analysis: analysisRouter,
+  mitre: mitreRouter,
   legacyArtifacts: legacyArtifactsRouter,
 });
 

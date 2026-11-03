@@ -48,6 +48,17 @@ __pycache__/
 *.pyc
 .venv/
 
+# Plano vivo local (não versionar)
+PLANO.md
+
+# Corpus local 50+50 (PE/ZIP de G:\samples — nunca versionar)
+fluxtrace_web/samples/benign/
+fluxtrace_web/samples/infected/
+fluxtrace_web/samples/selecao.csv
+fluxtrace_web/samples/**/*.exe
+fluxtrace_web/samples/**/*.dll
+fluxtrace_web/samples/**/*.zip
+
 # Material local do artigo (não versionar)
 paper/
 

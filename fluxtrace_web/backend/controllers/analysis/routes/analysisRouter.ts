@@ -5,10 +5,14 @@ import { uploadedLogSchema } from "../../../shared/analysis";
 import { removeLocalBatchWorkspace } from "../../../models/storage";
 import {
   getAnalysisBatchDetail,
+  explainSampleTrace,
+  getPivotCoverage,
   getReductionBaselineMetrics,
+  regenerateInsightWithLlm,
   startAnalysisBatch,
   syncActiveAnalysisBatches,
   syncAnalysisBatch,
+  syncMappedCatalogFromBatch,
 } from "../../../services/analysis/analysisService";
 import {
   deleteAnalysisBatchAndRelatedData,
@@ -37,7 +41,8 @@ import {
 } from "../../../services/virusTotal/fluxtraceUnifiedMitreExport";
 import { buildMitreFluxtraceVsVtTableXlsxForUserScope } from "../../../services/virusTotal/mitreFluxtraceVtTableXlsxExport";
 import { VT_COMPARE_EXTERNAL_JSON_MAX_CHARS } from "../../../shared/virusTotal/vtJsonCompareLimits";
-import { protectedProcedure, router } from "../../../_core/trpc";
+import { importOfficialCampaign } from "../../../services/analysis/importOfficialCampaign";
+import { adminProcedure, protectedProcedure, router } from "../../../_core/trpc";
 
 const listBatchesInputSchema = z.object({
   sampleName: z.string().trim().optional(),
@@ -46,7 +51,7 @@ const listBatchesInputSchema = z.object({
   createdTo: z.coerce.date().optional(),
   status: z.array(z.enum(["queued", "running", "completed", "failed", "cancelled"]))
     .optional(),
-  limit: z.number().int().min(1).max(100).default(50),
+  limit: z.number().int().min(1).max(250).default(200),
 }).optional();
 
 const submitBatchInputSchema = z.object({
@@ -107,6 +112,19 @@ function canAccessBatch(user: { id: number; role: string }, batchRow: { createdB
 }
 
 export const analysisRouter = router({
+  /**
+   * Importa os artefactos oficiais A5 (disco) para lotes da UI. Não volta a parsear os .cdf.
+   * Só admin — é a campanha n=99, não um upload do analista.
+   */
+  importOfficialCampaign: adminProcedure
+    .input(z.object({ force: z.boolean().optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      return importOfficialCampaign({
+        createdByUserId: ctx.user!.id,
+        force: input?.force === true,
+      });
+    }),
+
   dashboardStats: protectedProcedure.query(async ({ ctx }) => {
     const user = ctx.user!;
     const listOwnOnly = !isGlobalAnalysisScope(user);
@@ -122,7 +140,7 @@ export const analysisRouter = router({
       createdFrom: input?.createdFrom,
       createdTo: input?.createdTo,
       status: input?.status,
-      limit: input?.limit ?? 50,
+      limit: input?.limit ?? 200,
       ...(listOwnOnly ? { createdByUserId: user.id } : {}),
     });
   }),
@@ -327,6 +345,78 @@ export const analysisRouter = router({
     const includeServerProcess = allowServerProcess && (raw === "1" || raw === "true" || raw === "yes");
     return getAnalysisBatchDetail(input.batchId, { includeServerProcess });
   }),
+
+  /** Cobertura da cadeia FI → M1|M2 → TI → TM → TD para uma API (ou todas as pivô do lote). */
+  pivotCoverage: protectedProcedure
+    .input(z.object({
+      batchId: z.string().min(1),
+      api: z.string().min(1).max(120).optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const user = ctx.user!;
+      const batchRow = await getAnalysisBatchByBatchId(input.batchId);
+      if (!batchRow) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lote não encontrado." });
+      }
+      if (!canAccessBatch(user, batchRow)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Só pode ver o detalhe dos lotes que submeteu." });
+      }
+      return getPivotCoverage(input.batchId, input.api);
+    }),
+
+  /** Texto para o analista: o que o rastro desta amostra mostra (determinístico; LLM só naturaliza). */
+  explainSample: protectedProcedure
+    .input(z.object({
+      batchId: z.string().min(1),
+      api: z.string().min(1).max(120).optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const user = ctx.user!;
+      const batchRow = await getAnalysisBatchByBatchId(input.batchId);
+      if (!batchRow) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lote não encontrado." });
+      }
+      if (!canAccessBatch(user, batchRow)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Só pode ver o detalhe dos lotes que submeteu." });
+      }
+      return explainSampleTrace(input.batchId, input.api);
+    }),
+
+  /** Reinterpreta o veredito com LLM sobre a correlação já calculada — não volta a parsear .cdf nem inventa MITRE. */
+  regenerateInsight: protectedProcedure
+    .input(batchIdInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const user = ctx.user!;
+      const batchRow = await getAnalysisBatchByBatchId(input.batchId);
+      if (!batchRow) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lote não encontrado." });
+      }
+      if (!canAccessBatch(user, batchRow)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Só pode reinterpretar lotes que submeteu." });
+      }
+      try {
+        return await regenerateInsightWithLlm(input.batchId);
+      } catch (error) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }),
+
+  /** Cria pastas em funcoes-mapeadas para APIs que o rastro nomeou e ainda não estavam mapeadas. */
+  syncMappedCatalog: protectedProcedure
+    .input(batchIdInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const batchRow = await getAnalysisBatchByBatchId(input.batchId);
+      if (!batchRow) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lote não encontrado." });
+      }
+      if (!canAccessBatch(ctx.user!, batchRow)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Sem acesso a este lote." });
+      }
+      return syncMappedCatalogFromBatch(input.batchId);
+    }),
 
   /**
    * Remove o lote do Postgres (e tabelas derivadas) e a pasta de artefatos local do processo, se existir.

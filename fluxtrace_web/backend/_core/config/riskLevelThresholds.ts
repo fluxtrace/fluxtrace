@@ -1,7 +1,7 @@
 /**
  * Limiares de `deriveRiskLevel` (classificação critical/high/medium/low).
  *
- * Valores padrão = os usados nos experimentos SBSeg 2026 / CTA.
+ * Valores padrão = os usados nos experimentos reportados no artigo.
  * Externalizados via env para calibração sem alterar o código-fonte.
  * Não afetam a métrica de redução de linhas (ρ).
  *
