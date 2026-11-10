@@ -72,6 +72,7 @@ vi.mock("@/lib/api/trpc", () => ({
       analysis: {
         list: { invalidate: mockState.invalidateList },
         detail: { invalidate: mockState.invalidateDetail },
+        dashboardStats: { invalidate: vi.fn(async () => undefined) },
       },
       auth: {
         me: {
@@ -154,6 +155,13 @@ vi.mock("@/lib/api/trpc", () => ({
       submit: {
         useMutation: () => ({
           mutateAsync: mockState.submitMutateAsync,
+          isPending: false,
+        }),
+      },
+      importOfficialCampaign: {
+        useMutation: () => ({
+          mutate: vi.fn(),
+          mutateAsync: vi.fn(async () => ({ imported: 0, updated: 0, skipped: 0 })),
           isPending: false,
         }),
       },

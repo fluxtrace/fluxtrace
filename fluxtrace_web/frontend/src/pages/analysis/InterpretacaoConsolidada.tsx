@@ -739,7 +739,6 @@ function InterpretacaoConsolidadaContent() {
                   <PivotCoveragePanel
                     batchId={selectedBatchId}
                     api={pivotApi ?? selectedDetail.traceOrigin.observedApis.find((row) => row.mapped.length)?.api ?? selectedDetail.traceOrigin.observedApis[0]?.api ?? null}
-                    apis={selectedDetail.traceOrigin.observedApis.map((row) => row.api)}
                     onApiChange={setPivotApi}
                   />
 
