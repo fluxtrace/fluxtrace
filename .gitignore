@@ -62,6 +62,14 @@ fluxtrace_web/samples/**/*.zip
 # Material local do artigo (não versionar)
 paper/
 
+# Fontes locais (diagrama .drawio/.html e script de exportação) — não versionar
+local/
+
+# docs: só os manuais e a PNG da arquitetura são versionados
+fluxtrace_web/docs/*
+!fluxtrace_web/docs/MANUAL-*.md
+!fluxtrace_web/docs/fluxtrace-arquitetura.png
+
 # Apresentação local (PDF/PPTX) — não versionar
 apresentacao/
 

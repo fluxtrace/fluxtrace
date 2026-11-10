@@ -121,7 +121,7 @@ O repositório destina-se a repetir a cadeia da ferramenta (código, amostras, c
 
 ![FluxTrace — entrada por adaptador de formato, núcleo sobre eventos normalizados e saída](fluxtrace_web/docs/fluxtrace-arquitetura.png)
 
-O FluxTrace organiza-se em **três faixas** (ver diagrama acima): a ferramenta de DBI é escolha do analista e entra por um adaptador de formato; o núcleo (redução, origem, associação, índice auditável) opera sobre eventos normalizados. O adaptador implementado é o da Contradef. A PNG é gerada de `fluxtrace_web/docs/fluxtrace-arquitetura.html` por `render_arquitetura.py`.
+O FluxTrace organiza-se em **três faixas** (ver diagrama acima): a ferramenta de DBI é escolha do analista e entra por um adaptador de formato; o núcleo (redução, origem, associação, índice auditável) opera sobre eventos normalizados. O adaptador implementado é o da Contradef.
 
 | Fase | Módulos / saídas | Implementação na app web |
 |------|-------------------|---------------------------|
@@ -571,7 +571,7 @@ Dependências (React, Drizzle, Express, PostgreSQL driver, etc.) mantêm as suas
 | [`fluxtrace_web/readme-web.md`](fluxtrace_web/readme-web.md) | Rotas, env, deploy |
 | [`fluxtrace_web/docs/MANUAL-DEV-LOCAL.md`](fluxtrace_web/docs/MANUAL-DEV-LOCAL.md) | Instalação passo a passo (PT) |
 | [`fluxtrace_web/docs/MANUAL-TECNICO.md`](fluxtrace_web/docs/MANUAL-TECNICO.md) | Arquitetura e operação |
-| [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama (ingestão → discovery/índice → visualização); fonte: `.drawio` |
+| [`fluxtrace_web/docs/fluxtrace-arquitetura.png`](fluxtrace_web/docs/fluxtrace-arquitetura.png) | Diagrama da arquitetura (entrada por adaptador → núcleo → saída) |
 | [`fluxtrace_web/docs/MANUAL-USUARIO.md`](fluxtrace_web/docs/MANUAL-USUARIO.md) | Manual do utilizador |
 | [`test-samples/README.md`](test-samples/README.md) | Inventário das 16 amostras |
 | [`resultados/README.md`](resultados/README.md) | Índice de capturas e mapeamento amostra → figura |
