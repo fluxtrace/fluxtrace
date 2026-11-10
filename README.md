@@ -119,9 +119,9 @@ O repositório destina-se a repetir a cadeia da ferramenta (código, amostras, c
 
 ### Arquitetura
 
-![FluxTrace — pipeline: ingestão dos .cdf, processamento (discovery + índice) e visualização](fluxtrace_web/docs/fluxtrace-arquitetura.png)
+![FluxTrace — entrada por adaptador de formato, núcleo sobre eventos normalizados e saída](fluxtrace_web/docs/fluxtrace-arquitetura.png)
 
-O FluxTrace organiza-se em **três fases** (ver diagrama acima). A PNG tem de coincidir com `fluxtrace_web/docs/fluxtrace-arquitetura.drawio` — **não** descreve o redutor antigo (lista de 21, «99,7%», «47 interceptadas»).
+O FluxTrace organiza-se em **três faixas** (ver diagrama acima): a ferramenta de DBI é escolha do analista e entra por um adaptador de formato; o núcleo (redução, origem, associação, índice auditável) opera sobre eventos normalizados. O adaptador implementado é o da Contradef. A PNG é gerada de `fluxtrace_web/docs/fluxtrace-arquitetura.html` por `render_arquitetura.py`.
 
 | Fase | Módulos / saídas | Implementação na app web |
 |------|-------------------|---------------------------|
