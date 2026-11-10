@@ -1,5 +1,5 @@
 /**
- * A5 — lote oficial CotB (motor trace-discovery-2, CONTRADEF_SKIP_LLM=1).
+ * A5 — lote oficial CotB (CONTRADEF_SKIP_LLM=1). Saídas separadas por versão do motor.
  *
  * Lê os .cdf já extraídos em G:\cotb-pin-100\fluxtrace-upload (A2).
  * Não volta a descompactar logs.7z. Não mistura o Eixo A histórico.
@@ -8,9 +8,11 @@
  *   npx tsx backend/scripts/cotb/run-official-batch.mts
  *   npx tsx backend/scripts/cotb/run-official-batch.mts --limit 2
  *   npx tsx backend/scripts/cotb/run-official-batch.mts --force
+ *   npx tsx backend/scripts/cotb/run-official-batch.mts --write-reduced   # grava reduced/<cdf>.txt (nº linha original \t texto)
  */
 import "dotenv/config";
 
+import { closeSync, mkdirSync, openSync, writeSync } from "node:fs";
 import { mkdir, readdir, readFile, stat, writeFile, appendFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,12 +28,40 @@ import {
 
 const WEB_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const UPLOAD_ROOT = process.env.COTB_UPLOAD_ROOT?.trim() || "G:\\cotb-pin-100\\fluxtrace-upload";
-const ARTIFACT_ROOT = process.env.COTB_ARTIFACT_ROOT?.trim() || "G:\\cotb-pin-100\\fluxtrace-artifacts";
+const OUT_ROOT = process.env.COTB_OUT_ROOT?.trim() || "G:\\cotb-pin-100";
+const ARTIFACT_ROOT =
+  process.env.COTB_ARTIFACT_ROOT?.trim() || join(OUT_ROOT, `fluxtrace-artifacts-${TRACE_ENGINE_VERSION}`);
 const MANIFEST = join(UPLOAD_ROOT, "manifest-cdf.csv");
-const METRICS_CSV = join("G:\\cotb-pin-100", "fluxtrace-metrics-oficial.csv");
-const SUMMARY_JSON = join("G:\\cotb-pin-100", "fluxtrace-summary-oficial.json");
-const PAPER_MD = join("G:\\cotb-pin-100", "fluxtrace-paper-snippet-oficial.md");
+const METRICS_CSV = join(OUT_ROOT, `fluxtrace-metrics-${TRACE_ENGINE_VERSION}.csv`);
+const SUMMARY_JSON = join(OUT_ROOT, `fluxtrace-summary-${TRACE_ENGINE_VERSION}.json`);
+const PAPER_MD = join(OUT_ROOT, `fluxtrace-paper-snippet-${TRACE_ENGINE_VERSION}.md`);
 const EVENT_CAP = 320;
+const WRITE_BUFFER_BYTES = 1 << 20;
+
+/** Escrita síncrona em blocos: o parser não acumula linhas em RAM se o disco for lento. */
+function createReducedWriter(path: string) {
+  const fd = openSync(path, "w");
+  let chunks: string[] = [];
+  let pending = 0;
+  const flush = () => {
+    if (!chunks.length) return;
+    writeSync(fd, chunks.join(""));
+    chunks = [];
+    pending = 0;
+  };
+  return {
+    write(lineNumber: number, text: string) {
+      const row = `${lineNumber}\t${text}\n`;
+      chunks.push(row);
+      pending += row.length;
+      if (pending >= WRITE_BUFFER_BYTES) flush();
+    },
+    close() {
+      flush();
+      closeSync(fd);
+    },
+  };
+}
 
 type ManifestRow = {
   hash: string;
@@ -53,7 +83,8 @@ function parseArgs(argv: string[]) {
   const limit = limitIdx >= 0 ? Number.parseInt(argv[limitIdx + 1] ?? "0", 10) : 0;
   const onlyIdx = argv.indexOf("--only");
   const only = onlyIdx >= 0 ? (argv[onlyIdx + 1] ?? "").trim().toLowerCase() : "";
-  return { force, limit: Number.isFinite(limit) && limit > 0 ? limit : 0, only };
+  const writeReduced = argv.includes("--write-reduced");
+  return { force, limit: Number.isFinite(limit) && limit > 0 ? limit : 0, only, writeReduced };
 }
 
 function splitCsvLine(line: string): string[] {
@@ -126,6 +157,22 @@ const METRIC_FIELDS = [
   "origin_target_hits",
   "origin_pin_hits",
   "origin_unknown_hits",
+  "occ_target",
+  "occ_pin",
+  "occ_unknown",
+  "protect_args_fi",
+  "api_lines_fi",
+  "api_lines_m1",
+  "api_lines_m2",
+  "api_lines_memory",
+  "api_lines_dasm",
+  "api_lines_instr",
+  "modules_nonempty",
+  "modules_with_api",
+  "elapsed_s",
+  "peak_rss_mb",
+  "index_bytes",
+  "reduced_bytes",
   "techniques",
   "apis_target",
   "index_sha256",
@@ -216,8 +263,24 @@ function buildReport(params: {
   return lines.join("\n");
 }
 
-async function processSample(row: ManifestRow, destDir: string): Promise<Record<string, string | number>> {
+async function processSample(
+  row: ManifestRow,
+  destDir: string,
+  opts: { writeReduced: boolean },
+): Promise<Record<string, string | number>> {
   await mkdir(destDir, { recursive: true });
+  const sampleStart = Date.now();
+  let peakRss = process.memoryUsage().rss;
+  const sampleRss = () => {
+    peakRss = Math.max(peakRss, process.memoryUsage().rss);
+  };
+  const occ = { "pin-runtime": 0, target: 0, unknown: 0 };
+  const apiLinesByModule: Record<string, number> = {};
+  let protectArgs = 0;
+  let modulesNonEmpty = 0;
+  let reducedBytesTotal = 0;
+  const reducedDir = join(destDir, "reduced");
+  if (opts.writeReduced) mkdirSync(reducedDir, { recursive: true });
   const cdfs = await listCdfs(row.dest);
   const hits: TraceIndexHit[] = [];
   const sourceFiles: Array<{ fileName: string; sha256: string; sizeBytes: number }> = [];
@@ -242,13 +305,31 @@ async function processSample(row: ManifestRow, destDir: string): Promise<Record<
     const sizeBytes = (await stat(cdfPath)).size;
     const t0 = Date.now();
     process.stdout.write(`    ${fileName} ${(sizeBytes / (1024 * 1024)).toFixed(1)} MiB ... `);
-    const parsed = await analyzeCdfPathOffline(cdfPath, {
-      fileName,
-      onProgress: (n, bytes, total) => {
-        const pct = total > 0 ? ((bytes / total) * 100).toFixed(0) : "?";
-        process.stdout.write(`\n      ${n.toLocaleString("pt-PT")} lin  ${pct}%`);
-      },
-    });
+    const writer = opts.writeReduced ? createReducedWriter(join(reducedDir, `${fileName}.txt`)) : null;
+    const parsed = await (async () => {
+      try {
+        return await analyzeCdfPathOffline(cdfPath, {
+          fileName,
+          onProgress: (n, bytes, total) => {
+            sampleRss();
+            const pct = total > 0 ? ((bytes / total) * 100).toFixed(0) : "?";
+            process.stdout.write(`\n      ${n.toLocaleString("pt-PT")} lin  ${pct}%`);
+          },
+          ...(writer ? { onKeptLine: (n: number, text: string) => writer.write(n, text) } : {}),
+        });
+      } finally {
+        writer?.close();
+      }
+    })();
+    sampleRss();
+    const kind = classifyCdf(fileName);
+    if (sizeBytes > 0) modulesNonEmpty += 1;
+    apiLinesByModule[kind] = (apiLinesByModule[kind] ?? 0) + parsed.observedHitCount;
+    occ.target += parsed.occurrencesByOrigin.target;
+    occ["pin-runtime"] += parsed.occurrencesByOrigin["pin-runtime"];
+    occ.unknown += parsed.occurrencesByOrigin.unknown;
+    protectArgs += parsed.protectionArgsSeen;
+    reducedBytesTotal += parsed.reducedBytes;
     const sha = await sha256OfPath(cdfPath);
     const rho = parsed.originalLineCount ? 1 - parsed.reducedLineCount / parsed.originalLineCount : 0;
     sourceFiles.push({ fileName, sha256: sha, sizeBytes });
@@ -350,6 +431,9 @@ async function processSample(row: ManifestRow, destDir: string): Promise<Record<
 
   const indexJson = hitsTruncated ? JSON.stringify(indexDoc) : JSON.stringify(indexDoc, null, 2);
   await writeFile(join(destDir, "trace-index.json"), indexJson, "utf8");
+  const indexBytes = Buffer.byteLength(indexJson, "utf8");
+  sampleRss();
+  const elapsedS = (Date.now() - sampleStart) / 1000;
   await writeFile(join(destDir, "observed-api-graph.json"), JSON.stringify(observedApiGraph, null, 2), "utf8");
   await writeFile(join(destDir, "report.md"), report, "utf8");
   await writeFile(
@@ -368,6 +452,13 @@ async function processSample(row: ManifestRow, destDir: string): Promise<Record<
         trigger,
         hitCount,
         hitsTruncated,
+        occurrencesByOrigin: occ,
+        protectionArgsSeen: protectArgs,
+        apiLinesByModule,
+        elapsedS,
+        peakRssMb: peakRss / (1024 * 1024),
+        indexBytes,
+        reducedBytes: reducedBytesTotal,
       },
       null,
       2,
@@ -397,6 +488,22 @@ async function processSample(row: ManifestRow, destDir: string): Promise<Record<
     origin_target_hits: indexDoc.originCounts.target,
     origin_pin_hits: indexDoc.originCounts["pin-runtime"],
     origin_unknown_hits: indexDoc.originCounts.unknown,
+    occ_target: occ.target,
+    occ_pin: occ["pin-runtime"],
+    occ_unknown: occ.unknown,
+    protect_args_fi: protectArgs,
+    api_lines_fi: apiLinesByModule.interceptor ?? 0,
+    api_lines_m1: apiLinesByModule.m1 ?? 0,
+    api_lines_m2: apiLinesByModule.m2 ?? 0,
+    api_lines_memory: apiLinesByModule.memory ?? 0,
+    api_lines_dasm: apiLinesByModule.dasm ?? 0,
+    api_lines_instr: apiLinesByModule.instr ?? 0,
+    modules_nonempty: modulesNonEmpty,
+    modules_with_api: Object.values(apiLinesByModule).filter((n) => n > 0).length,
+    elapsed_s: Number(elapsedS.toFixed(1)),
+    peak_rss_mb: Number((peakRss / (1024 * 1024)).toFixed(0)),
+    index_bytes: indexBytes,
+    reduced_bytes: reducedBytesTotal,
     techniques: [...techniques].sort().join("|"),
     apis_target: observedTarget.map((a) => a.api).join("|"),
     index_sha256: indexDoc.indexSha256,
@@ -432,7 +539,7 @@ function writePaper(rows: Array<Record<string, string | number>>) {
   };
 
   const md = [
-    "# FluxTrace — lote oficial CotB (A5, motor `trace-discovery-2`)",
+    `# FluxTrace — lote oficial CotB (A5, motor \`${TRACE_ENGINE_VERSION}\`)`,
     "",
     `- Gerado por \`backend/scripts/cotb/run-official-batch.mts\` (cwd \`${WEB_ROOT}\`).`,
     `- Fontes: **todos** os \`.cdf\` da pasta A2 (Interceptor, M1, M2, Memory, Disassembly, Instructions). Nenhum módulo ignorado.`,
@@ -456,6 +563,34 @@ function writePaper(rows: Array<Record<string, string | number>>) {
     `- Alarme gatilho em benignas com API *target*: ${benTarget.filter((r) => Number(r.alarm_trigger) === 1).length}/${benTarget.length}`,
     "",
     `ρ pooled (n=${rows.length}): **${rho.toFixed(4)}**`,
+    "",
+    "## Gatilho: avaliabilidade",
+    `- Amostras com parâmetro de protecção lido no FunctionInterceptor: ${rows.filter((r) => Number(r.protect_args_fi) > 0).length}/${rows.length}`,
+    `- Infectadas: ${infected.filter((r) => Number(r.protect_args_fi) > 0).length}/${infected.length}; benignas: ${benign.filter((r) => Number(r.protect_args_fi) > 0).length}/${benign.length}`,
+    `- Com gatilho entre as avaliáveis: ${rows.filter((r) => Number(r.protect_args_fi) > 0 && Number(r.alarm_trigger) === 1).length}`,
+    "",
+    "## Módulos",
+    `- Não vazios (6/6): ${rows.filter((r) => Number(r.modules_nonempty) === 6).length}/${rows.length}`,
+    ...[0, 1, 2, 3, 4, 5, 6].map(
+      (k) => `- Com linhas que nomeiam API em ${k} módulos: ${rows.filter((r) => Number(r.modules_with_api) === k).length}`,
+    ),
+    "",
+    "## Custo",
+    ...(() => {
+      const el = num("elapsed_s").filter((v) => v > 0).sort((a, b) => a - b);
+      const rss = num("peak_rss_mb").filter((v) => v > 0).sort((a, b) => a - b);
+      const idx = num("index_bytes").filter((v) => v > 0).sort((a, b) => a - b);
+      const med = (a: number[]) => (a.length ? a[Math.floor(a.length / 2)]! : 0);
+      const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+      return [
+        `- Tempo total: ${(sum(el) / 3600).toFixed(2)} h; mediana ${med(el).toFixed(1)} s; máx ${(el.at(-1) ?? 0).toFixed(1)} s`,
+        `- Pico RSS: mediana ${med(rss)} MiB; máx ${rss.at(-1) ?? 0} MiB`,
+        `- Índice: total ${(sum(idx) / (1024 * 1024)).toFixed(1)} MiB; mediana ${(med(idx) / 1024).toFixed(1)} KiB; máx ${((idx.at(-1) ?? 0) / (1024 * 1024)).toFixed(1)} MiB`,
+      ];
+    })(),
+    "",
+    "## Ocorrências por origem (linhas que nomeiam API)",
+    `- target=${num("occ_target").reduce((a, b) => a + b, 0)}  pin-runtime=${num("occ_pin").reduce((a, b) => a + b, 0)}  unknown=${num("occ_unknown").reduce((a, b) => a + b, 0)}`,
     "",
     "## APIs *target* (nº de amostras, não linhas)",
     "",
@@ -521,7 +656,7 @@ async function main() {
     console.log(`[${i}/${rows.length}] ${row.label} ${hash.slice(0, 12)} instr=${row.instr_bytes}${skip ? " reuse" : ""}`);
     if (skip) continue;
     try {
-      const metric = await processSample(row, destDir);
+      const metric = await processSample(row, destDir, { writeReduced: args.writeReduced });
       metricsRows.push(metric);
       await appendFile(METRICS_CSV, metricLine(metric), "utf8");
       done.add(hash);

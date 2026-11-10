@@ -94,14 +94,18 @@ function addToBucket(
 function fillBuckets(params: {
   observedApis?: readonly ObservedApiOriginRow[];
   pivotFlows?: readonly PivotFlow[];
+  /** Percurso de comportamento: só `target`. Painel de origem passa `false`. */
+  behaviorOnly?: boolean;
 }): Record<ContradefPhase, Map<string, PhaseApi>> {
   const buckets = emptyBuckets();
   const covered = new Set<string>();
+  const behaviorOnly = params.behaviorOnly !== false;
   const pivotHits = (params.pivotFlows ?? []).filter((flow) =>
     flow.modules.some((row) => row.occurrences > 0),
   );
 
   for (const flow of pivotHits) {
+    if (behaviorOnly && flow.origin.target <= 0) continue;
     covered.add(flow.api);
     const origin =
       flow.origin.target > 0 ? "target" : flow.origin["pin-runtime"] > 0 ? "pin-runtime" : "unknown";
@@ -120,6 +124,7 @@ function fillBuckets(params: {
 
   for (const row of params.observedApis ?? []) {
     if (covered.has(row.api)) continue;
+    if (behaviorOnly && row.origin !== "target") continue;
     const phase = classifyContradefPhase(row.fileName, row.logType);
     if (!phase) continue;
     addToBucket(buckets, phase, {
@@ -138,6 +143,7 @@ function fillBuckets(params: {
 export function buildPhaseTraceBoard(params: {
   observedApis?: readonly ObservedApiOriginRow[];
   pivotFlows?: readonly PivotFlow[];
+  behaviorOnly?: boolean;
 }): PhaseTraceBoard {
   const buckets = fillBuckets(params);
   const names = new Set<string>();
@@ -159,6 +165,7 @@ export function buildPhaseTraceBoard(params: {
 export function buildPhaseTraceGraph(params: {
   observedApis?: readonly ObservedApiOriginRow[];
   pivotFlows?: readonly PivotFlow[];
+  behaviorOnly?: boolean;
 }): FlowGraph {
   const board = buildPhaseTraceBoard(params);
 

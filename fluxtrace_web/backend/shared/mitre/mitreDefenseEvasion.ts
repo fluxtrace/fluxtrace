@@ -235,11 +235,6 @@ export function buildMitreDefenseEvasionFromEvidence(input: BuildInput): MitreDe
   if (apiSet.has("DeleteFile")) {
     addEvidence(map, T1070_004, "API:DeleteFile");
   }
-  if (apiSet.has("VirtualProtect") || apiSet.has("VirtualAlloc")) {
-    const hit = ["VirtualProtect", "VirtualAlloc"].filter((a) => apiSet.has(a));
-    addEvidence(map, T1027, hit.map((a) => `API:${a}`).join(", "));
-  }
-
   for (let i = 0; i < input.heuristicTags.length; i += 1) {
     const tag = input.heuristicTags[i]!;
     const ref = HEURISTIC_BASE[tag];

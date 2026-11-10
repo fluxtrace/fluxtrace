@@ -48,7 +48,7 @@ export function TraceOriginPanel({
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [originFilter, setOriginFilter] = useState<"all" | TraceOriginKind>("all");
+  const [originFilter, setOriginFilter] = useState<"all" | TraceOriginKind>("target");
 
   const counts = origin?.originCounts ?? { "pin-runtime": 0, target: 0, unknown: 0 };
   const rows = origin?.observedApis ?? [];

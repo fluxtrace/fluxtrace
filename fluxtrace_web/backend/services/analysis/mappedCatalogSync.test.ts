@@ -25,6 +25,7 @@ const hits: TraceIndexHit[] = [
     apis: ["IsDebuggerPresent"],
     mapped: ["IsDebuggerPresent"],
     addresses: ["0x7ffb1000"],
+    origin: "target",
   },
   {
     fileName: "sample.TraceFcnCall.M1.cdf",
@@ -33,6 +34,7 @@ const hits: TraceIndexHit[] = [
     apis: ["IsDebuggerPresent"],
     mapped: ["IsDebuggerPresent"],
     addresses: ["0x7ffb1000"],
+    origin: "target",
   },
   {
     fileName: "sample.TraceFcnCall.M2.cdf",
@@ -40,6 +42,7 @@ const hits: TraceIndexHit[] = [
     lineNumber: 8,
     apis: ["GetProcAddress"],
     mapped: [],
+    origin: "target",
   },
   {
     fileName: "sample.TraceInstructions.cdf",
@@ -60,8 +63,8 @@ describe("classifyContradefModule", () => {
 });
 
 describe("catalogSourceApis", () => {
-  it("promove qualquer módulo dos seis .cdf — o nome no rastro manda, incluindo TI", () => {
-    expect(catalogSourceApis(hits)).toEqual(["GetProcAddress", "IsDebuggerPresent", "RtlAllocateHeap"]);
+  it("só abre pasta no catálogo a partir do interceptor/M1/M2 — TI-only não vira pivô", () => {
+    expect(catalogSourceApis(hits)).toEqual(["GetProcAddress", "IsDebuggerPresent"]);
     expect(isAutoAddableApiName("RtlAllocateHeap")).toBe(true);
     expect(isAutoAddableApiName("malloc")).toBe(false);
     expect(isAutoAddableApiName("_initterm")).toBe(false);
@@ -82,6 +85,8 @@ describe("buildPivotFlow", () => {
     expect(flow.mermaid).toContain("IsDebuggerPresent");
     expect(flow.mermaid).toContain("FunctionInterceptor");
     expect(flow.mermaid).toContain("TraceFcnCall.M1");
+    expect(flow.mermaid).toContain("como foi a chamada");
+    expect(flow.mermaid).not.toContain("origem da chamada");
     expect(flow.mermaid).not.toContain("ausente");
     expect(flow.chainLevel).toBe("call-origin");
     expect(flow.likeIsDebuggerPresent).toBe(false);
@@ -126,9 +131,11 @@ describe("backboneMermaid", () => {
     ]);
     expect(flow.mermaid).toContain("RtlGetCurrentServiceSessionId");
     expect(flow.mermaid).toContain("TraceInstructions ×2");
+    expect(flow.mermaid).toContain("quem chamou: sem evidência");
     expect(flow.mermaid).not.toContain("ausente");
     expect(flow.mermaid).not.toContain("FunctionInterceptor");
     expect(flow.mermaid).not.toContain("origem da chamada");
+    expect(flow.mermaid).not.toContain("como foi a chamada");
   });
 });
 

@@ -56,7 +56,7 @@ describe("traceIndexArtifact", () => {
   });
 
   it("expõe versão do motor para o artigo", () => {
-    expect(TRACE_ENGINE_VERSION).toBe("trace-discovery-2");
+    expect(TRACE_ENGINE_VERSION).toBe("trace-discovery-4");
   });
 
   it("contagem colapsada (TI) soma occurrences no first-seen", () => {

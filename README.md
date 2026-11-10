@@ -108,8 +108,11 @@ O repositório destina-se a repetir a cadeia da ferramenta (código, amostras, c
 
 - **Lotes de análise** — submissão multipart, fila, estados (`queued`, `running`, `completed`), métricas de tempo.
 - **Discovery no log** — os nomes de API saem do `.cdf` (interceptor, M1/M2, instruções). Não há lista fechada de 21 nomes. O catálogo M1 **anota** o que já apareceu.
-- **Origem Pin vs amostra** — cada ocorrência leva `pin-runtime` / `target` / `unknown` (imagem/módulo no `.cdf`). O índice **guarda tudo**; redução, correlação, grafo e técnicas usam só `target`.
-- **Índice e artefactos** — `trace-index.json` (todas as ocorrências, SHA-256 dos `.cdf`, versão do motor); `observed-api-graph.json`; relatório determinístico. O grafo da UI **pagina**; o índice não corta.
+- **Redução seletiva** — linha-âncora = linha que nomeia API (ou etiqueta/gatilho; em TraceInstructions também `Return`). Fica cada âncora com 4 linhas antes e 4 depois; no FunctionInterceptor, o bloco inteiro do evento (`[+] API...` a `[*]`). Janelas sobrepostas unem-se pelo nº de linha original. Linhas contadas só por `\n` (o Pin grava `\r` isolado dentro de parâmetros binários).
+- **Origem Pin vs amostra** — cada ocorrência leva `pin-runtime` / `target` / `unknown` (imagem/módulo no `.cdf`). Correlação, grafo e técnicas usam só `target`; o resto fica no índice e na saída reduzida.
+- **Índice e artefactos** — `trace-index.json` (SHA-256 dos `.cdf`, versão do motor): uma entrada por linha em FunctionInterceptor/M1/M2; em TraceInstructions/Memory/Disassembly uma entrada por (API, origem) com 1.ª linha e nº de ocorrências. `observed-api-graph.json`; relatório determinístico. O grafo da UI **pagina**.
+- **Gatilho** — `VirtualProtect`/`VirtualAlloc` só disparam quando o argumento de protecção lido no FunctionInterceptor pede página executável; T1027 segue a mesma regra.
+- **Verificação independente** — `backend/scripts/cotb/audit-evidence.mts` relê os `.cdf` originais e confronta índice e saída reduzida (ficheiro:linha, recontagem FI/M1/M2, blocos FI completos, ligação FI↔M1/M2 por endereço da rotina e thread, FI↔TraceInstructions por `ret addr`).
 - **Interpretação consolidada** — categoria e risco são **rótulos da ferramenta**, não ground truth. LLM opcional (`CONTRADEF_SKIP_LLM=1` no artigo).
 - **Funções mapeadas (M1)** — documentação das ~47 APIs que a **Contradef** intercepta; a FluxTrace não intercepta.
 - **Integrações opcionais** — VirusTotal v3, MITRE TA0005 (etiqueta), export XLSX.

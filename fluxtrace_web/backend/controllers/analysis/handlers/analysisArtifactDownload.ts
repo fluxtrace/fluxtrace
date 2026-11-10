@@ -2,10 +2,10 @@ import type { Express, Request, Response } from "express";
 import { createReadStream } from "node:fs";
 import { access, readdir, readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
-import readline from "node:readline";
 
 import { LOG_HEURISTIC_STAGE_ORDER, MUST_CHANGE_PASSWORD_ERR_MSG } from "../../../shared/const";
 import { resolveLocalArtifactPath } from "../../../models/storage";
+import { readLinesLf } from "../../../services/analysis/lfLineReader";
 import { getSessionUserFromRequest } from "../../../_core/server/context";
 import type { User } from "../../../drizzle/schema";
 import { getAnalysisInsight, getAnalysisBatchByBatchId, listAnalysisArtifacts } from "../../../models/db";
@@ -213,40 +213,30 @@ async function readOriginalSnippetFromPath(args: {
 }): Promise<{ lines: SnippetLine[]; highlightLine: number }> {
   const { absPath, anchorLine, beforeCount, afterCount } = args;
 
-  const stream = createReadStream(absPath, { encoding: "utf8" });
-  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-
   const rollingBefore: SnippetLine[] = [];
   const lines: SnippetLine[] = [];
 
   let lineNo = 0;
 
-  try {
-    // streaming por linhas (ficheiros de log grandes)
-    for await (const chunk of rl) {
-      lineNo += 1;
-      const lineText = typeof chunk === "string" ? chunk : String(chunk);
-      const row: SnippetLine = { lineNumber: lineNo, text: lineText };
+  for await (const lineText of readLinesLf(absPath)) {
+    lineNo += 1;
+    const row: SnippetLine = { lineNumber: lineNo, text: lineText };
 
-      if (lineNo < anchorLine) {
-        rollingBefore.push(row);
-        while (rollingBefore.length > beforeCount) rollingBefore.shift();
-        continue;
-      }
-
-      if (lineNo === anchorLine) {
-        lines.push(...rollingBefore.map((x) => ({ lineNumber: x.lineNumber, text: x.text })), row);
-        rollingBefore.length = 0;
-        if (afterCount <= 0) break;
-        continue;
-      }
-
-      lines.push(row);
-      if (lineNo - anchorLine >= afterCount) break;
+    if (lineNo < anchorLine) {
+      rollingBefore.push(row);
+      while (rollingBefore.length > beforeCount) rollingBefore.shift();
+      continue;
     }
-  } finally {
-    rl.close();
-    stream.destroy();
+
+    if (lineNo === anchorLine) {
+      lines.push(...rollingBefore.map((x) => ({ lineNumber: x.lineNumber, text: x.text })), row);
+      rollingBefore.length = 0;
+      if (afterCount <= 0) break;
+      continue;
+    }
+
+    lines.push(row);
+    if (lineNo - anchorLine >= afterCount) break;
   }
 
   const ok = lines.some((l) => l.lineNumber === anchorLine);

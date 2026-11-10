@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createOriginTracker, extractCallerImages, isPinRuntimeImage } from "./traceOrigin";
+import { callSiteSegment, createOriginTracker, extractCallerImages, isPinRuntimeImage } from "./traceOrigin";
 
 describe("traceOrigin", () => {
   it("reconhece imagens do runtime Pin", () => {
@@ -11,9 +11,41 @@ describe("traceOrigin", () => {
     expect(isPinRuntimeImage(String.raw`C:\Windows\System32\KERNEL32.DLL`)).toBe(false);
   });
 
-  it("não trata KERNEL32:Export como caller", () => {
+  it("não trata KERNEL32:Export sozinho como caller (é o callee)", () => {
     const line = String.raw`7ffde23daec0   T[0]  C:\Windows\System32\KERNEL32.DLL:GetProcAddress`;
     expect(extractCallerImages(line)).toEqual([]);
+  });
+
+  it("Call site à esquerda de -> é quem chamou; o export à direita não", () => {
+    const line =
+      "Call 7ff712340010 malware.exe:start+0x0012 -> 7ffe1234abcd KERNEL32.DLL:IsDebuggerPresent [T0] (0, 0, ...)";
+    expect(callSiteSegment(line)).toContain("malware.exe");
+    expect(callSiteSegment(line)).not.toContain("IsDebuggerPresent");
+    expect(extractCallerImages(line)).toEqual(["malware.exe"]);
+
+    const tracker = createOriginTracker("TraceInstructions");
+    expect(tracker.classify(line)).toMatchObject({ origin: "target", image: "malware.exe" });
+  });
+
+  it("Call a partir do Pin fica pin-runtime", () => {
+    const line =
+      "Call 7ffd11110000 pin.exe:?+0x0040 -> 7ffe1234abcd ntdll.dll:NtAllocateVirtualMemory [T0] (0, ...)";
+    const tracker = createOriginTracker("TraceInstructions");
+    expect(tracker.classify(line).origin).toBe("pin-runtime");
+  });
+
+  it("instrução com imagem da amostra (sem seta) usa o módulo que executa", () => {
+    const tracker = createOriginTracker("TraceInstructions");
+    expect(
+      tracker.classify("7ff712340010 malware.exe:start+0x0012                    call qword ptr [rip+0x10]").origin,
+    ).toBe("target");
+  });
+
+  it("Call só com callee, sem imagem à esquerda, continua unknown", () => {
+    const tracker = createOriginTracker("TraceInstructions");
+    expect(
+      tracker.classify("Call 7ff712340010 -> 7ffe1234abcd ntdll.dll:RtlAllocateHeap [T0] (0, ...)").origin,
+    ).toBe("unknown");
   });
 
   it("FunctionInterceptor: Nome da imagem da amostra → target; Pin → pin-runtime", () => {

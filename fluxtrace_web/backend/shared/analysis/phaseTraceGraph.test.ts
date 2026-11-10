@@ -58,7 +58,7 @@ describe("buildPhaseTraceGraph", () => {
     const gpa = graph.nodes.find((n) => n.id === "api:FunctionInterceptor:GetProcAddress");
     const rtl = graph.nodes.find((n) => n.id === "api:TraceInstructions:RtlGetCurrentServiceSessionId");
     expect(gpa?.label).toBe("GetProcAddress ×4");
-    expect(rtl?.label).toBe("RtlGetCurrentServiceSessionId ×2");
+    expect(rtl).toBeUndefined();
     expect(graph.edges.every((e) => e.relation === "fase")).toBe(true);
     expect(graph.nodes.filter((n) => n.kind === "phase")).toHaveLength(6);
   });

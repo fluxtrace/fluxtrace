@@ -4,7 +4,6 @@ import { chmodSync, createReadStream, createWriteStream, existsSync } from "node
 import { access, mkdir, mkdtemp, readdir, readFile, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, extname, join, relative, resolve } from "node:path";
-import { createInterface } from "node:readline";
 import { StringDecoder } from "node:string_decoder";
 import { promisify } from "node:util";
 
@@ -42,6 +41,7 @@ import { renderMalwareFlowMapMarkdown } from "../flowGraph/flowGraphMindMapMarkd
 import { invokeLLM } from "../../_core/integrations/llm";
 import { getServerProcessDebugSnapshot } from "../../_core/debug/serverProcessDebug";
 import { harvestSha256FromNormalizedCorrelation, harvestSha256FromStoredEvents } from "../samples/sampleSha256Harvest";
+import { readLinesLf } from "./lfLineReader";
 import { annotateMapped, discoverApisInLine, resetMappedCatalogCache } from "./traceApiDiscovery";
 import {
   buildPivotFlow,
@@ -518,6 +518,10 @@ type ParsedLogResult = {
     mapped: string[];
     occurrences: number;
   }>;
+  /** Linhas que nomeiam API, por origem (cada ocorrência conta). */
+  occurrencesByOrigin: Record<TraceOrigin, number>;
+  /** Parâmetros de protecção (VirtualProtect/VirtualAlloc…) lidos no FunctionInterceptor: o gatilho só é avaliável se > 0. */
+  protectionArgsSeen: number;
 };
 
 function decodeBase64(input: string) {
@@ -761,7 +765,7 @@ function detectTechniqueTags(line: string, apis: string[]) {
   if (apis.includes("Sleep") || lowered.includes("delay") || /sleep\s*[:=]?\s*\d{4,}/i.test(line)) {
     tags.add("Atraso deliberado");
   }
-  if (apis.includes("VirtualProtect") || apis.includes("VirtualAlloc") || lowered.includes("rw") && lowered.includes("rx") || lowered.includes("page_execute")) {
+  if (isTriggerLine(line, apis) && !apis.includes("WriteProcessMemory") && !apis.includes("CreateRemoteThread")) {
     tags.add("Transição RW→RX");
   }
   if (apis.includes("WriteProcessMemory") || apis.includes("CreateRemoteThread")) {
@@ -781,6 +785,37 @@ function detectTechniqueTags(line: string, apis: string[]) {
   }
 
   return Array.from(tags);
+}
+
+const PROTECTION_APIS = new Set([
+  "VirtualProtect",
+  "VirtualProtectEx",
+  "VirtualAlloc",
+  "VirtualAllocEx",
+  "VirtualAlloc2",
+  "NtProtectVirtualMemory",
+  "ZwProtectVirtualMemory",
+  "NtAllocateVirtualMemory",
+  "ZwAllocateVirtualMemory",
+]);
+const FI_BLOCK_HEADER = /^\s*\[\+\]\s+([A-Za-z_][A-Za-z0-9_]*)\.\.\./;
+const FI_PROTECTION_PARAM = /^\s*(?:flNewProtect|flProtect|NewProtect|NewAccessProtection|Protect|PageProtection)\s*:\s*(0x[0-9a-fA-F]+|\d+)\b/;
+/** PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY */
+const PAGE_EXECUTE_MASK = 0xf0;
+
+export function isExecutableProtection(value: number): boolean {
+  return Number.isFinite(value) && (value & PAGE_EXECUTE_MASK) !== 0;
+}
+
+/**
+ * O FunctionInterceptor grava a protecção pedida numa linha de parâmetro em hexadecimal
+ * (`flNewProtect: 0x40`), nunca na linha do nome da API.
+ */
+export function fiProtectionTrigger(blockApi: string | null, rawLine: string): boolean {
+  if (!blockApi || !PROTECTION_APIS.has(blockApi)) return false;
+  const match = rawLine.match(FI_PROTECTION_PARAM);
+  if (!match?.[1]) return false;
+  return isExecutableProtection(Number(match[1]));
 }
 
 function isTriggerLine(line: string, apis: string[]) {
@@ -1427,8 +1462,28 @@ function toNormalizedEvent(item: ProcessedLogLine): NormalizedEvent {
   };
 }
 
-function createLogCollector(fileName: string, logType: SupportedLogType, perFileEventLimit: number) {
+/** Linhas de TI/Memory/Dasm guardadas em RAM só para pré-visualização; a contagem é exacta. */
+const BULK_PREVIEW_LINES = 2_000;
+const CONTEXT_WINDOW = 4;
+/** `Return <addr> dll:Fn+off [T0] returns: <valor>, ret addr: …` — o valor e o desvio seguinte são contexto. */
+const TI_RETURN_LINE = /^(?:\| )*Return\s+0x/;
+
+export type KeptLineSink = (lineNumber: number, text: string) => void;
+
+function createLogCollector(
+  fileName: string,
+  logType: SupportedLogType,
+  perFileEventLimit: number,
+  opts: { onKeptLine?: KeptLineSink } = {},
+) {
   const originTracker = createOriginTracker(logType);
+  let fiBlockApi: string | null = null;
+  /**
+   * TraceInstructions / Memory / Dasm: dezenas de milhões de linhas `dll:Export`.
+   * Não materializar ProcessedLogLine nem o array de hits — só estatísticas e janelas em streaming.
+   */
+  const bulkTrace =
+    logType === "TraceInstructions" || logType === "TraceMemory" || logType === "TraceDisassembly";
   /** Só guarda linhas de contexto (nº limitado), não o ficheiro completo. O stage fica aqui, não num Map por linha. */
   const keepLineMap = new Map<number, { text: string; stage: string }>();
   const previousLines: ProcessedLogLine[] = [];
@@ -1455,12 +1510,38 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
     occurrences?: number;
     addresses?: string[];
   }> = [];
+  /** Chave `api\0origem`: a mesma API chamada pela amostra e pelo runtime não se funde. */
   const apiStats = new Map<
     string,
-    { lineNumber: number; origin: TraceOrigin; originEvidence: string; mapped: string[]; occurrences: number }
+    { api: string; lineNumber: number; origin: TraceOrigin; originEvidence: string; mapped: string[]; occurrences: number }
   >();
+  const occurrencesByOrigin: Record<TraceOrigin, number> = { "pin-runtime": 0, target: 0, unknown: 0 };
   let observedHitCount = 0;
+  let protectionArgsSeen = 0;
   let lastBulkLine: { lineNumber: number; text: string } | null = null;
+  const bulkPrevious: Array<{ lineNumber: number; text: string }> = [];
+  let bulkFutureBudget = 0;
+  let bulkLastKept = 0;
+  let bulkKeptCount = 0;
+  let bulkKeptBytes = 0;
+
+  const countApiOccurrence = (api: string, lineNumber: number, origin: TraceOrigin, originEvidence: string) => {
+    occurrencesByOrigin[origin] += 1;
+    const key = `${api}\0${origin}`;
+    const prev = apiStats.get(key);
+    if (!prev) {
+      apiStats.set(key, {
+        api,
+        lineNumber,
+        origin,
+        originEvidence,
+        mapped: annotateMapped([api]).mapped,
+        occurrences: 1,
+      });
+    } else {
+      prev.occurrences += 1;
+    }
+  };
 
   const rememberLine = (item: ProcessedLogLine) => {
     if (item.rawLine.trim().length > 0) {
@@ -1468,16 +1549,23 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
     }
   };
 
+  /** Linhas chegam por ordem crescente: `bulkLastKept` basta para unir janelas sobrepostas. */
+  const keepBulkLine = (lineNumber: number, text: string) => {
+    if (lineNumber <= bulkLastKept) return;
+    bulkLastKept = lineNumber;
+    if (!text.trim()) return;
+    bulkKeptCount += 1;
+    bulkKeptBytes += Buffer.byteLength(text, "utf-8") + 1;
+    opts.onKeptLine?.(lineNumber, text);
+    if (keepLineMap.size < BULK_PREVIEW_LINES) {
+      keepLineMap.set(lineNumber, { text, stage: "—" });
+    }
+  };
+
   const consume = (rawLine: string) => {
     originalLineCount += 1;
     approximateOriginalBytes += Buffer.byteLength(rawLine, "utf-8") + 1;
 
-    /**
-     * TraceInstructions / Memory / Dasm: dezenas de milhões de linhas `dll:Export`.
-     * Não materializar ProcessedLogLine nem o array de hits — só estatísticas.
-     */
-    const bulkTrace =
-      logType === "TraceInstructions" || logType === "TraceMemory" || logType === "TraceDisassembly";
     if (bulkTrace) {
       const originInfo = originTracker.classify(rawLine);
       const apis = discoverApisInLine(rawLine, []);
@@ -1485,27 +1573,45 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       if (apis.length) {
         observedHitCount += 1;
         for (const api of apis) {
-          const prev = apiStats.get(api);
-          if (!prev) {
-            apiStats.set(api, {
-              lineNumber: originalLineCount,
-              origin: originInfo.origin,
-              originEvidence: originInfo.evidence,
-              mapped: annotateMapped([api]).mapped,
-              occurrences: 1,
-            });
-          } else {
-            prev.occurrences += 1;
-          }
+          countApiOccurrence(api, originalLineCount, originInfo.origin, originInfo.evidence);
         }
       }
-      if (originalLineCount <= 3 && rawLine.trim()) {
-        keepLineMap.set(originalLineCount, { text: rawLine, stage: "—" });
+      const anchor =
+        apis.length > 0 ||
+        (logType === "TraceInstructions" && TI_RETURN_LINE.test(rawLine)) ||
+        isTriggerLine(rawLine, apis) ||
+        detectTechniqueTags(rawLine, apis).length > 0;
+      if (anchor) {
+        for (const prev of bulkPrevious) keepBulkLine(prev.lineNumber, prev.text);
+        keepBulkLine(originalLineCount, rawLine);
+        bulkFutureBudget = CONTEXT_WINDOW;
+      } else if (bulkFutureBudget > 0) {
+        keepBulkLine(originalLineCount, rawLine);
+        bulkFutureBudget -= 1;
+      } else if (originalLineCount <= 3) {
+        keepBulkLine(originalLineCount, rawLine);
       }
+      bulkPrevious.push({ lineNumber: originalLineCount, text: rawLine });
+      if (bulkPrevious.length > CONTEXT_WINDOW) bulkPrevious.shift();
       if (rawLine.trim()) {
         lastBulkLine = { lineNumber: originalLineCount, text: rawLine };
       }
       return;
+    }
+
+    /** No FunctionInterceptor o evento inteiro (cabeçalho a `[*]`) entra na saída reduzida. */
+    let keepWholeFiBlock = false;
+    if (logType === "FunctionInterceptor") {
+      const header = rawLine.match(FI_BLOCK_HEADER);
+      if (header) {
+        fiBlockApi = header[1] ?? null;
+        keepWholeFiBlock = true;
+      } else if (rawLine.trimStart().startsWith("[*]")) {
+        keepWholeFiBlock = fiBlockApi !== null;
+        fiBlockApi = null;
+      } else {
+        keepWholeFiBlock = fiBlockApi !== null;
+      }
     }
 
     const originInfo = originTracker.classify(rawLine);
@@ -1517,6 +1623,16 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       originInfo.origin,
       originInfo.evidence,
     );
+    if (logType === "FunctionInterceptor" && fiBlockApi && PROTECTION_APIS.has(fiBlockApi) && FI_PROTECTION_PARAM.test(rawLine)) {
+      protectionArgsSeen += 1;
+    }
+    if (logType === "FunctionInterceptor" && fiProtectionTrigger(fiBlockApi, rawLine)) {
+      item.trigger = true;
+      item.suspicious = true;
+      if (!item.techniqueTags.includes("Transição RW→RX")) {
+        item.techniqueTags.push("Transição RW→RX");
+      }
+    }
     const forBehavior = isBehaviorOrigin(item.origin);
 
     originalLinesByStage[item.stage] = (originalLinesByStage[item.stage] ?? 0) + 1;
@@ -1528,19 +1644,7 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
     if (item.apis.length) {
       observedHitCount += 1;
       for (const api of item.apis) {
-        const mappedOne = annotateMapped([api]).mapped;
-        const prev = apiStats.get(api);
-        if (!prev) {
-          apiStats.set(api, {
-            lineNumber: originalLineCount,
-            origin: item.origin,
-            originEvidence: item.originEvidence,
-            mapped: mappedOne,
-            occurrences: 1,
-          });
-        } else {
-          prev.occurrences += 1;
-        }
+        countApiOccurrence(api, originalLineCount, item.origin, item.originEvidence);
       }
       if (observedHits.length < MAX_INDEX_HITS) {
         observedHits.push({
@@ -1565,11 +1669,16 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       futureContextBudget -= 1;
     }
 
-    if (forBehavior && item.suspicious) {
-      suspiciousEventCount += 1;
+    if (item.suspicious) {
       previousLines.forEach(rememberLine);
       rememberLine(item);
-      futureContextBudget = 4;
+      futureContextBudget = CONTEXT_WINDOW;
+    } else if (keepWholeFiBlock) {
+      rememberLine(item);
+    }
+
+    if (forBehavior && item.suspicious) {
+      suspiciousEventCount += 1;
       if (events.length < perFileEventLimit && (item.normalizedLine || item.rawLine)) {
         events.push(toNormalizedEvent(item));
       }
@@ -1590,7 +1699,7 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
     }
 
     previousLines.push(item);
-    if (previousLines.length > 4) {
+    if (previousLines.length > CONTEXT_WINDOW) {
       previousLines.shift();
     }
 
@@ -1601,8 +1710,9 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
   };
 
   const finalize = (exactOriginalBytes?: number): ParsedLogResult => {
+    const bulk = bulkTrace;
     if (lastBulkLine) {
-      keepLineMap.set(lastBulkLine.lineNumber, { text: lastBulkLine.text, stage: "—" });
+      keepBulkLine(lastBulkLine.lineNumber, lastBulkLine.text);
     }
     lastLines.forEach(rememberLine);
 
@@ -1616,14 +1726,23 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       .filter((entry) => entry.text.trim().length > 0);
 
     const keptLines = keptEntries.map(({ lineNumber, text }) => ({ lineNumber, text }));
-
-    const keptLinesByStage: Record<string, number> = {};
-    for (const { stage } of keptEntries) {
-      const st = stage ?? "—";
-      keptLinesByStage[st] = (keptLinesByStage[st] ?? 0) + 1;
+    if (!bulk && opts.onKeptLine) {
+      for (const entry of keptLines) opts.onKeptLine(entry.lineNumber, entry.text);
     }
 
-    const reducedBytes = Buffer.byteLength(keptLines.map((entry) => entry.text).join("\n"), "utf-8");
+    const keptLinesByStage: Record<string, number> = {};
+    if (bulk) {
+      keptLinesByStage["—"] = bulkKeptCount;
+    } else {
+      for (const { stage } of keptEntries) {
+        const st = stage ?? "—";
+        keptLinesByStage[st] = (keptLinesByStage[st] ?? 0) + 1;
+      }
+    }
+
+    const reducedBytes = bulk
+      ? bulkKeptBytes
+      : Buffer.byteLength(keptLines.map((entry) => entry.text).join("\n"), "utf-8");
 
     const lineSeen = new Set<string>();
     const mitreAnchorEvents: NormalizedEvent[] = [];
@@ -1652,7 +1771,7 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       suspiciousApis: Array.from(suspiciousApiSet),
       techniqueTags: Array.from(techniqueSet),
       originalLineCount,
-      reducedLineCount: keptLines.length,
+      reducedLineCount: bulk ? bulkKeptCount : keptLines.length,
       originalBytes: exactOriginalBytes ?? approximateOriginalBytes,
       reducedBytes,
       suspiciousEventCount,
@@ -1660,7 +1779,9 @@ function createLogCollector(fileName: string, logType: SupportedLogType, perFile
       observedHits,
       observedHitCount,
       observedHitsTruncated: observedHits.length < observedHitCount,
-      observedApiStats: Array.from(apiStats.entries()).map(([api, stat]) => ({ api, ...stat })),
+      observedApiStats: Array.from(apiStats.values()).map((stat) => ({ ...stat })),
+      occurrencesByOrigin: { ...occurrencesByOrigin },
+      protectionArgsSeen,
     };
   };
 
@@ -1683,16 +1804,17 @@ export function analyzeLogTextOffline(fileName: string, text: string) {
 /** Lê um `.cdf` por linhas (TraceInstructions de vários GiB). Sem BD. */
 export async function analyzeCdfPathOffline(
   filePath: string,
-  opts?: { fileName?: string; onProgress?: (lineCount: number, byteWeight: number, sizeBytes: number) => void },
+  opts?: {
+    fileName?: string;
+    onProgress?: (lineCount: number, byteWeight: number, sizeBytes: number) => void;
+    onKeptLine?: KeptLineSink;
+  },
 ) {
   const fileName = opts?.fileName ?? basename(filePath);
   const logType = inferLogType(fileName);
   const sizeBytes = (await stat(filePath)).size;
-  const collector = createLogCollector(fileName, logType, 50_000);
-  const reader = createInterface({
-    input: createReadStream(filePath, { encoding: "utf-8" }),
-    crlfDelay: Infinity,
-  });
+  const collector = createLogCollector(fileName, logType, 50_000, { onKeptLine: opts?.onKeptLine });
+  const reader = readLinesLf(filePath);
   let lineCount = 0;
   let byteWeight = 0;
   let lastProgressMs = 0;
@@ -1745,12 +1867,7 @@ async function analyzeSingleLogFile(
   };
 
   if (logFile.tempFilePath) {
-    const reader = createInterface({
-      input: createReadStream(logFile.tempFilePath, { encoding: "utf-8" }),
-      crlfDelay: Infinity,
-    });
-
-    for await (const rawLine of reader) {
+    for await (const rawLine of readLinesLf(logFile.tempFilePath)) {
       await bump(rawLine);
     }
 
@@ -3068,10 +3185,12 @@ export async function getPivotCoverage(batchId: string, api?: string) {
     if (ranked !== 0) return ranked;
     return (order.get(a.api) ?? 9999) - (order.get(b.api) ?? 9999);
   });
-  const present = flows.filter((flow) => flow.chainLevel !== "absent");
+  const named = flows.filter((flow) => flow.chainLevel !== "absent");
+  const withTarget = named.filter((flow) => flow.origin.target > 0);
+  const present = withTarget.length ? withTarget : named.filter((flow) => flow.origin["pin-runtime"] <= 0);
   const mappedCatalogSync = mappedCatalogSyncSchema.safeParse(summaryJson.mappedCatalogSync);
   const selected =
-    (api ? present.find((item) => item.api === api) ?? flows.find((item) => item.api === api) : null)
+    (api ? present.find((item) => item.api === api) ?? named.find((item) => item.api === api) ?? flows.find((item) => item.api === api) : null)
     ?? pickDefaultPivot(present)
     ?? null;
   return {
@@ -3104,7 +3223,7 @@ export async function regenerateInsightWithLlm(batchId: string) {
     return {
       eventType: event.eventType,
       stage: event.stage ?? "—",
-      message: event.message,
+      message: event.message ?? "",
       logType: (typeof payload.logType === "string" ? payload.logType : "Unknown") as SupportedLogType,
       fileName: typeof payload.fileName === "string" ? payload.fileName : "",
       lineNumber: Number(payload.lineNumber) || 0,

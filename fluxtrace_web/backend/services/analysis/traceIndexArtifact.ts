@@ -3,7 +3,7 @@ import { createReadStream } from "node:fs";
 
 import type { TraceOrigin } from "./traceOrigin";
 
-export const TRACE_ENGINE_VERSION = "trace-discovery-2";
+export const TRACE_ENGINE_VERSION = "trace-discovery-4";
 
 export type TraceIndexHit = {
   fileName: string;
@@ -188,9 +188,14 @@ export function buildTraceIndexDocument(params: {
   const hits = canonicalizeHits(params.hits);
   const observed = firstSeenApis(params.hits);
   const observedTarget = firstSeenApis(params.hits, { origin: "target" });
+  /** Entradas do índice por origem (uma entrada agregada de TI conta 1). */
   const originCounts = { "pin-runtime": 0, target: 0, unknown: 0 };
+  /** Ocorrências por origem (`occurrences` das entradas agregadas somadas). */
+  const originOccurrences = { "pin-runtime": 0, target: 0, unknown: 0 };
   for (const hit of hits) {
-    originCounts[hit.origin ?? "unknown"] += 1;
+    const origin = hit.origin ?? "unknown";
+    originCounts[origin] += 1;
+    originOccurrences[origin] += hit.occurrences != null && hit.occurrences > 0 ? hit.occurrences : 1;
   }
   return {
     engine: TRACE_ENGINE_VERSION,
@@ -199,6 +204,7 @@ export function buildTraceIndexDocument(params: {
     observedApiCount: observed.length,
     observedTargetApiCount: observedTarget.length,
     originCounts,
+    originOccurrences,
     hitCount: hits.length,
     indexSha256: hashCanonicalIndex(hits),
     observedApis: observed,

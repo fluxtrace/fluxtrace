@@ -134,7 +134,7 @@ export type ObservedApiOriginRow = z.infer<typeof observedApiOriginRowSchema>;
 export const EMPTY_ORIGIN_COUNTS: OriginCounts = { "pin-runtime": 0, target: 0, unknown: 0 };
 
 export const EMPTY_TRACE_ORIGIN = {
-  engine: "trace-discovery-2",
+  engine: "trace-discovery-4",
   indexSha256: "",
   originCounts: EMPTY_ORIGIN_COUNTS,
   observedApis: [] as ObservedApiOriginRow[],
@@ -188,7 +188,7 @@ export const mappedCatalogSyncSchema = z.object({
 export type MappedCatalogSyncDto = z.infer<typeof mappedCatalogSyncSchema>;
 
 export const traceOriginSchema = z.object({
-  engine: z.string().default("trace-discovery-2"),
+  engine: z.string().default("trace-discovery-4"),
   indexSha256: z.string().default(""),
   originCounts: originCountsSchema.default(EMPTY_ORIGIN_COUNTS),
   observedApis: z.array(observedApiOriginRowSchema).default([]),

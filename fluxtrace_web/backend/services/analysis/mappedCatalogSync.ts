@@ -1,6 +1,7 @@
 /**
  * Catálogo em disco (`FUNCOES_MAPEADAS`) anota; o rastro manda.
- * Funções novas em qualquer dos seis .cdf passam a ter pasta automática (o log manda).
+ * Funções novas no interceptor/M1/M2 passam a ter pasta automática.
+ * Nomes só em TraceInstructions (muitas vezes callee sem caller) ficam no índice, não abrem pasta.
  * A cadeia entre os seis .cdf é a mesma do fluxo IsDebuggerPresent validado com analista.
  */
 import { existsSync } from "node:fs";
@@ -166,16 +167,29 @@ export const STARTUP_NOISE_APIS = new Set([
   "FlsFree",
 ]);
 
-export function backboneMermaid(api: string, modules: readonly PivotModuleHits[]): string {
+function callerCaption(origin?: { "pin-runtime": number; target: number; unknown: number }): string {
+  if (!origin) return "quem chamou: sem evidência";
+  if (origin.target > 0) return "quem chamou: amostra";
+  if (origin["pin-runtime"] > 0) return "quem chamou: Pin";
+  return "quem chamou: sem evidência";
+}
+
+export function backboneMermaid(
+  api: string,
+  modules: readonly PivotModuleHits[],
+  origin?: { "pin-runtime": number; target: number; unknown: number },
+): string {
   const byMod = new Map(modules.map((row) => [row.module, row]));
   const present = CONTRADEF_MODULES.filter((mod) => (byMod.get(mod)?.occurrences ?? 0) > 0);
+  const who = callerCaption(origin);
   if (!present.length) {
-    return `flowchart TB\n  N["${api}"]\n`;
+    return `flowchart TB\n  who["${who}"]\n  N["${api}"]\n  who --> N\n`;
   }
   const mark = (mod: ContradefModule) => `${mod} ×${byMod.get(mod)!.occurrences}`;
   const hasCall = present.includes("TraceFcnCall.M1") || present.includes("TraceFcnCall.M2");
+  const head = ["flowchart TB", `  who["${who}"]`, `  API["${api}"]`, "  who --> API"];
   if (!hasCall) {
-    const lines = ["flowchart TB", `  API["${api}"]`];
+    const lines = [...head];
     let prev = "API";
     for (const mod of present) {
       const id = mermaidModuleId(mod);
@@ -185,24 +199,24 @@ export function backboneMermaid(api: string, modules: readonly PivotModuleHits[]
     }
     return `${lines.join("\n")}\n`;
   }
-  const lines = ["flowchart TB", `  API["${api}"]`];
+  const lines = [...head];
   let from = "API";
   if (present.includes("FunctionInterceptor")) {
     lines.push(`  FI["${mark("FunctionInterceptor")}"]`);
     lines.push("  API --> FI");
     from = "FI";
   }
-  lines.push("  ori{\"origem da chamada?\"}");
-  lines.push(`  ${from} --> ori`);
+  lines.push("  como{\"como foi a chamada?\"}");
+  lines.push(`  ${from} --> como`);
   const tails: string[] = [];
   if (present.includes("TraceFcnCall.M1")) {
     lines.push(`  M1["${mark("TraceFcnCall.M1")}"]`);
-    lines.push("  ori -->|directa IAT / thunk| M1");
+    lines.push("  como -->|directa IAT / thunk| M1");
     tails.push("M1");
   }
   if (present.includes("TraceFcnCall.M2")) {
     lines.push(`  M2["${mark("TraceFcnCall.M2")}"]`);
-    lines.push("  ori -->|indirecta / GetProcAddress| M2");
+    lines.push("  como -->|dinâmica / GetProcAddress| M2");
     tails.push("M2");
   }
   const rest = present.filter(
@@ -212,7 +226,7 @@ export function backboneMermaid(api: string, modules: readonly PivotModuleHits[]
   const firstId = mermaidModuleId(rest[0]!);
   lines.push(`  ${firstId}["${mark(rest[0]!)}"]`);
   for (const tail of tails) lines.push(`  ${tail} --> ${firstId}`);
-  if (!tails.length) lines.push(`  ori --> ${firstId}`);
+  if (!tails.length) lines.push(`  como --> ${firstId}`);
   let prev = firstId;
   for (const mod of rest.slice(1)) {
     const id = mermaidModuleId(mod);
@@ -290,7 +304,7 @@ export function buildPivotFlow(api: string, hits: readonly TraceIndexHit[], mapp
     mapped: mappedSet.has(api) || mappedSet.has(api.replace(/A$|W$/, "")),
     modules,
     sharedAddresses: intersectAddresses(modules.map((row) => row.addresses)),
-    mermaid: backboneMermaid(api, modules),
+    mermaid: backboneMermaid(api, modules, origin),
     origin,
     ...assessment,
   };
@@ -322,7 +336,7 @@ export function catalogSourceApis(hits: readonly TraceIndexHit[]): string[] {
   const names = new Set<string>();
   for (const hit of hits) {
     const module = classifyContradefModule(hit.fileName, hit.logType);
-    if (!module) continue;
+    if (!isCatalogSourceModule(module)) continue;
     for (const api of hit.apis) {
       if (isAutoAddableApiName(api)) names.add(api);
     }
@@ -339,11 +353,14 @@ export function hydratePivotFlow(flow: PivotFlow): PivotFlow {
 }
 
 export function presentApisMermaid(flows: readonly PivotFlow[], cap = 40): string {
-  const present = flows.filter((flow) => flow.chainLevel !== "absent").slice(0, cap);
+  const named = flows.filter((flow) => flow.chainLevel !== "absent");
+  const withTarget = named.filter((flow) => flow.origin.target > 0);
+  const present = (withTarget.length ? withTarget : named.filter((flow) => flow.origin["pin-runtime"] <= 0)).slice(0, cap);
   if (!present.length) return "";
   const lines = ["flowchart LR"];
   present.forEach((flow, index) => {
-    lines.push(`  p${index}["${flow.api}\\n${flow.chainLevel}"]`);
+    const who = flow.origin.target > 0 ? "amostra" : flow.origin["pin-runtime"] > 0 ? "Pin" : "sem caller";
+    lines.push(`  p${index}["${flow.api}\\n${flow.chainLevel} · ${who}"]`);
     if (index > 0) lines.push(`  p${index - 1} --> p${index}`);
   });
   return `${lines.join("\n")}\n`;
@@ -383,7 +400,7 @@ function fluxoMarkdownFilename(slug: string): string {
 }
 
 export function autoCatalogMarkdown(api: string, coverage?: PivotFlow): string {
-  const mermaid = coverage?.mermaid ?? backboneMermaid(api, CONTRADEF_MODULES.map(emptyHits));
+  const mermaid = coverage?.mermaid ?? backboneMermaid(api, CONTRADEF_MODULES.map(emptyHits), coverage?.origin);
   return `# Fluxo ${api}
 
 Pasta criada automaticamente porque **\`${api}\` apareceu no rastro Contradef**. O log manda: o catálogo anota, não filtra.

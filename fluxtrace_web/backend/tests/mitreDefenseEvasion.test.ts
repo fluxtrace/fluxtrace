@@ -18,9 +18,14 @@ describe("buildMitreDefenseEvasion", () => {
     expect(ids).toEqual(["T1497.001", "T1497.003"]);
   });
 
-  it("mapeia GetProcAddress para T1027.007", () => {
+  it("mapeia GetProcAddress para T1027.007; VirtualProtect só pelo nome não dá T1027", () => {
     const result = buildMitreDefenseEvasion([], ["GetProcAddress", "VirtualProtect"]);
     expect(result.techniques.some((t) => t.id === "T1027.007")).toBe(true);
+    expect(result.techniques.some((t) => t.id === "T1027")).toBe(false);
+  });
+
+  it("T1027 exige a etiqueta de protecção executável observada", () => {
+    const result = buildMitreDefenseEvasion(["Transição RW→RX"], ["VirtualProtect"]);
     expect(result.techniques.some((t) => t.id === "T1027")).toBe(true);
   });
 
@@ -33,30 +38,30 @@ describe("buildMitreDefenseEvasion", () => {
 
   it("preenche ocorrências quando eventos e mapa ficheiro+linha → nó coincidem", () => {
     const fileLineKey = `Log.txt\0${String(12)}`;
-    const fileLineToNodeId = new Map<string, string>([[fileLineKey, "event:0:VirtualProtect"]]);
+    const fileLineToNodeId = new Map<string, string>([[fileLineKey, "event:0:GetProcAddress"]]);
     const result = buildMitreDefenseEvasionFromEvidence({
       heuristicTags: [],
-      suspiciousApis: ["VirtualProtect"],
+      suspiciousApis: ["GetProcAddress"],
       events: [
         {
           fileName: "Log.txt",
           lineNumber: 12,
           stage: "Desempacotamento",
           suspicious: true,
-          suspiciousApis: ["VirtualProtect"],
+          suspiciousApis: ["GetProcAddress"],
           techniqueTags: [],
         },
       ],
       fileLineToNodeId,
     });
-    const t1027 = result.techniques.find((t) => t.id === "T1027");
-    expect(t1027).toBeDefined();
-    const ev = t1027!.heuristicEvidence.find((e) => e.label.includes("VirtualProtect"));
+    const t1027007 = result.techniques.find((t) => t.id === "T1027.007");
+    expect(t1027007).toBeDefined();
+    const ev = t1027007!.heuristicEvidence.find((e) => e.label.includes("GetProcAddress"));
     expect(ev?.occurrences).toHaveLength(1);
     expect(ev?.occurrences[0]).toMatchObject({
       fileName: "Log.txt",
       lineNumber: 12,
-      graphNodeId: "event:0:VirtualProtect",
+      graphNodeId: "event:0:GetProcAddress",
       phaseNodeId: "phase:Desempacotamento",
     });
   });
