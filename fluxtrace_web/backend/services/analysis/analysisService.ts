@@ -86,6 +86,8 @@ import {
   type MitreDefenseEvasion,
   buildMitreDefenseEvasionFromEvidence,
   EMPTY_TRACE_ORIGIN,
+  MITRE_ATTACK_VERSION,
+  MITRE_DEFENSE_EVASION_TACTIC,
   mappedCatalogSyncSchema,
   mitreDefenseEvasionSchema,
   pivotFlowSchema,
@@ -1170,7 +1172,7 @@ function buildFallbackSummary(params: {
 }) {
   const techniqueText = params.techniques.length ? params.techniques.join(", ") : "nenhuma técnica relevante detectada";
   const apiText = params.suspiciousApis.length ? params.suspiciousApis.join(", ") : "nenhuma API sensível identificada";
-  return `# Veredito da análise\n\nA amostra **${params.analysisName}** foi classificada preliminarmente como **${params.classification}**, com nível de risco **${params.riskLevel}** e fase atual estimada em **${params.currentPhase}**.\n\nAs principais heurísticas observadas nos logs foram: **${techniqueText}**. As APIs com maior relevância analítica foram: **${apiText}**.\n\nO módulo de redução manteve **${params.metrics.reducedLineCount}** de **${params.metrics.originalLineCount}** linhas, resultando em uma redução aproximada de **${params.metrics.reductionPercent.toFixed(1)}%**. Esse recorte privilegia eventos críticos e contextos vizinhos aos gatilhos heurísticos, especialmente transições de memória e chamadas indicativas de evasão.\n\n## MITRE ATT&CK (TA0005)\n\nComportamentos compatíveis com **Defense Evasion** são correlacionados automaticamente à tática [TA0005](https://attack.mitre.org/tactics/TA0005/) na interface, com ID e nome da técnica Enterprise conforme a matriz oficial — separando a **categoria da amostra** (Trojan, Backdoor, etc.) das **técnicas de evasão** observadas.\n\n## Recomendação inicial\n\nRevisar o fluxo reduzido em conjunto com o grafo e a linha do tempo para confirmar o ponto exato em que o malware altera seu comportamento, concentrando a investigação nas chamadas sensíveis e nos artefatos produzidos logo após os gatilhos.`;
+  return `# Veredito da análise\n\nA amostra **${params.analysisName}** foi classificada preliminarmente como **${params.classification}**, com nível de risco **${params.riskLevel}** e fase atual estimada em **${params.currentPhase}**.\n\nAs principais heurísticas observadas nos logs foram: **${techniqueText}**. As APIs com maior relevância analítica foram: **${apiText}**.\n\nO módulo de redução manteve **${params.metrics.reducedLineCount}** de **${params.metrics.originalLineCount}** linhas, resultando em uma redução aproximada de **${params.metrics.reductionPercent.toFixed(1)}%**. Esse recorte privilegia eventos críticos e contextos vizinhos aos gatilhos heurísticos, especialmente transições de memória e chamadas indicativas de evasão.\n\n## MITRE ATT&CK (TA0005 ${MITRE_DEFENSE_EVASION_TACTIC.name}, v${MITRE_ATTACK_VERSION})\n\nComportamentos de evasão são correlacionados automaticamente à tática [TA0005](https://attack.mitre.org/tactics/TA0005/) (**${MITRE_DEFENSE_EVASION_TACTIC.name}** desde a ATT&CK v19, que dividiu a antiga Defense Evasion em Stealth e Defense Impairment, TA0112) na interface, com ID e nome da técnica Enterprise conforme a matriz oficial — separando a **categoria da amostra** (Trojan, Backdoor, etc.) das **técnicas de evasão** observadas.\n\n## Recomendação inicial\n\nRevisar o fluxo reduzido em conjunto com o grafo e a linha do tempo para confirmar o ponto exato em que o malware altera seu comportamento, concentrando a investigação nas chamadas sensíveis e nos artefatos produzidos logo após os gatilhos.`;
 }
 
 async function generateInsight(params: {

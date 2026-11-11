@@ -132,21 +132,36 @@ export function MitreDefenseEvasionPanel({ mitre, heuristicTags, onEvidenceTrace
   const observed = mitre.techniques;
   const catalogTechniques = catalogQuery.data?.techniques ?? MITRE_TA0005_CATALOG.techniques;
   const catalogDate = catalogQuery.data?.syncedAt ?? catalogQuery.data?.generatedAt ?? MITRE_TA0005_CATALOG.generatedAt;
+  const catalogAttackVersion = catalogQuery.data?.attackVersion ?? MITRE_TA0005_CATALOG.attackVersion;
+  const catalogTacticName = catalogQuery.data?.tacticName ?? MITRE_TA0005_CATALOG.tacticName;
 
   const unobservedRows = useMemo(() => {
     const seen = new Set(mitre.techniques.map((t) => t.id));
     return catalogTechniques.filter((e) => !seen.has(e.id));
   }, [catalogTechniques, mitre.techniques]);
 
+  const observedOutsideCatalog = useMemo(() => {
+    const ids = new Set(catalogTechniques.map((t) => t.id));
+    return mitre.techniques.filter((t) => !ids.has(t.id)).map((t) => t.id);
+  }, [catalogTechniques, mitre.techniques]);
+
+  const reportVersionDiffers = !mitre.attackVersion || mitre.attackVersion !== catalogAttackVersion;
+
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-muted/50 p-4 dark:border-white/10 dark:bg-slate-950/60">
       <div className="flex min-w-0 flex-row items-center justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <p className="min-w-0 text-sm font-medium text-foreground">MITRE ATT&CK — evasão de defesas</p>
+          <p className="min-w-0 text-sm font-medium text-foreground">
+            MITRE ATT&CK — TA0005 {catalogTacticName}
+          </p>
           <p className="text-[11px] text-muted-foreground">
+            {mitre.attackVersion
+              ? `Rótulos desta análise: ATT&CK v${mitre.attackVersion} (${mitre.tacticName})`
+              : `Rótulos desta análise: versão ATT&CK não registada (${mitre.tacticName})`}
+            {" · "}
             Catálogo de {formatCatalogDate(catalogDate)}
-            {catalogQuery.data?.version ? ` · ${catalogQuery.data.version}` : ""}
-            {catalogQuery.data?.techniqueCount != null ? ` · ${catalogQuery.data.techniqueCount} técnicas` : ""}
+            {catalogAttackVersion ? ` · ATT&CK v${catalogAttackVersion}` : ""}
+            {catalogQuery.data?.techniqueCount != null ? ` · ${catalogQuery.data.techniqueCount} entradas` : ""}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -184,6 +199,19 @@ export function MitreDefenseEvasionPanel({ mitre, heuristicTags, onEvidenceTrace
         </p>
       ) : null}
 
+      {reportVersionDiffers ? (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+          {mitre.attackVersion
+            ? `Esta análise foi rotulada com a ATT&CK v${mitre.attackVersion}; o catálogo actual é a v${catalogAttackVersion}.`
+            : `Esta análise é anterior ao registo da versão ATT&CK; o catálogo actual é a v${catalogAttackVersion}.`}{" "}
+          Desde a v19, Defense Evasion foi dividida em Stealth (herda TA0005) e Defense Impairment (TA0112).
+          {observedOutsideCatalog.length
+            ? ` IDs desta análise fora da TA0005 actual: ${observedOutsideCatalog.join(", ")}.`
+            : " Todos os IDs desta análise continuam na TA0005."}{" "}
+          Reprocesse o lote para gravar os rótulos com a versão actual.
+        </p>
+      ) : null}
+
       {observed.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nenhum dos sinais desta análise foi mapeado para técnicas de TA0005. Isso não exclui outras táticas (por
@@ -213,6 +241,11 @@ export function MitreDefenseEvasionPanel({ mitre, heuristicTags, onEvidenceTrace
                   >
                     {row.name}
                   </a>
+                  {row.otherTactics?.length ? (
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Também em: {row.otherTactics.map((tac) => `${tac.id} ${tac.name}`).join(", ")}
+                    </p>
+                  ) : null}
                 </TableCell>
                 <TableCell className="align-top">
                   <div className="flex flex-wrap gap-1.5">

@@ -207,7 +207,7 @@ Express + tRPC, Drizzle/PostgreSQL, integrações. **View:** SPA em `frontend/`.
 | Área | Conteúdo |
 |------|-----------|
 | `setup/` | `ensure-7zip-executable.mjs` — `postinstall` |
-| `mitre/` | `generate-ta0005-catalog.mjs` — `pnpm mitre:ta0005-catalog` |
+| `mitre/` | `sync-ta0005-catalog.mts` — `pnpm mitre:sync-catalog` (STIX Enterprise oficial; TA0005 Stealth, versão ATT&CK e outras tácticas por técnica); `generate-ta0005-catalog.mjs` — `pnpm mitre:ta0005-catalog` (a partir de uma página TA0005 guardada; recusa snapshots anteriores à v19) |
 | `db/` | `push-schema.mts` (`pnpm db:push`), `query-batch-once.mts`, `run-rename-jobs-to-batches.mts`, `sync-legacy-backlog.mts` |
 | `sql/` | SQL de referência |
 

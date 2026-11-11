@@ -6,7 +6,9 @@ import {
   isBehaviourMitreTreesByHashExport,
   listSandboxNamesFromMitreEntry,
   pickMitreTreeEntryForBatch,
+  splitByCurrentTa0005,
 } from "../../shared/virusTotal/vtBehaviourMitreExport";
+import { MITRE_ATTACK_VERSION, MITRE_DEFENSE_EVASION_TACTIC } from "../../shared/mitre/mitreDefenseEvasion";
 import type { VirusTotalBatchLookupResult } from "../../shared/virusTotal/virusTotalReport";
 import {
   diffVtStats,
@@ -143,14 +145,19 @@ function buildSummaryMarkdownMitreTa0005(params: {
 }): string {
   const { batchSha, matchedExportHash, availableHashes, sandboxes, externalTa0005Ids, fluxTa0005Ids, internalVt } =
     params;
-  const { onlyA: onlyFlux, onlyB: onlyExport, both } = setDiff(fluxTa0005Ids, externalTa0005Ids);
+  const vtSplit = splitByCurrentTa0005(externalTa0005Ids);
+  const { onlyA: onlyFlux, onlyB: onlyExport, both } = setDiff(fluxTa0005Ids, vtSplit.current);
 
   const lines: string[] = [];
-  lines.push("## Comparação MITRE ATT&CK **TA0005** (Defence Evasion)");
+  lines.push(
+    `## Comparação MITRE ATT&CK **TA0005** (${MITRE_DEFENSE_EVASION_TACTIC.name}, ATT&CK v${MITRE_ATTACK_VERSION})`,
+  );
   lines.push("");
   lines.push(
     "O ficheiro segue o padrão **mapa SHA-256 → `behaviour_mitre_trees`** (sandboxes VirusTotal). " +
-      "A comparação usa apenas técnicas listadas sob a tática **TA0005**, como no painel FluxTrace (evasão).",
+      "A comparação usa apenas técnicas listadas sob a tática **TA0005**, como no painel FluxTrace. " +
+      `Técnicas que a sandbox ainda rotula como TA0005 mas que saíram da táctica na ATT&CK v${MITRE_ATTACK_VERSION} ` +
+      "(ex.: T1562, hoje em Defense Impairment, TA0112) ficam fora da comparação e são listadas à parte.",
   );
   lines.push("");
   lines.push(`- **SHA-256 do lote FluxTrace:** ${batchSha ? `\`${batchSha}\`` : "*(sem hash no lote)*"}`);
@@ -172,6 +179,11 @@ function buildSummaryMarkdownMitreTa0005(params: {
   lines.push(`- **Em ambos:** ${both.length ? both.map((x) => `\`${x}\``).join(", ") : "—"}`);
   lines.push(`- **Só no FluxTrace:** ${onlyFlux.length ? onlyFlux.map((x) => `\`${x}\``).join(", ") : "—"}`);
   lines.push(`- **Só no export VT:** ${onlyExport.length ? onlyExport.map((x) => `\`${x}\``).join(", ") : "—"}`);
+  if (vtSplit.outside.length) {
+    lines.push(
+      `- **Rotulados TA0005 no VT, fora da TA0005 na v${MITRE_ATTACK_VERSION}:** ${vtSplit.outside.map((x) => `\`${x}\``).join(", ")}`,
+    );
+  }
   lines.push("");
 
   if (both.length && !onlyFlux.length && !onlyExport.length) {
@@ -268,7 +280,7 @@ export async function compareVtJsonWithBatch(params: {
             ? `Nenhuma chave no JSON igual ao hash do lote. Hashes no ficheiro: ${pick.availableHashes.length}.`
             : "Lote sem SHA-256 — não foi possível escolher entrada por hash.",
         sandboxes.length > 0 ? `Sandboxes: ${sandboxes.join(", ")}.` : "Sem dados de sandbox (\`data\` vazio nesta chave).",
-        `Técnicas TA0005 extraídas do export: ${extIds.length}.`,
+        `Técnicas TA0005 extraídas do export: ${extIds.length} (fora da TA0005 na ATT&CK v${MITRE_ATTACK_VERSION}: ${splitByCurrentTa0005(extIds).outside.length}).`,
       ],
     };
 

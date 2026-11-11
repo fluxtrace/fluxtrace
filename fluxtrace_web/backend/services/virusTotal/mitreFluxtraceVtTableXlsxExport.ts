@@ -3,7 +3,7 @@ import * as XLSX_Module from "xlsx";
 import { getAnalysisBatchByBatchId } from "../../models/db";
 import { getAnalysisBatchDetail } from "../analysis/analysisService";
 import { normalizeOptionalSampleSha256 } from "../../shared/virusTotal";
-import { fluxDefenseEvasionCanonAndNames } from "../../shared/virusTotal/vtBehaviourMitreExport";
+import { fluxDefenseEvasionCanonAndNames, splitByCurrentTa0005 } from "../../shared/virusTotal/vtBehaviourMitreExport";
 import { virusTotalFetchBehaviourMitreTrees } from "./virusTotalLookup";
 import { resolveBatchIdsForUnifiedExport } from "./fluxtraceUnifiedMitreExport";
 
@@ -268,7 +268,8 @@ export async function buildMitreFluxtraceVsVtTableXlsx(params: {
       if (trees.ok) {
         meta.vtOkRows += 1;
         for (const [k, v] of trees.vtTechniqueNameByUpper.entries()) vtNames.set(k, v);
-        colVtTa0005Canon = trees.ta0005TechniqueIds;
+        // Só IDs da TA0005 na versão do catálogo; os que saíram (ex.: T1562) continuam na coluna D.
+        colVtTa0005Canon = splitByCurrentTa0005(trees.ta0005TechniqueIds).current;
         colVtAllCanon = trees.techniqueIds;
       } else {
         meta.vtFailedRows += 1;

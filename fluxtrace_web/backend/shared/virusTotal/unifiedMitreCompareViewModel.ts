@@ -5,7 +5,9 @@ import {
   listExportRootShaKeys,
   listSandboxNamesFromMitreEntry,
   pickMitreTreeEntryForBatch,
+  splitByCurrentTa0005,
 } from "./vtBehaviourMitreExport";
+import { MITRE_ATTACK_VERSION, MITRE_DEFENSE_EVASION_TACTIC } from "../mitre/mitreDefenseEvasion";
 import { statsTotalEngines } from "./vtExportFingerprint";
 import type { VirusTotalBatchLookupResult } from "./virusTotalReport";
 
@@ -36,8 +38,10 @@ export type UnifiedMitreHashCard = {
   sampleName: string;
   batchId: string;
   sandboxes: string[];
-  /** TA0005 do export JSON externo (sandboxes VT). */
+  /** TA0005 do export JSON externo (sandboxes VT), tal como rotulado pela sandbox. */
   exportVtTa0005: string[];
+  /** Rotulados TA0005 pela sandbox mas fora da TA0005 na versão ATT&CK do catálogo (excluídos da comparação). */
+  exportVtOutsideCurrentTa0005: string[];
   /** TA0005 do resumo FluxTrace. */
   fluxTa0005: string[];
   inBoth: string[];
@@ -102,13 +106,15 @@ export function buildUnifiedMitreCompareViewModel(params: {
     const exportVtTa0005 = collectTa0005TechniqueIdsFromMitreEntry(pick.entry);
     const entry = internalBySha[sha]!;
     const fluxTa0005 = collectFluxtraceDefenseEvasionTechniqueIds(entry._fluxtrace.mitreDefenseEvasion);
-    const { onlyA: onlyFluxtrace, onlyB: onlyExportVt, both: inBoth } = setDiff(fluxTa0005, exportVtTa0005);
+    const vtSplit = splitByCurrentTa0005(exportVtTa0005);
+    const { onlyA: onlyFluxtrace, onlyB: onlyExportVt, both: inBoth } = setDiff(fluxTa0005, vtSplit.current);
     perHash.push({
       sha,
       sampleName: entry._fluxtrace.sampleName,
       batchId: entry._fluxtrace.batchId,
       sandboxes: listSandboxNamesFromMitreEntry(pick.entry),
       exportVtTa0005,
+      exportVtOutsideCurrentTa0005: vtSplit.outside,
       fluxTa0005,
       inBoth,
       onlyExportVt,
@@ -146,12 +152,16 @@ export function unifiedMitreCompareMarkdownFromViewModel(
 ): string {
   const lines: string[] = [];
   const s = vm.summary;
-  lines.push("## Comparação unificada — **MITRE TA0005** (Defence Evasion)");
+  lines.push(
+    `## Comparação unificada — **MITRE TA0005** (${MITRE_DEFENSE_EVASION_TACTIC.name}, ATT&CK v${MITRE_ATTACK_VERSION})`,
+  );
   lines.push("");
   lines.push(
     "O servidor construiu um mapa **SHA-256 → dados FluxTrace** a partir dos lotes seleccionados (campo `_fluxtrace`). " +
       "O ficheiro importado segue o padrão **mapa SHA-256 → behaviour_mitre_trees** (sandboxes VirusTotal). " +
-      "Para cada hash presente em **ambos** os lados, comparam-se técnicas sob a tática **TA0005**.",
+      "Para cada hash presente em **ambos** os lados, comparam-se técnicas sob a tática **TA0005**. " +
+      `Técnicas que a sandbox ainda rotula como TA0005 mas que saíram da táctica na ATT&CK v${MITRE_ATTACK_VERSION} ` +
+      "(ex.: T1562, hoje em Defense Impairment, TA0112) ficam fora da comparação e são listadas à parte.",
   );
   lines.push("");
   lines.push("### Resumo");
@@ -218,6 +228,11 @@ export function unifiedMitreCompareMarkdownFromViewModel(
     lines.push(`- **Em ambos:** ${h.inBoth.length ? h.inBoth.map((x) => `\`${x}\``).join(", ") : "—"}`);
     lines.push(`- **Só FluxTrace:** ${h.onlyFluxtrace.length ? h.onlyFluxtrace.map((x) => `\`${x}\``).join(", ") : "—"}`);
     lines.push(`- **Só export VT:** ${h.onlyExportVt.length ? h.onlyExportVt.map((x) => `\`${x}\``).join(", ") : "—"}`);
+    if (h.exportVtOutsideCurrentTa0005.length) {
+      lines.push(
+        `- **Rotulados TA0005 no VT, fora da TA0005 na v${MITRE_ATTACK_VERSION}:** ${h.exportVtOutsideCurrentTa0005.map((x) => `\`${x}\``).join(", ")}`,
+      );
+    }
     lines.push(`- ${vtLookupOneLiner(h.virusTotalFileReport)}`);
     lines.push("");
   }

@@ -11,6 +11,8 @@ export {
   buildMitreDefenseEvasion,
   buildMitreDefenseEvasionFromEvidence,
   listHeuristicsOutsideTa0005,
+  MITRE_ATTACK_VERSION,
+  MITRE_DEFENSE_EVASION_TACTIC,
   mitreDefenseEvasionSchema,
   traceMitreEvidenceOccurrences,
 } from "../mitre/mitreDefenseEvasion";

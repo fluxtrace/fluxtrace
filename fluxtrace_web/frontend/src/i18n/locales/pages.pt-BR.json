@@ -296,6 +296,7 @@
     "unifiedResultInBoth": "Em ambos (intersecção TA0005)",
     "unifiedResultOnlyExportVt": "Só export VT",
     "unifiedResultOnlyFluxtrace": "Só FluxTrace",
+    "unifiedResultOutsideCurrentTa0005": "Rotulados TA0005 no VT, mas fora da TA0005 na ATT&CK v{{version}} (ex.: T1562 → Defense Impairment, TA0112) — fora da comparação",
     "unifiedResultVtApi": "Relatório VT (API)",
     "unifiedResultVtApiFail": "VT API: falha (`{{code}}`) — {{message}}",
     "unifiedResultVtApiOk": "VT API: {{name}} · detalhe do campo last_analysis_stats: {{breakdown}} · soma de todas as categorias (aprox. número total de contribuições na agregação VT): {{total}}",

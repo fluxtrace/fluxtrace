@@ -5,6 +5,7 @@ import {
   collectFluxtraceDefenseEvasionTechniqueIds,
   collectTa0005TechniqueIdsFromMitreEntry,
   flattenVtBehaviourMitreSandboxData,
+  splitByCurrentTa0005,
 } from "./vtBehaviourMitreExport";
 
 describe("flattenVtBehaviourMitreSandboxData", () => {
@@ -94,6 +95,15 @@ describe("collectTa0005TechniqueIdsFromMitreEntry", () => {
       },
     };
     expect(collectTa0005TechniqueIdsFromMitreEntry(entry)).toEqual(["T1036", "T1055"]);
+  });
+});
+
+describe("splitByCurrentTa0005", () => {
+  it("separa IDs que saíram da TA0005 na v19+ (T1562 → TA0112) dos que continuam em Stealth", () => {
+    expect(splitByCurrentTa0005(["T1622", "T1562.001", "t1497.001", "T1562", "T1548.002"])).toEqual({
+      current: ["T1622", "t1497.001"],
+      outside: ["T1562.001", "T1562", "T1548.002"],
+    });
   });
 });
 

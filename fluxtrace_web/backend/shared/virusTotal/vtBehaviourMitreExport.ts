@@ -1,4 +1,22 @@
+import { MITRE_TA0005_CATALOG } from "../mitre/mitreDefenseEvasion";
+
 const SHA256_HEX = /^[a-f0-9]{64}$/i;
+
+const CURRENT_TA0005_IDS = new Set(MITRE_TA0005_CATALOG.techniques.map((t) => t.id.toUpperCase()));
+
+/**
+ * Separa IDs rotulados TA0005 por uma fonte externa (ex.: sandboxes VT) entre os que pertencem à TA0005
+ * na versão ATT&CK do catálogo e os que saíram dela. Desde a v19 a antiga Defense Evasion foi dividida:
+ * ex.: T1562 Impair Defenses foi revogada (T1562.001 → T1685, Defense Impairment, TA0112).
+ */
+export function splitByCurrentTa0005(ids: readonly string[]): { current: string[]; outside: string[] } {
+  const current: string[] = [];
+  const outside: string[] = [];
+  for (const id of ids) {
+    (CURRENT_TA0005_IDS.has(id.trim().toUpperCase()) ? current : outside).push(id);
+  }
+  return { current, outside };
+}
 
 /** Formato como `respostas_virustotal.json`: mapa SHA-256 → `{ data: { SandboxName: { tactics: [...] } }, links }`. */
 export function isBehaviourMitreTreesByHashExport(root: unknown): boolean {
@@ -169,8 +187,9 @@ export function collectAllBehaviourMitreTechniqueIdsFromVtSandboxMap(data: unkno
 }
 
 /**
- * Recolhe IDs de técnica MITRE sob a tática **TA0005** (Defense Evasion),
- * em todas as sandboxes do payload — alinhado ao painel FluxTrace (TA0005).
+ * Recolhe IDs de técnica MITRE sob a tática **TA0005** (Stealth desde a ATT&CK v19; antes Defense Evasion),
+ * em todas as sandboxes do payload, tal como a sandbox os rotulou. Para comparar com o FluxTrace,
+ * passar por {@link splitByCurrentTa0005}.
  */
 export function collectTa0005TechniqueIdsFromMitreEntry(entry: unknown): string[] {
   const idSet = new Set<string>();

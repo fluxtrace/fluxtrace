@@ -2,6 +2,10 @@
  * Generates shared/data/mitreTa0005Catalog.json from a saved MITRE tactic page
  * (markdown export or copy of https://attack.mitre.org/tactics/TA0005/).
  * Run: pnpm mitre:ta0005-catalog (ou node backend/scripts/mitre/generate-ta0005-catalog.mjs)
+ *
+ * Caminho preferido: `pnpm mitre:sync-catalog` (STIX Enterprise oficial, regista a versão ATT&CK e as
+ * outras tácticas de cada técnica). Desde a ATT&CK v19 a TA0005 chama-se Stealth; um snapshot
+ * com título "Defense Evasion" é anterior à divisão e é recusado.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -27,6 +31,16 @@ function techniqueUrl(id) {
 
 const text = fs.readFileSync(src, "utf8");
 const lines = text.split(/\r?\n/);
+
+const titleMatch = text.match(/^Title:\s*(.+?),\s*Tactic TA0005/m);
+const tacticName = titleMatch ? titleMatch[1].trim() : "Stealth";
+if (/defense evasion/i.test(tacticName)) {
+  console.error(
+    `${path.basename(src)} é um snapshot anterior à ATT&CK v19 ("${tacticName}"). ` +
+      "Use `pnpm mitre:sync-catalog` ou guarde de novo https://attack.mitre.org/tactics/TA0005/.",
+  );
+  process.exit(1);
+}
 
 const entries = [];
 for (const line of lines) {
@@ -57,7 +71,7 @@ unique.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
 const generatedAt = new Date().toISOString().slice(0, 10);
 const catalog = {
   tacticId: "TA0005",
-  tacticName: "Defense Evasion",
+  tacticName,
   source: "https://attack.mitre.org/tactics/TA0005/",
   generatedAt,
   version: `bundled-${generatedAt}`,

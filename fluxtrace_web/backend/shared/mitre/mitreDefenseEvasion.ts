@@ -3,13 +3,29 @@ import { z } from "zod";
 import mitreTa0005Catalog from "../data/mitreTa0005Catalog.json";
 
 type MitreRef = { id: string; name: string; url: string };
+type MitreTacticRef = { id: string; name: string };
+type CatalogTechnique = MitreRef & { otherTactics?: MitreTacticRef[] };
 
-/** Catálogo estático (técnicas + sub-técnicas) para TA0005, regenerado com `pnpm mitre:ta0005-catalog`. */
+/**
+ * Catálogo estático (técnicas + sub-técnicas) da TA0005, regenerado com `pnpm mitre:sync-catalog`
+ * a partir do STIX Enterprise oficial. Desde a ATT&CK v19 a TA0005 chama-se Stealth
+ * (Defense Evasion foi dividida em Stealth, TA0005, e Defense Impairment, TA0112).
+ */
 export const MITRE_TA0005_CATALOG = mitreTa0005Catalog;
-export const MITRE_TA0005_CATALOG_ENTRY_COUNT = mitreTa0005Catalog.techniques.length;
-export const MITRE_TA0005_PARENT_TECHNIQUE_COUNT = mitreTa0005Catalog.techniques.filter(
-  (t) => !t.id.includes("."),
-).length;
+const CATALOG_TECHNIQUES: CatalogTechnique[] = mitreTa0005Catalog.techniques;
+export const MITRE_TA0005_CATALOG_ENTRY_COUNT = CATALOG_TECHNIQUES.length;
+export const MITRE_TA0005_PARENT_TECHNIQUE_COUNT = CATALOG_TECHNIQUES.filter((t) => !t.id.includes(".")).length;
+/** Versão da ATT&CK Enterprise do catálogo embutido (ex.: "20.1"). */
+export const MITRE_ATTACK_VERSION: string = mitreTa0005Catalog.attackVersion;
+
+const OTHER_TACTICS_BY_ID = new Map(
+  CATALOG_TECHNIQUES.filter((t) => t.otherTactics?.length).map((t) => [t.id, t.otherTactics!]),
+);
+
+/** Outras tácticas da técnica na versão do catálogo (ex.: T1497.001 também em TA0007 Discovery). */
+export function otherTacticsForTechnique(id: string): MitreTacticRef[] {
+  return OTHER_TACTICS_BY_ID.get(id) ?? [];
+}
 
 function techniqueUrl(id: string): string {
   const dot = id.indexOf(".");
@@ -71,18 +87,25 @@ export const mitreDefenseEvidenceItemSchema = z.object({
 
 export type MitreDefenseEvidenceItem = z.infer<typeof mitreDefenseEvidenceItemSchema>;
 
+export const mitreTacticRefSchema = z.object({ id: z.string(), name: z.string() });
+
 export const mitreDefenseEvasionTechniqueSchema = z.object({
   id: z.string(),
   name: z.string(),
   url: z.string().url(),
+  /** Outras tácticas da técnica na versão registada; opcional em relatórios antigos. */
+  otherTactics: z.array(mitreTacticRefSchema).optional(),
   heuristicEvidence: z.array(mitreDefenseEvidenceItemSchema),
 });
 
 export const mitreDefenseEvasionSchema = z.object({
   tacticId: z.literal("TA0005"),
+  /** "Stealth" desde a ATT&CK v19; relatórios antigos guardam "Defense Evasion". */
   tacticName: z.string(),
   tacticUrl: z.string().url(),
-  /** Técnicas de nível superior do TA0005 (MITRE lista 47 abaixo da táctica). */
+  /** Versão da ATT&CK Enterprise usada nos rótulos (ex.: "20.1"); ausente em relatórios antigos. */
+  attackVersion: z.string().optional(),
+  /** Técnicas de nível superior da TA0005 na versão registada (31 em Stealth v20; 47 em Defense Evasion v18). */
   tacticTechniqueCount: z.number().int().nonnegative(),
   /** Soma técnicas + sub-técnicas do catálogo completo; opcional em relatórios antigos. */
   tacticCatalogEntryCount: z.number().int().nonnegative().optional(),
@@ -96,10 +119,10 @@ export type MitreDefenseEvasionTechnique = z.infer<typeof mitreDefenseEvasionTec
 
 export const MITRE_DEFENSE_EVASION_TACTIC = {
   id: "TA0005" as const,
-  name: "Defense Evasion",
+  name: mitreTa0005Catalog.tacticName,
   url: "https://attack.mitre.org/tactics/TA0005/",
-  /** Current Enterprise ATT&CK count for this tactic (TA0005 lists 47 techniques). */
-  techniqueCount: 47,
+  techniqueCount: MITRE_TA0005_PARENT_TECHNIQUE_COUNT,
+  attackVersion: MITRE_ATTACK_VERSION,
 };
 
 type BuildInput = {
@@ -196,7 +219,7 @@ export function buildMitreDefenseEvasion(heuristicTags: string[], suspiciousApis
 /**
  * Infere técnicas TA0005 a partir de APIs e heurísticas presentes no lote.
  *
- * Importante (CTA / ablação multi-log): o mapeamento é **API ou heurística → ID ATT&CK**,
+ * Importante (ablação multi-log): o mapeamento é **API ou heurística → ID ATT&CK**,
  * não «módulo de log exclusivo → ID». Ex.: T1027.007 exige GetProcAddress em *qualquer*
  * fonte residual (TraceFcnCall, TraceInstructions, …); remover TraceFcnCall não elimina
  * T1027.007 se GetProcAddress permanecer noutro módulo. Idem WriteProcessMemory → T1055.002.
@@ -250,6 +273,7 @@ export function buildMitreDefenseEvasionFromEvidence(input: BuildInput): MitreDe
       id: entry.ref.id,
       name: entry.ref.name,
       url: entry.ref.url,
+      otherTactics: otherTacticsForTechnique(entry.ref.id),
       heuristicEvidence: Array.from(entry.evidence)
         .sort((a, b) => a.localeCompare(b))
         .map((label) => ({
@@ -263,6 +287,7 @@ export function buildMitreDefenseEvasionFromEvidence(input: BuildInput): MitreDe
     tacticId: "TA0005",
     tacticName: MITRE_DEFENSE_EVASION_TACTIC.name,
     tacticUrl: MITRE_DEFENSE_EVASION_TACTIC.url,
+    attackVersion: MITRE_ATTACK_VERSION,
     tacticTechniqueCount: MITRE_DEFENSE_EVASION_TACTIC.techniqueCount,
     tacticCatalogEntryCount: MITRE_TA0005_CATALOG_ENTRY_COUNT,
     tacticParentTechniqueCount: MITRE_TA0005_PARENT_TECHNIQUE_COUNT,

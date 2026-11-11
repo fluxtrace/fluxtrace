@@ -115,7 +115,7 @@ O repositório destina-se a repetir a cadeia da ferramenta (código, amostras, c
 - **Verificação independente** — `backend/scripts/cotb/audit-evidence.mts` relê os `.cdf` originais e confronta índice e saída reduzida (ficheiro:linha, recontagem FI/M1/M2, blocos FI completos, ligação FI↔M1/M2 por endereço da rotina e thread, FI↔TraceInstructions por `ret addr`).
 - **Interpretação consolidada** — categoria e risco são **rótulos da ferramenta**, não ground truth. LLM opcional (`CONTRADEF_SKIP_LLM=1` no artigo).
 - **Funções mapeadas (M1)** — documentação das ~47 APIs que a **Contradef** intercepta; a FluxTrace não intercepta.
-- **Integrações opcionais** — VirusTotal v3, MITRE TA0005 (etiqueta), export XLSX.
+- **Integrações opcionais** — VirusTotal v3, MITRE ATT&CK v20 TA0005 Stealth (etiqueta), export XLSX.
 
 ### Arquitetura
 
@@ -520,6 +520,19 @@ Evidências típicas no veredito: `IsDebuggerPresent`, `CheckRemoteDebuggerPrese
 ---
 
 ### IDs MITRE ATT&CK (TA0005) no FluxTrace
+
+**Versão de referência: MITRE ATT&CK v20** (Enterprise 20.1, MITRE Corporation, 2026). Na v19 a antiga táctica *Defense Evasion* foi dividida em **Stealth**, que herda o ID **TA0005**, e **Defense Impairment** (**TA0112**). As técnicas que o FluxTrace infere continuam todas em Stealth (TA0005), com os mesmos IDs; algumas pertencem também a outra táctica:
+
+| ID | Técnica | Outra táctica (v20) |
+|----|---------|---------------------|
+| T1622 | Debugger Evasion | TA0007 Discovery |
+| T1497.001 / T1497.003 | System Checks / Time Based Checks | TA0007 Discovery |
+| T1055 / T1055.001 / T1055.002 | Process Injection (DLL / PE) | TA0004 Privilege Escalation |
+| T1027 / T1027.007 | Obfuscated Files / Dynamic API Resolution | — |
+| T1678 | Delay Execution | — |
+| T1070 / T1070.004 | Indicator Removal / File Deletion | — |
+
+A T1562 *Impair Defenses* foi revogada na v19 (ex.: T1562.001 → T1685, em TA0112). O motor não a emite; quando uma sandbox VirusTotal ainda a rotula como TA0005, a comparação lista-a à parte, fora da intersecção. Cada relatório grava a versão usada (`mitreDefenseEvasion.attackVersion`) e as outras tácticas de cada técnica (`techniques[].otherTactics`); relatórios anteriores a este registo aparecem no painel com aviso para reprocessar. O catálogo embutido (`backend/shared/data/mitreTa0005Catalog.json`) é regenerado do STIX Enterprise oficial com `pnpm mitre:sync-catalog`.
 
 Os identificadores usados na Tabela 1 do artigo (T1027, T1027.007, T1055, T1622, …) são produzidos pelo motor em `fluxtrace_web/backend/shared/mitre/mitreDefenseEvasion.ts` e aparecem na UI (**Interpretação consolidada** → técnicas TA0005) e no insight do lote (`mitreDefenseEvasion.techniques[].id`).
 

@@ -209,9 +209,13 @@ export function downloadReduceLogsAnalysisExcel(params: {
         return `${nCat ?? "—"} / ${d.mitreDefenseEvasion.techniques.length}`;
       })(),
     ],
+    [
+      "Versão ATT&CK dos rótulos (táctica TA0005)",
+      `${d.mitreDefenseEvasion.attackVersion ? `v${d.mitreDefenseEvasion.attackVersion}` : "não registada"} (${d.mitreDefenseEvasion.tacticName})`,
+    ],
   ];
 
-  const mitreHeaders = ["ID", "Técnica_MITRE", "URL", "Evidencia_logs"];
+  const mitreHeaders = ["ID", "Técnica_MITRE", "URL", "Outras_tacticas", "Evidencia_logs"];
   const mitreRows = d.mitreDefenseEvasion.techniques.map((t) => {
     const ev = t.heuristicEvidence
       .map((item) => {
@@ -222,7 +226,8 @@ export function downloadReduceLogsAnalysisExcel(params: {
         return `${item.label}${loc}`;
       })
       .join(" | ");
-    return [t.id, t.name, t.url, ev];
+    const other = (t.otherTactics ?? []).map((tac) => `${tac.id} ${tac.name}`).join("; ");
+    return [t.id, t.name, t.url, other, ev];
   });
 
   const heuristicRows = [["Heuristica"], ...d.techniques.map((h) => [h])];

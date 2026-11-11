@@ -6,6 +6,7 @@ import {
   downloadUnifiedMitreCompareXlsx,
 } from "@/lib/virus-total/unifiedMitreCompareExport";
 import { unifiedMitreVtApiLine } from "@/lib/virus-total/unifiedMitreVtApiLine";
+import { MITRE_ATTACK_VERSION } from "@shared/mitre/mitreDefenseEvasion";
 import type { UnifiedMitreCompareViewModel } from "@shared/virusTotal/unifiedMitreCompareViewModel";
 import { FileSpreadsheet, Table } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -211,6 +212,14 @@ export function UnifiedMitreCompareResult(props: { view: Ta0005View; llmText: st
                     <TechniqueChips ids={h.onlyFluxtrace} variant="flux" />
                   </div>
                 </div>
+                {h.exportVtOutsideCurrentTa0005?.length ? (
+                  <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.06] p-3">
+                    <p className="mb-1.5 text-xs font-medium text-amber-800 dark:text-amber-300">
+                      {t("vtJsonCompare.unifiedResultOutsideCurrentTa0005", { version: MITRE_ATTACK_VERSION })}
+                    </p>
+                    <TechniqueChips ids={h.exportVtOutsideCurrentTa0005} variant="export" />
+                  </div>
+                ) : null}
                 <p className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{t("vtJsonCompare.unifiedResultVtApi")}:</span>{" "}
                   {unifiedMitreVtApiLine(h.virusTotalFileReport, t)}

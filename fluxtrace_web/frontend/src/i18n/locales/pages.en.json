@@ -296,6 +296,7 @@
     "unifiedResultInBoth": "In both (TA0005 intersection)",
     "unifiedResultOnlyExportVt": "VT export only",
     "unifiedResultOnlyFluxtrace": "FluxTrace only",
+    "unifiedResultOutsideCurrentTa0005": "Labelled TA0005 by VT but outside TA0005 in ATT&CK v{{version}} (e.g. T1562 → Defense Impairment, TA0112) — excluded from the comparison",
     "unifiedResultVtApi": "VT report (API)",
     "unifiedResultVtApiFail": "VT API: failure (`{{code}}`) — {{message}}",
     "unifiedResultVtApiOk": "VT API: {{name}} · last_analysis_stats breakdown: {{breakdown}} · sum of all buckets (approx. total contributing rows in VT aggregate): {{total}}",
